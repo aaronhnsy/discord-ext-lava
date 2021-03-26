@@ -1,0 +1,7 @@
+*.pyc
+*.ini
+*.log*
+
+.idea/
+venv/
+docs/_build
