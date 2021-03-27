@@ -45,7 +45,7 @@ extensions = [
 napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = True  # TODO maybe change this
 
-autodoc_typehints = 'signature'
+autodoc_typehints = 'description'
 autodoc_member_order = 'bysource'
 
 extlinks = {

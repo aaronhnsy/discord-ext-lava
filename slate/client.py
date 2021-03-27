@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import MutableMapping, Optional, Protocol, Type
+from typing import Dict, Optional, Protocol, Type
 
 import aiohttp
 import discord
 
 from slate.bases.node import BaseNode
-from slate.bases.player import BasePlayer
+from slate.bases.player import Player
 from slate.exceptions import NoNodesAvailable, NodeCreationError, NodeNotFound, PlayerAlreadyExists
 
 __log__ = logging.getLogger(__name__)
@@ -17,13 +17,13 @@ __all__ = ['Client']
 
 class Client:
     """
-    The client used to manage Nodes and Players.
+    The client used to manage nodes and players.
 
     Parameters
     ----------
     bot: :py:class:`typing.Protocol` [ :py:class:`discord.Client` ]
-        The bot instance that this :class:`Client` should be associated with.
-    session: :py:class:`typing.Optional` [ :py:class:`aiohttp.ClientSession` ]
+        The bot instance that this client should be associated with.
+    session: Optional [ :py:class:`aiohttp.ClientSession` ]
         The aiohttp client session used to make requests and connect to websockets with. If not passed, a new client session will be made.
     """
 
@@ -32,7 +32,7 @@ class Client:
         self._bot: Protocol[discord.Client] = bot
         self._session: aiohttp.ClientSession = session or aiohttp.ClientSession()
 
-        self._nodes: MutableMapping[str, Protocol[BaseNode]] = {}
+        self._nodes: Dict[str, Protocol[BaseNode]] = {}
 
     def __repr__(self) -> str:
         return f'<slate.Client node_count={len(self.nodes)}>'
@@ -43,7 +43,7 @@ class Client:
     def bot(self) -> Protocol[discord.Client]:
         """
         :py:class:`Protocol` [ :py:class:`discord.Client` ]:
-            The bot instance that this :class:`Client` is connected to.
+            The bot instance that this client is connected to.
         """
         return self._bot
 
@@ -51,17 +51,17 @@ class Client:
     def session(self) -> aiohttp.ClientSession:
         """
         :py:class:`aiohttp.ClientSession`:
-            The aiohttp session used to make requests and connect to Node websockets with.
+            The aiohttp session used to make requests and connect to node websockets with.
         """
         return self._session
 
     #
 
     @property
-    def nodes(self) -> MutableMapping[str, Protocol[BaseNode]]:
+    def nodes(self) -> Dict[str, Protocol[BaseNode]]:
         """
-        :py:class:`typing.MutableMapping` [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
-            A mapping of Node identifier's to Nodes that this Client is managing.
+        Dict [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
+            A mapping of node identifier's to nodes that this client is managing.
         """
 
         return self._nodes
@@ -70,7 +70,7 @@ class Client:
 
     async def create_node(self, *, host: str, port: str, password: str, identifier: str, cls: Type[Protocol[BaseNode]], **kwargs) -> Protocol[BaseNode]:
         """
-        Creates a Node and attempts to connect to an external nodes websocket. (:resource:`Andesite <andesite>`, :resource:`Lavalink <lavalink>`, etc)
+        Creates a node and attempts to connect it to it's external websocket.
 
         Parameters
         ----------
@@ -81,21 +81,21 @@ class Client:
         password: :py:class:`str`
             The password used for authentification.
         identifier: :py:class:`str`
-            A unique identifier used to refer to the created Node.
+            A unique identifier used to refer to the created node.
         cls: :py:class:`typing.Type` [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]
             The class used to connect to the external node. Must be a subclass of :py:class:`BaseNode`.
         **kwargs:
-            Optional keyword arguments to pass to the created Node.
+            Optional keyword arguments to pass to the created node.
 
         Returns
         -------
         :py:class:`typing.Protocol` [ :py:class:`BaseNode` ]
-            The Node that was created.
+            The node that was created.
 
         Raises
         ------
         :py:class:`NodeCreationError`
-            Either a Node with the given identifier already exists, or the given class was not a subclass of :py:class:`BaseNode`.
+            Either a node with the given identifier already exists, or the given class was not a subclass of :py:class:`BaseNode`.
         :py:class:`NodeConnectionError`
             There was an error while connecting to the external node. Could mean there was invalid authorization or an incorrect host address/port, etc.
         """
@@ -116,22 +116,22 @@ class Client:
 
     def get_node(self, *, identifier: Optional[str] = None) -> Optional[Protocol[BaseNode]]:
         """
-        Returns the Node with the given identifier.
+        Returns the node with the given identifier.
 
         Parameters
         ----------
-        identifier: :py:class:`typing.Optional` [ :py:class:`str` ]
-            The identifier of the Node to return. If not passed a random Node will be returned.
+        identifier: Optional [ :py:class:`str` ]
+            The identifier of the node to return. If not passed a random node will be returned.
 
         Returns
         -------
-        :py:class:`typing.Optional` [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]
-            The Node that was found. Could return :py:class:`None` if no Nodes with the given identifier were found.
+        Optional [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]
+            The node that was found. Could return :py:class:`None` if no nodes with the given identifier were found.
 
         Raises
         ------
         :py:class:`NoNodesAvailable`
-            Raised if there are no Nodes available.
+            Raised if there are no nodes available.
         """
 
         available_nodes = {identifier: node for identifier, node in self._nodes.items() if node.is_available}
@@ -143,32 +143,32 @@ class Client:
 
         return available_nodes.get(identifier, None)
 
-    async def create_player(self, *, channel: discord.VoiceChannel, node_identifier: Optional[str] = None, cls: Optional[Type[Protocol[BasePlayer]]] = BasePlayer) -> Protocol[BasePlayer]:
+    async def create_player(self, *, channel: discord.VoiceChannel, node_identifier: Optional[str] = None, cls: Optional[Type[Protocol[Player]]] = Player) -> Protocol[Player]:
         """
-        Creates a Player for the given :py:class:`discord.VoiceChannel`.
+        Creates a player for the given :py:class:`discord.VoiceChannel`.
 
         Parameters
         ----------
         channel: :py:class:`discord.VoiceChannel`
-            The discord voice channel to connect the Player too.
-        node_identifier: :py:class:`typing.Optional` [ :py:class:`str` ]
-            A Node identifier to create the Player on. If not passed a random Node will be chosen.
+            The discord voice channel to connect the player too.
+        node_identifier: Optional [ :py:class:`str` ]
+            A node identifier to create the player on. If not passed a random node will be chosen.
         cls: :py:class:`typing.Type` [ :py:class:`typing.Protocol` [ :py:class:`Player` ] ]
-            The class used to implement the base Player features. Must be a subclass of :py:class:`Player`. Defaults to the Player supplied with Slate.
+            The class used to implement the base player features. Must be a subclass of :py:class:`Player`. Defaults to the player supplied with Slate.
 
         Returns
         -------
         :py:class:`typing.Protocol` [ :py:class:`Player` ]
-            The Player that was created.
+            The player that was created.
 
         Raises
         ------
         :py:class:`NodeNotFound`
-            Raised if a Node with the given identifier was not found.
+            Raised if a node with the given identifier was not found.
         :py:class:`NoNodesAvailable`
-            Raised if there are no Nodes available.
+            Raised if there are no nodes available.
         :py:class:`PlayerAlreadyExists`
-            Raised if a Player for the voice channel already exists.
+            Raised if a player for the voice channel already exists.
         """
 
         node = self.get_node(identifier=node_identifier)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from slate.bases.player import BasePlayer
+    from slate.bases.player import Player
 
 
 __all__ = ['TrackStartEvent', 'TrackEndEvent', 'TrackExceptionEvent', 'TrackStuckEvent', 'WebSocketClosedEvent']
@@ -17,7 +17,7 @@ class TrackStartEvent:
 
         self.data: dict = data
 
-        self.player: Protocol[BasePlayer] = data.get('player')
+        self.player: Protocol[Player] = data.get('player')
         self.track: str = data.get('track')
 
     def __repr__(self) -> str:
@@ -35,7 +35,7 @@ class TrackEndEvent:
 
         self.data: dict = data
 
-        self.player: Protocol[BasePlayer] = data.get('player')
+        self.player: Protocol[Player] = data.get('player')
         self.track: str = data.get('track')
 
         self.reason: str = data.get('reason')
@@ -56,7 +56,7 @@ class TrackExceptionEvent:
 
         self.data: dict = data
 
-        self.player: Protocol[BasePlayer] = data.get('player')
+        self.player: Protocol[Player] = data.get('player')
         self.track: str = data.get('track')
 
         exception = data.get('exception')
@@ -81,7 +81,7 @@ class TrackStuckEvent:
 
         self.data: dict = data
 
-        self.player: Protocol[BasePlayer] = data.get('player')
+        self.player: Protocol[Player] = data.get('player')
         self.track: str = data.get('track')
 
         self.threshold_ms: str = data.get('thresholdMs')
@@ -101,7 +101,7 @@ class WebSocketClosedEvent:
 
         self.data: dict = data
 
-        self.player: Protocol[BasePlayer] = data.get('player')
+        self.player: Protocol[Player] = data.get('player')
         self.reason: str = data.get('reason')
         self.code: str = data.get('code')
         self.by_remote: str = data.get('byRemote')

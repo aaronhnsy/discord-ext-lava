@@ -20,7 +20,7 @@ __all__ = ['LavalinkNode']
 
 class LavalinkNode(BaseNode):
     """
-    An implementation of :py:class:`BaseNode` that allows connection to :resource:`Lavalink <lavalink>` nodes.
+    An implementation of :py:class:`BaseNode` that allows connection to :resource:`lavalink <lavalink>` nodes.
 
     Parameters
     ----------
@@ -28,12 +28,12 @@ class LavalinkNode(BaseNode):
         The slate client that this node is associated with.
     host: :py:class:`str`
         The host address of the node's websocket.
-    port: :py:class:`port`
+    port: :py:class:`str`
         The port to connect to the node's websocket with.
     password: :py:class:`str`
         The password used for authentification with the node's websocket and HTTP connections.
     identifier: :py:class:`str`
-        This nodes unique identifier.
+        This node's unique identifier.
     **kwargs
         Custom keyword arguments that have been passed to this node from :py:meth:`Client.create_node`.
     """
@@ -59,8 +59,9 @@ class LavalinkNode(BaseNode):
     @property
     def lavalink_stats(self) -> Optional[LavalinkStats]:
         """
-        :py:class:`typing.Optional` [ :py:class:`LavalinkStats` ]:
-            Stats sent from :resource:`Andesite <andesite>` when using the :resource:`Lavalink <lavalink>` compatible websocket. These stats are sent every 30 or so seconds.
+        Optional [ :py:class:`LavalinkStats` ]:
+            Stats sent from :resource:`lavalink <lavalink>`. These stats are sent every 30 or so seconds. Could be :py:class:`None` if :py:attr:`AndesiteNode.use_compatibility`
+            is :py:class:`False`.
         """
         return self._lavalink_stats
 

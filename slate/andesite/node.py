@@ -8,7 +8,7 @@ from typing import Optional, TYPE_CHECKING
 import aiohttp
 import async_timeout
 
-from ..bases.node import BaseNode
+from slate.bases.node import BaseNode
 from slate.objects.stats import AndesiteStats, LavalinkStats, Metadata
 from slate.utils import ExponentialBackoff
 
@@ -22,8 +22,8 @@ __all__ = ['AndesiteNode']
 
 class AndesiteNode(BaseNode):
     """
-    An implementation of :py:class:`BaseNode` that allows connection to :resource:`Andesite <andesite>` nodes with support for their :resource:`Lavalink <lavalink>`
-    compatibility mode.
+    An implementation of :py:class:`BaseNode` that allows connection to :resource:`andesite <andesite>` nodes with support for their :resource:`lavalink <lavalink>`
+    compatible websocket.
 
     Parameters
     ----------
@@ -31,14 +31,14 @@ class AndesiteNode(BaseNode):
         The slate client that this node is associated with.
     host: :py:class:`str`
         The host address of the node's websocket.
-    port: :py:class:`port`
+    port: :py:class:`str`
         The port to connect to the node's websocket with.
     password: :py:class:`str`
         The password used for authentification with the node's websocket and HTTP connections.
     identifier: :py:class:`str`
-        This nodes unique identifier.
+        This node's unique identifier.
     use_compatibility: :py:class:`bool`
-        Whether or not this node should use the :resource:`Lavalink <lavalink>` compatible websocket.
+        Whether or not this node should use the :resource:`lavalink <lavalink>` compatible websocket.
     **kwargs
         Custom keyword arguments that have been passed to this node from :py:meth:`Client.create_node`.
     """
@@ -75,7 +75,7 @@ class AndesiteNode(BaseNode):
     def use_compatibility(self) -> bool:
         """
         :py:class:`bool`:
-            Whether or not this node is using the :resource:`Lavalink <lavalink>` compatible websocket.
+            Whether or not this node is using the :resource:`lavalink <lavalink>` compatible websocket.
         """
         return self._use_compatibility
 
@@ -84,17 +84,17 @@ class AndesiteNode(BaseNode):
     @property
     def connection_id(self) -> Optional[int]:
         """
-        :py:class:`typing.Optional` [ :py:class:`int` ]:
-            The connection id sent upon successful connection with :resource:`Andesite <andesite>`. This could be :py:class:`None` if :py:attr:`AndesiteNode.use_compatibility` is
-            :py:class:`True`.
+        Optional [ :py:class:`int` ]:
+            The connection id sent upon successful connection with :resource:`andesite <andesite>`. This could be :py:class:`None` if
+            :py:attr:`AndesiteNode.use_compatibility` is :py:class:`True`.
         """
         return self._connection_id
 
     @property
     def metadata(self) -> Optional[Metadata]:
         """
-        :py:class:`typing.Optional` [ :py:class:`Metadata` ]:
-            Metadata sent from :resource:`Andesite <andesite>` that contains version information and node information. This could be :py:class:`None` if
+        Optional [ :py:class:`Metadata` ]:
+            Metadata sent from :resource:`andesite <andesite>` that contains version information and node information. This could be :py:class:`None` if
             :py:attr:`AndesiteNode.use_compatibility` is :py:class:`True`.
         """
         return self._metadata
@@ -102,8 +102,8 @@ class AndesiteNode(BaseNode):
     @property
     def andesite_stats(self) -> Optional[AndesiteStats]:
         """
-        :py:class:`typing.Optional` [ :py:class:`AndesiteStats` ]:
-            Stats sent from :resource:`Andesite <andesite>` that contains information about the system and current status. These stats are sent from andesite upon using
+        Optional [ :py:class:`AndesiteStats` ]:
+            Stats sent from :resource:`andesite <andesite>` that contains information about the system and current status. These stats are sent upon using
             :py:meth:`AndesiteNode.request_andesite_stats`.
         """
         return self._andesite_stats
@@ -111,8 +111,9 @@ class AndesiteNode(BaseNode):
     @property
     def lavalink_stats(self) -> Optional[LavalinkStats]:
         """
-        :py:class:`typing.Optional` [ :py:class:`LavalinkStats` ]:
-            Stats sent from :resource:`Andesite <andesite>` when using the :resource:`Lavalink <lavalink>` compatible websocket. These stats are sent every 30 or so seconds.
+        Optional [ :py:class:`LavalinkStats` ]:
+            Stats sent from :resource:`andesite <andesite>` when using the :resource:`lavalink <lavalink>` compatible websocket. These stats are sent every 30 or so seconds. This
+            could be :py:class:`None` if :py:attr:`AndesiteNode.use_compatibility` is :py:class:`False`.
         """
         return self._lavalink_stats
 
@@ -195,7 +196,7 @@ class AndesiteNode(BaseNode):
 
     async def ping(self) -> float:
         """
-        Returns the latency between this node and it's websocket in milliseconds. This works on both the lavalink compatible websocket and the normal websocket.
+        Returns the latency between this node and it's websocket in milliseconds. This works on both the :resource:`lavalink <lavalink>` compatible websocket and the normal websocket.
 
         Returns
         -------
@@ -221,7 +222,7 @@ class AndesiteNode(BaseNode):
 
     async def request_andesite_stats(self) -> AndesiteStats:
         """
-        Requests andesite stats from the node. This works on both the lavalink compatible websocket and the normal websocket.
+        Requests :resource:`andesite <andesite>` stats from the node. This works on both the :resource:`lavalink <lavalink>` compatible websocket and the normal websocket.
 
         Returns
         -------

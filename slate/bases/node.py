@@ -15,7 +15,7 @@ from slate.objects.track import Track
 from slate.utils import ExponentialBackoff
 
 if TYPE_CHECKING:
-    from slate.bases.player import BasePlayer
+    from slate.bases.player import Player
     from slate.client import Client
 
 
@@ -25,7 +25,7 @@ __all__ = ['BaseNode']
 
 class BaseNode(abc.ABC):
     """
-    The abstract base class for creating a node with. Nodes connect to a websocket such as (:resource:`Andesite <andesite>` or :resource:`Lavalink <lavalink>`
+    The abstract base class for creating a node with. Nodes connect to a websocket such as :resource:`andesite <andesite>` or :resource:`lavalink <lavalink>`
     using custom logic defined in that nodes subclass. All nodes passed to :py:meth:`Client.create_node` must inherit from this class.
 
     Parameters
@@ -34,7 +34,7 @@ class BaseNode(abc.ABC):
         The slate client that this node is associated with.
     host: :py:class:`str`
         The host address of the node's websocket.
-    port: :py:class:`port`
+    port: :py:class:`str`
         The port to connect to the node's websocket with.
     password: :py:class:`str`
         The password used for authentification with the node's websocket and HTTP connections.
@@ -52,7 +52,7 @@ class BaseNode(abc.ABC):
         self._password: str = password
         self._identifier: str = identifier
 
-        self._players: Dict[int, Protocol[BasePlayer]] = {}
+        self._players: Dict[int, Protocol[Player]] = {}
 
         self._http_url: Optional[str] = None
         self._ws_url: Optional[str] = None
@@ -73,7 +73,7 @@ class BaseNode(abc.ABC):
     def client(self) -> Client:
         """
         :py:class:`Client`:
-            The slate Client that this node is associated with.
+            The slate client that this node is associated with.
         """
         return self._client
 
@@ -112,10 +112,10 @@ class BaseNode(abc.ABC):
     #
 
     @property
-    def players(self) -> Dict[int, Protocol[BasePlayer]]:
+    def players(self) -> Dict[int, Protocol[Player]]:
         """
-        :py:class:`typing.Mapping` [ :py:class:`int` , :py:class:`typing.Protocol` [ :py:class:`Player`] ]:
-            A mapping of Player guild id's to Players that this node is managing.
+        Dict [ :py:class:`int` , :py:class:`typing.Protocol` [ :py:class:`Player`] ]:
+            A mapping of player guild id's to players that this node is managing.
         """
         return self._players
 
@@ -246,7 +246,7 @@ class BaseNode(abc.ABC):
 
     async def destroy(self, *, force: bool = False) -> None:
         """
-        Calls :py:meth:`BaseNode.disconnect` and removes this node from it's Client.
+        Calls :py:meth:`BaseNode.disconnect` and removes this node from it's client.
 
         Parameters
         ----------
@@ -271,14 +271,14 @@ class BaseNode(abc.ABC):
             The query to search with. Could be a link or a search term if prepended with 'scsearch:' (Soundcloud), 'ytsearch:' (Youtube) or 'ytmsearch: ' (Youtube music).
         ctx: :py:class:`typing.Protocol` [ :py:class:`commands.Context`]
             An optional context argument to pass to the track for quality of life features such as :py:attr:`Track.requester`.
-        retry: :py:class:`typing.Optional` [ :py:class:`bool` ]
+        retry: Optional [ :py:class:`bool` ]
             Whether or not to retry the search if a non-200 status code is received. If :py:class:`True` the search will be retried up to 5 times, with an exponential backoff.
-        raw: :py:class:`typing.Optional` [ :py:class:`bool` ]
+        raw: Optional [ :py:class:`bool` ]
             Whether or not to return the raw json result of the search.
 
         Returns
         -------
-        :py:class:`typing.Optional` [ :py:class:`typing.Union` [ :py:class:`Playlist` , :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
+        Optional [ Union [ :py:class:`Playlist` , :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
             The raw json result, list of Tracks, or Playlist that was found.
 
         Raises

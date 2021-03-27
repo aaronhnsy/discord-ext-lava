@@ -9,15 +9,15 @@ from slate.objects.track import Track
 
 class Playlist:
     """
-    A class representing a Playlist object sent from lavalink or andesite (or another provider).
+    A class representing a Playlist object sent from :resource:`lavalink <lavalink>` or :resource:`andesite <andesite>` (or another provider).
 
     Parameters
     ----------
     playlist_info : dict
         Information about the playlist.
-    tracks : list[dict]
+    tracks : List [dict]
         A list of dictionaries containing track information.
-    ctx : Optional[ :py:class:`commands.Context` ]
+    ctx : Optional [ :py:class:`commands.Context` ]
         An optional discord.py context object that allows for quality of life attributes such as :py:attr:`Track.requester`.
 
 
@@ -66,7 +66,7 @@ class Playlist:
     @property
     def tracks(self) -> List[Track]:
         """
-        list[ :py:class:`Track` ]:
+        List [ :py:class:`Track` ]:
             A list of Track objects that this playlist has.
         """
         return self._tracks

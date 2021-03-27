@@ -8,9 +8,9 @@ from typing import List, Optional, Protocol, TYPE_CHECKING
 import discord
 from discord import VoiceProtocol
 
-from slate.objects import events
 from slate.andesite.node import AndesiteNode
 from slate.lavalink.node import LavalinkNode
+from slate.objects import events
 
 if TYPE_CHECKING:
     from slate.bases.node import BaseNode
@@ -19,17 +19,27 @@ if TYPE_CHECKING:
 
 
 __log__ = logging.getLogger('slate.bases.player')
-__all__ = ['BasePlayer']
+__all__ = ['Player']
 
 
-class BasePlayer(VoiceProtocol, ABC):
+class Player(VoiceProtocol, ABC):
+    """
+    A class that manages the playback of tracks within a discord channel.
+
+    Parameters
+    ----------
+    client: :py:class:`typing.Protocol` [ :py:class:`discord.Client` ]
+        The bot instance that this client should be connected to.
+    channel: :py:class:`discord.VoiceChannel`
+        The voice channel that this player should connect to.
+    """
 
     def __init__(self, client: Protocol[discord.Client], channel: discord.VoiceChannel) -> None:
         super().__init__(client=client, channel=channel)
 
         self.client: Protocol[discord.Client] = client
         self._bot: Protocol[discord.Client] = self.client
-        self.channel: discord.VoiceChannel = channel
+        self.channel: Optional[discord.VoiceChannel] = channel
         self._guild: discord.Guild = channel.guild
 
         self._node: Optional[Protocol[BaseNode]] = None
@@ -47,52 +57,92 @@ class BasePlayer(VoiceProtocol, ABC):
         self._voice_server_update_data: Optional[dict] = None
 
     def __repr__(self) -> str:
-        return f'<slate.BasePlayer client={self.client} channel={self.channel!r} is_connected={self.is_connected} is_paused={self.is_paused} is_playing={self.is_playing}>'
+        return f'<slate.Player client={self.client} channel={self.channel!r} is_connected={self.is_connected} is_paused={self.is_paused} is_playing={self.is_playing}>'
 
     #
 
     @property
     def bot(self) -> Protocol[discord.Client]:
+        """
+        :py:class:`typing.Protocol` [ :py:class:`discord.Client` ]:
+            The bot instance that this player is connected to.
+        """
         return self._bot
 
     @property
     def guild(self) -> discord.Guild:
+        """
+         :py:class:`discord.Guild`:
+            The guild that this player is connected to.
+        """
         return self._guild
 
     #
 
     @property
     def node(self) -> Optional[Protocol[BaseNode]]:
+        """
+        Optional [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
+            The node that is managing this player.
+        """
         return self._node
 
     #
 
     @property
     def current(self) -> Optional[Track]:
+        """
+        Optional [ :py:class:`Track` ]:
+            The track that this player is currently playing. Could be None if nothing is playing.
+        """
         return self._current
 
     @property
     def filter(self) -> Optional[Filter]:
+        """
+        Optional [ :py:class:`Filter` ]:
+            The filter currently set on this player. Could be None if one has not been set yet.
+        """
         return self._filter
 
     @property
     def volume(self) -> int:
+        """
+        :py:class:`int`:
+            The volume of the player.
+        """
         return self._volume
 
     @property
     def is_paused(self) -> bool:
+        """
+        :py:class:`bool`:
+            Whether or not the player is paused.
+        """
         return self._paused
 
     @property
     def is_connected(self) -> bool:
+        """
+        :py:class:`bool`:
+            Whether or not the player is connected to its voice channel.
+        """
         return self.channel is not None
 
     @property
     def is_playing(self) -> bool:
+        """
+        :py:class:`bool`:
+            Whether or not the player is connected and playing a track.
+        """
         return self.is_connected and self._current is not None
 
     @property
     def position(self) -> float:
+        """
+        :py:class:`float`:
+            The position of the current track. Will be 0 if nothing is playing.
+        """
 
         if not self.is_playing or not self.current:
             return 0
@@ -109,11 +159,18 @@ class BasePlayer(VoiceProtocol, ABC):
 
     @property
     def listeners(self) -> List[discord.Member]:
+        """
+        List [ :py:class:`discord.Member` ]:
+            A list of members in the player's voice channel who are not bots and who are not deafened.
+        """
         return [member for member in self.channel.members if not member.bot and not member.voice.deaf or not member.voice.self_deaf]
 
     #
 
     async def on_voice_server_update(self, data: dict) -> None:
+        """
+        :meta private:
+        """
 
         __log__.debug(f'PLAYER | Received VOICE_SERVER_UPDATE | Data: {data}')
 
@@ -121,6 +178,9 @@ class BasePlayer(VoiceProtocol, ABC):
         await self._dispatch_voice_update()
 
     async def on_voice_state_update(self, data: dict) -> None:
+        """
+        :meta private:
+        """
 
         __log__.debug(f'PLAYER | Received VOICE_STATE_UPDATE | Data: {data}')
 
@@ -175,11 +235,32 @@ class BasePlayer(VoiceProtocol, ABC):
     #
 
     async def connect(self, *, timeout: float, reconnect: bool) -> None:
+        """
+        Connects this player to it's voice channel.
+
+        Parameters
+        ----------
+        timeout: float
+            Unused, required by discord.py.
+        reconnect: bool
+            Unused, required by discord.py.
+        """
 
         await self.guild.change_voice_state(channel=self.channel)
         __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' joined channel \'{self.channel.id}\'.')
 
     async def stop(self, *, force: bool = False) -> None:
+        """
+        Stops the current track.
+
+        ..  note::
+            Sets :py:attr:`Player.current` to None
+
+        Parameters
+        ----------
+        force: bool
+            If True, a stop request will be sent to the websocket regardless of if :py:attr:`Player.current` is None.
+        """
 
         if not self.current and not force:
             return
@@ -190,6 +271,14 @@ class BasePlayer(VoiceProtocol, ABC):
         self._current = None
 
     async def disconnect(self, *, force: bool = False) -> None:
+        """
+        Disconnects this player from it's voice channel.
+
+        Parameters
+        ----------
+        force: bool
+            If True, the player will try to disconnect regardless of if :py:attr:`Player.is_connected` is False.
+        """
 
         if not self.is_connected and not force:
             return
@@ -201,6 +290,17 @@ class BasePlayer(VoiceProtocol, ABC):
         self.channel = None
 
     async def destroy(self, *, force: bool = False) -> None:
+        """
+        Calls :py:meth:`Player.disconnect` then sends a request to stop the current track and destroy the player.
+
+        ..  note::
+            This method removes the player from its node.
+
+        Parameters
+        ----------
+        force: bool
+            Passed to :py:meth:`Player.disconnect` and :py:meth:`Player.stop`
+        """
 
         await self.disconnect(force=force)
 
@@ -212,6 +312,24 @@ class BasePlayer(VoiceProtocol, ABC):
         __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' was destroyed.')
 
     async def play(self, track: Track, *, start: int = 0, end: int = 0, volume: int = None, no_replace: bool = False, pause: bool = False) -> None:
+        """
+        Plays a track.
+
+        Parameters
+        ----------
+        track: :py:class:`Track`
+            The track to be played.
+        start: int
+            The start position of the track in milliseconds.
+        end: int
+            The end position of the track in milliseconds.
+        volume: int
+            The starting volume of the track.
+        no_replace: bool
+            If True and :py:attr:`Player.current` is not None, this operation will be ignored.
+        pause: bool
+            Whether or not to start the track with playback paused.
+        """
 
         self._last_position = 0
         self._last_time = 0
@@ -239,13 +357,29 @@ class BasePlayer(VoiceProtocol, ABC):
         __log__.info(f'PLAYER | Player for guild \'{self.guild.id}\' is playing the track {self._current!r}.')
 
     async def set_filter(self, filter: Filter) -> None:
+        """
+        Sets a filter on the player.
 
-        await self.node._send(op='filters', guildId=str(self.guild.id), **filter.payload)
+        Parameters
+        ----------
+        filter: :py:class:`Filter`
+            An instance of a filter object.
+        """
+
+        await self.node._send(op='filters', guildId=str(self.guild.id), **filter._payload)
         self._filter = filter
 
         __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' is using the filter {self._filter!r}')
 
     async def set_volume(self, volume: int) -> None:
+        """
+        Sets the players volume.
+
+        Parameters
+        ----------
+        volume: int
+            The volume to set the player to.
+        """
 
         await self.node._send(op='volume', guildId=str(self.guild.id), volume=volume)
         self._volume = volume
@@ -253,13 +387,29 @@ class BasePlayer(VoiceProtocol, ABC):
         __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' volume is now {self._volume}.')
 
     async def set_pause(self, pause: bool) -> None:
+        """
+        Pauses or unpauses the player.
+
+        Parameters
+        ----------
+        pause: bool
+            True to pause the player, False to resume.
+        """
 
         await self.node._send(op='pause', guildId=str(self.guild.id), pause=pause)
         self._paused = pause
 
-        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' has set its paused status to {self._paused}.')
+        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' has set it\'s paused status to {self._paused}.')
 
     async def set_position(self, position: int) -> None:
+        """
+        Set the position of the player.
+
+        Parameters
+        ----------
+        position: int
+            The position to set the player to, in milliseconds.
+        """
 
         if not self.current:
             return
@@ -268,4 +418,4 @@ class BasePlayer(VoiceProtocol, ABC):
             return
 
         await self.node._send(op='seek', guildId=str(self.guild.id), position=position)
-        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' has set its position to {self.position}.')
+        __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' has set it\'s position to {self.position}.')

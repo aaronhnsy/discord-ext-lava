@@ -8,7 +8,7 @@ from discord.ext import commands
 
 class Track:
     """
-    A class representing a Track object sent from lavalink or andesite (or another provider).
+    A class representing a Track object sent from :resource:`lavalink <lavalink>` or :resource:`andesite <andesite>` (or another provider).
 
     Parameters
     ----------
@@ -16,7 +16,7 @@ class Track:
         The Base64 encoded track data that serves as it's unique id.
     track_info : dict
         Information about the track.
-    ctx : Optional[ :py:class:`commands.Context` ]
+    ctx : Optional [ :py:class:`commands.Context` ]
         An optional discord.py context object that allows for quality of life attributes such as :py:attr:`Track.requester`.
 
 
@@ -135,7 +135,7 @@ class Track:
     @property
     def requester(self) -> Optional[Union[discord.Member, discord.User]]:
         """
-        Optional [ :py:class:`typing.Union` [ :py:class:`discord.Member` , :py:class:`discord.User` ] ]:
+        Optional [ Union [ :py:class:`discord.Member` , :py:class:`discord.User` ] ]:
             The discord user or member who requested the track. Only available if :py:attr:`Track.context` is not None.
         """
         return self._requester

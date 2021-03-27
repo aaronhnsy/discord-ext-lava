@@ -46,8 +46,8 @@ class Equalizer(BaseFilter):
 
     Parameters
     ----------
-    bands : list[tuple[int, float]
-        A list of tuples of each band and its gain.
+    bands : List [tuple[int, float]
+        A list of tuples of each band and it's gain.
     name: str
         A custom name for the equalizer filter.
     """
@@ -398,12 +398,12 @@ class Filter:
 
     Parameters
     ----------
-    filters : list[BaseFilter]
+    filters : List [ :py:class:`BaseFilter` ]
         A list of instances of subclasses of :py:class:`BaseFilter` that you want to add to this filter.
     filter : Optional[ :py:class:`Filter` ]
         An optional Filter instance that allows you to overwrite the settings of certain filters while retaining old ones.
     volume : Optional[float]
-        Optional volume filter. Not recommend for use as :py:meth:`BasePlayer.set_volume` works just as well.
+        Optional volume filter. Not recommend for use as :py:meth:`Player.set_volume` works just as well.
 
     """
 

@@ -1,7 +1,7 @@
 
 class LavalinkStats:
     """
-    A collection of Lavalink stats sent by lavalink every 30 ish seconds, and from lavalink when using the lavalink compatible websocket.
+    A collection of Lavalink stats sent by :resource:`lavalink <lavalink>` every 30 or so seconds, and from :resource:`andesite <andesite>` when using the :resource:`lavalink <lavalink>` compatible websocket.
     """
 
     __slots__ = 'node', 'data', 'playing_players', 'total_players', 'uptime', 'memory_reservable', 'memory_allocated', 'memory_used', 'memory_free', 'system_load', \
@@ -37,7 +37,7 @@ class LavalinkStats:
 
 class AndesiteStats:
     """
-    A collection of stats sent by andesite upon request using :py:meth:`AndesiteNode.request_andesite_stats`.
+    A collection of stats sent by :resource:`andesite <andesite>` upon request using :py:meth:`AndesiteNode.request_andesite_stats`.
     """
 
     __slots__ = 'data', 'playing_players', 'total_players', 'uptime', 'runtime_pid', 'runtime_management_spec_version', 'runtime_name', 'vm_name', 'vm_vendor', 'vm_version', \
@@ -85,7 +85,7 @@ class AndesiteStats:
 
 class Metadata:
     """
-    Metadata sent by andesite upon connection to the websocket.
+    Metadata sent by :resource:`andesite <andesite>` upon connection to the websocket.
     """
 
     __slots__ = 'data', 'version', 'version_major', 'version_minor', 'version_revision', 'version_commit', 'version_build', 'node_region', 'node_id', 'enabled_sources', \

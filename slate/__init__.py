@@ -9,7 +9,7 @@ from collections import namedtuple
 
 from .andesite.node import AndesiteNode
 from .bases.node import BaseNode
-from .bases.player import BasePlayer
+from .bases.player import Player
 from .client import Client
 from .exceptions import *
 from .lavalink.node import LavalinkNode
