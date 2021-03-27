@@ -7,6 +7,22 @@ from discord.ext import commands
 
 
 class Track:
+    """
+    A class representing a Track object sent from lavalink or andesite (or another provider).
+
+    Parameters
+    ----------
+    track_id : str
+        The Base64 encoded track data that serves as it's unique id.
+    track_info : dict
+        Information about the track.
+    ctx : Optional[ :py:class:`commands.Context` ]
+        An optional discord.py context object that allows for quality of life attributes such as :py:attr:`Track.requester`.
+
+
+    .. note::
+        This class uses :ref:`py:slots` which means you can't use dynamic attributes.
+    """
 
     __slots__ = '_track_id', '_track_info', '_ctx', '_class', '_title', '_author', '_length', '_identifier', '_uri', '_is_stream', '_is_seekable', '_position', '_requester'
 
@@ -38,52 +54,98 @@ class Track:
 
     @property
     def track_id(self) -> str:
+        """
+        :py:class:`str` :
+            The Base64 encoded track data that serves as this it's unique id.
+        """
         return self._track_id
 
     @property
     def ctx(self) -> Optional[Protocol[commands.Context]]:
+        """
+        Optional [ :py:class:`commands.Context` ]:
+            A discord.py context object that allows access to attributes such as :py:attr:`Track.requester`.
+        """
         return self._ctx
 
     @property
     def title(self) -> str:
+        """
+        :py:class:`str` :
+            The title of the track.
+        """
         return self._title
 
     @property
     def author(self) -> str:
+        """
+    `   :py:class:`str` :
+            The author of the track.
+        """
         return self._author
 
     @property
     def length(self) -> int:
+        """
+        :py:class:`int` :
+            The length of the track in milliseconds.
+        """
         return self._length
 
     @property
     def identifier(self) -> str:
+        """
+        :py:class:`str` :
+            The tracks identifier, on youtube this is the videos id.
+        """
         return self._identifier
 
     @property
     def uri(self) -> str:
+        """
+        :py:class:`str` :
+            The URL of the track.
+        """
         return self._uri
 
     @property
     def is_stream(self) -> bool:
+        """
+        :py:class:`bool` :
+            Whether or not the track is a stream.
+        """
         return self._is_stream
 
     @property
     def is_seekable(self) -> bool:
+        """
+        :py:class:`bool` :
+            Whether or not the track is seekable.
+        """
         return self._is_seekable
 
     @property
     def position(self) -> int:
+        """
+        :py:class:`int` :
+            The current position of the track in milliseconds.
+        """
         return self._position
 
     @property
     def requester(self) -> Optional[Union[discord.Member, discord.User]]:
+        """
+        Optional [ :py:class:`typing.Union` [ :py:class:`discord.Member` , :py:class:`discord.User` ] ]:
+            The discord user or member who requested the track. Only available if :py:attr:`Track.context` is not None.
+        """
         return self._requester
-
-    #
 
     @property
     def source(self) -> str:
+        """
+        :py:class:`str` :
+            The source of the track. (Youtube, HTTP, Twitch, Soundcloud, etc)
+        """
 
         if not self.uri:
             return 'UNKNOWN'
@@ -96,6 +158,10 @@ class Track:
 
     @property
     def thumbnail(self) -> str:
+        """
+        :py:class:`str` :
+            The thumbnail of the track. Returns a dummy 1280x720 image if not found.
+        """
 
         if self.source == 'Youtube':
             return f'https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg'

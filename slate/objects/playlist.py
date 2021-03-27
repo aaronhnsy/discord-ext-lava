@@ -8,6 +8,22 @@ from slate.objects.track import Track
 
 
 class Playlist:
+    """
+    A class representing a Playlist object sent from lavalink or andesite (or another provider).
+
+    Parameters
+    ----------
+    playlist_info : dict
+        Information about the playlist.
+    tracks : list[dict]
+        A list of dictionaries containing track information.
+    ctx : Optional[ :py:class:`commands.Context` ]
+        An optional discord.py context object that allows for quality of life attributes such as :py:attr:`Track.requester`.
+
+
+    .. note::
+        This class uses :ref:`py:slots` which means you can't use dynamic attributes.
+    """
 
     __slots__ = '_playlist_info', '_raw_tracks', '_ctx', '_tracks', '_name', '_selected_track'
 
@@ -29,10 +45,19 @@ class Playlist:
 
     @property
     def name(self) -> str:
+        """
+        :py:class:`str`:
+            The name of this playlist.
+        """
         return self._name
 
     @property
     def selected_track(self) -> Optional[Track]:
+        """
+        Optional [ :py:class:`Track` ]:
+            The Track selected when this playlist was fetched, could be None.
+        """
+
         try:
             return self._tracks[self._selected_track]
         except IndexError:
@@ -40,4 +65,8 @@ class Playlist:
 
     @property
     def tracks(self) -> List[Track]:
+        """
+        list[ :py:class:`Track` ]:
+            A list of Track objects that this playlist has.
+        """
         return self._tracks
