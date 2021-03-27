@@ -14,7 +14,7 @@ from .client import Client
 from .exceptions import *
 from .lavalink.node import LavalinkNode
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
-from .objects.filters import ChannelMix, Equalizer, Filter, Karaoke, LowPass, Rotation, Timescale, Tremolo, Vibrato
+from .objects.filters import BaseFilter, ChannelMix, Distortion, Equalizer, Filter, Karaoke, LowPass, Rotation, Timescale, Tremolo, Vibrato
 from .objects.playlist import Playlist
 from .objects.stats import AndesiteStats, LavalinkStats, Metadata
 from .objects.track import Track

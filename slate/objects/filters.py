@@ -2,33 +2,55 @@ from __future__ import annotations
 
 import abc
 import collections
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Type
 
-__all__ = ['Equalizer', 'Karaoke', 'Timescale', 'Tremolo', 'Vibrato', 'Rotation', 'LowPass', 'ChannelMix', 'Rotation']
+__all__ = ['BaseFilter', 'Equalizer', 'Karaoke', 'Timescale', 'Tremolo', 'Vibrato', 'Rotation', 'LowPass', 'ChannelMix', 'Distortion', 'Filter']
 
 
 class BaseFilter(abc.ABC):
+    """
+    An abstract base class that all filter objects must inherit from.
+    """
 
     def __init__(self) -> None:
         self._name = 'BaseFilter'
 
-    def __str__(self) -> str:
-        return self._name
-
-    @abc.abstractmethod
     def __repr__(self) -> str:
         pass
 
-    @abc.abstractmethod
-    def payload(self) -> Dict[str, Any]:
-        pass
+    def __str__(self) -> str:
+        return self._name
 
     @property
     def name(self) -> str:
+        """
+        :py:class:`str`:
+            The name of this filter.
+        """
         return self._name
+
+    #
+
+    @property
+    @abc.abstractmethod
+    def _payload(self) -> Dict[str, Dict[str, Any]]:
+        pass
 
 
 class Equalizer(BaseFilter):
+    """
+    An equalizer filter. There are 15 bands (0-14) that can be changed with values ranging from -0.25 to 1.0. The default value is 0.
+
+    .. note::
+        A value of -0.25 means the band is completely muted, while a value of 0.25 means it is doubled.
+
+    Parameters
+    ----------
+    bands : list[tuple[int, float]
+        A list of tuples of each band and its gain.
+    name: str
+        A custom name for the equalizer filter.
+    """
 
     def __init__(self, *, bands: List[Tuple[int, float]], name='Equalizer') -> None:
         super().__init__()
@@ -36,13 +58,13 @@ class Equalizer(BaseFilter):
 
         self._bands = self._bands(bands=bands)
 
-    #
-
     def __repr__(self) -> str:
         return f'<slate.Equalizer name=\'{self._name}\' bands={self._bands}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
+    def _payload(self) -> Dict[str, float]:
         return self._bands
 
     #
@@ -65,58 +87,95 @@ class Equalizer(BaseFilter):
     #
 
     @classmethod
-    def flat(cls) -> Equalizer:
+    def default(cls) -> Equalizer:
+        """
+        A factory method that returns an :py:class:`Equalizer` with all bands set to the default gain of 0.
+        """
 
-        bands = [(0, 0.0), (1, 0.0), (2, 0.0), (3, 0.0), (4, 0.0), (5, 0.0), (6, 0.0), (7, 0.0), (8, 0.0), (9, 0.0), (10, 0.0), (11, 0.0), (12, 0.0), (13, 0.0), (14, 0.0)]
-        return cls(bands=bands, name='Flat')
-
-    # TODO: More classmethods
+        bands = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0), (9, 0), (10, 0), (11, 0), (12, 0), (13, 0), (14, 0)]
+        return cls(bands=bands, name='Default equalizer')
 
 
 class Karaoke(BaseFilter):
+    """
+    A karaoke filter. This uses equalization to eliminate a specific band which usually targets the vocals of a song.
+
+    Parameters
+    ----------
+    level : Optional[float]
+        ...
+    mono_level : Optional[float]
+        ...
+    filter_band : Optional[float]
+        ...
+    filter_width : Optional[float]
+        ...
+    """
 
     def __init__(self, *, level: Optional[float] = 1.0, mono_level: Optional[float] = 1.0, filter_band: Optional[float] = 220.0, filter_width: Optional[float] = 100.0) -> None:
         super().__init__()
 
-        self.level = level
-        self.mono_level = mono_level
-        self.filter_band = filter_band
-        self.filter_width = filter_width
+        self.level: Optional[float] = level
+        self.mono_level: Optional[float] = mono_level
+        self.filter_band: Optional[float] = filter_band
+        self.filter_width: Optional[float] = filter_width
 
         self._name = 'Karaoke'
-
-    #
 
     def __repr__(self) -> str:
         return f'<slate.Karaoke level={self.level} mono_level={self.mono_level} filter_band={self.filter_band} filter_width={self.filter_width}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'level': self.level, 'mono_level': self.mono_level, 'filter_band': self.filter_band, 'filter_width': self.filter_width}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'karaoke': {'level': self.level, 'mono_level': self.mono_level, 'filter_band': self.filter_band, 'filter_width': self.filter_width}}
 
 
 class Timescale(BaseFilter):
+    """
+    A timescale filter, allows you to modify the pitch or speed of a song, or both (rate).
+
+    Parameters
+    ----------
+    speed : Optional[float]
+        The speed of the filter, default value is 1. (Normal speed)
+    pitch : Optional[float]
+        The pitch of the filter, default value is 1. (Normal pitch)
+    rate : Optional[float]
+        The speed and pitch of the song, default value is 1. (Normal speed and pitch)
+    """
 
     def __init__(self, *, speed: Optional[float] = 1.0, pitch: Optional[float] = 1.0, rate: Optional[float] = 1.0) -> None:
         super().__init__()
 
-        self.speed = speed
-        self.pitch = pitch
-        self.rate = rate
+        self.speed: Optional[float]  = speed
+        self.pitch: Optional[float]  = pitch
+        self.rate: Optional[float]  = rate
 
         self._name = 'Timescale'
-
-    #
 
     def __repr__(self) -> str:
         return f'<slate.Timescale speed={self.speed} pitch={self.pitch} rate={self.rate}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'speed': self.speed, 'pitch': self.pitch, 'rate': self.rate}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'timescale': {'speed': self.speed, 'pitch': self.pitch, 'rate': self.rate}}
 
 
 class Tremolo(BaseFilter):
+    """
+    A tremolo filter, this uses amplification to create a shuddering or trembling effect in which the volume oscillates.
+
+    Parameters
+    ----------
+    frequency : Optional[float]
+        The frequency at which the volume will oscillate. Default value is 2, and must always be more than 0.
+    depth : Optional[float]
+        The factor by which the volume will oscillate. Default value is 0.5, and must always be more than 0 or less than or equal to 1.
+    """
 
     def __init__(self, *, frequency: Optional[float] = 2.0, depth: Optional[float] = 0.5) -> None:
         super().__init__()
@@ -126,22 +185,32 @@ class Tremolo(BaseFilter):
         if not 0 < depth <= 1:
             raise ValueError('Depth must be more than 0.0 and less than or equal to 1.0')
 
-        self.frequency = frequency
-        self.depth = depth
+        self.frequency: Optional[float] = frequency
+        self.depth: Optional[float] = depth
 
         self._name = 'Tremolo'
-
-    #
 
     def __repr__(self) -> str:
         return f'<slate.Tremolo frequency={self.frequency} depth={self.depth}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'frequency': self.frequency, 'depth': self.depth}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'tremolo': {'frequency': self.frequency, 'depth': self.depth}}
 
 
 class Vibrato(BaseFilter):
+    """
+    A vibrato filter, this is similar to tremolo in the sense that this oscillates the pitch instead of the volume.
+
+    Parameters
+    ----------
+    frequency : Optional[float]
+        The frequency at which the pitch will oscillate. Default value is 2, and must always be more than 0 or less than or equal to 14.
+    depth : Optional[float]
+        The factor by which the pitch will oscillate. Default value is 0.5, and must always be more than 0 or less than or equal to 1.
+    """
 
     def __init__(self, *, frequency: Optional[float] = 2.0, depth: Optional[float] = 0.5) -> None:
         super().__init__()
@@ -151,129 +220,215 @@ class Vibrato(BaseFilter):
         if not 0 < depth <= 1:
             raise ValueError('Depth must be more than 0.0 and less than or equal to 1.0')
 
-        self.frequency = frequency
-        self.depth = depth
+        self.frequency: Optional[float] = frequency
+        self.depth: Optional[float] = depth
 
         self._name = 'Vibrato'
-
-    #
 
     def __repr__(self) -> str:
         return f'<slate.Vibrato frequency={self.frequency} depth={self.depth}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'frequency': self.frequency, 'depth': self.depth}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'vibrato': {'frequency': self.frequency, 'depth': self.depth}}
 
 
 class Rotation(BaseFilter):
+    """
+    A rotation filter. Rotates the audio around stereo audio channels to create an audio panning effect.
 
-    def __init__(self, *, rotation_hz: Optional[float] = 5) -> None:
+    Parameters
+    ----------
+    rotation_hertz : Optional[float]
+        The frequency of the audio rotating. Default value is 5, recommended value range is 0 - 2.
+    """
+
+    def __init__(self, *, rotation_hertz: Optional[float] = 5) -> None:
         super().__init__()
 
-        self.rotation_hz = rotation_hz
+        self.rotation_hertz: Optional[float] = rotation_hertz
 
         self._name = 'Rotation'
 
+    def __repr__(self) -> str:
+        return f'<slate.Rotation rotation_hertz={self.rotation_hertz}>'
+
     #
 
-    def __repr__(self) -> str:
-        return f'<slate.Rotation rotation_hz={self.rotation_hz}>'
-
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'rotationHz': self.rotation_hz}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'rotation': {'rotationHz': self.rotation_hertz}}
 
 
 class LowPass(BaseFilter):
+    """
+    A low pass filter in which higher frequencies get suppressed while lower ones are allowed to pass through.
+
+    Parameters
+    ----------
+    smoothing : Optional[float]
+        ...
+    """
 
     def __init__(self, *, smoothing: Optional[float] = 20) -> None:
         super().__init__()
 
-        self.smoothing = smoothing
+        self.smoothing: Optional[float] = smoothing
 
         self._name = 'Low Pass'
-
-    #
 
     def __repr__(self) -> str:
         return f'<slate.LowPass smoothing={self.smoothing}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'smoothing': self.smoothing}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'lowpass': {'smoothing': self.smoothing}}
 
 
 class ChannelMix(BaseFilter):
+    """
+    A channel mix filter that allows you to mix left and right audio channels with a configurable factor on how much each one affects the the other. By default both channels are kept separate from eachother, while a value of 0.5 on each factor means both channels get the same audio.
 
-    def __init__(
-            self, *, left_to_left: Optional[bool] = True, right_to_right: Optional[bool] = True, left_to_right: Optional[bool] = False, right_to_left: Optional[bool] = False
-    ) -> None:
+    .. note::
+        All values must be more than or equal to 0, or less than or equal to 1.
+
+    Parameters
+    ----------
+    left_to_left: Optional[float]
+        How much of an effect the left channel has an effect on the left channel. Default value is 1.
+    right_to_right: Optional[float]
+        How much of an effect the right channel has an effect on the right channel. Default value is 1.
+    left_to_right: Optional[float]
+        How much of an effect the left channel has an effect on the right channel. Default value is 0.
+    right_to_left: Optional[float]
+        How much of an effect the right channel has an effect on the left channel. Default value is 0.
+    """
+
+    def __init__(self, *, left_to_left: Optional[float] = 1, right_to_right: Optional[float] = 1, left_to_right: Optional[float] = 0, right_to_left: Optional[float] = 0) -> None:
         super().__init__()
 
-        self.left_to_left = left_to_left
-        self.right_to_right = right_to_right
-        self.left_to_right = left_to_right
-        self.right_to_left = right_to_left
+        if 0 > left_to_left > 1:
+            raise ValueError('\'left_to_left\' value must be more than or equal to 0 or less than or equal to 1.')
+        if 0 > right_to_right > 1:
+            raise ValueError('\'right_to_right\' value must be more than or equal to 0 or less than or equal to 1.')
+        if 0 > left_to_right > 1:
+            raise ValueError('\'left_to_right\' value must be more than or equal to 0 or less than or equal to 1.')
+        if 0 > right_to_left > 1:
+            raise ValueError('\'right_to_left\' value must be more than or equal to 0 or less than or equal to 1.')
+
+        self.left_to_left: Optional[float] = left_to_left
+        self.right_to_right: Optional[float] = right_to_right
+        self.left_to_right: Optional[float] = left_to_right
+        self.right_to_left: Optional[float] = right_to_left
 
         self._name = 'Channel Mix'
-
-    #
 
     def __repr__(self) -> str:
         return f'<slate.ChannelMix left_to_left={self.left_to_left} right_to_right{self.right_to_right} left_to_right={self.left_to_right} right_to_left={self.right_to_left}>'
 
+    #
+
     @property
-    def payload(self) -> Dict[str, float]:
-        return {'left_to_left': self.left_to_left, 'right_to_right': self.right_to_right, 'left_to_right': self.left_to_right, 'right_to_left': self.right_to_left}
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {'channelmix': {'left_to_left': self.left_to_left, 'right_to_right': self.right_to_right, 'left_to_right': self.left_to_right, 'right_to_left': self.right_to_left}}
+
+
+class Distortion(BaseFilter):
+    """
+    A distortion filter. Can create some pretty cool sound effects.
+
+    Parameters
+    ----------
+    sin_offset : Optional[int]
+        ...
+    sin_scale : Optional[int]
+        ...
+    cos_offset : Optional[int]
+        ...
+    cos_scale : Optional[int]
+        ...
+    tan_offset : Optional[int]
+        ...
+    tan_scale : Optional[int]
+        ...
+    offset : Optional[int]
+        ...
+    scale : Optional[int]
+        ...
+    """
+
+    def __init__(self, *, sin_offset: Optional[int] = 0, sin_scale: Optional[int] = 1, cos_offset: Optional[int] = 0, cos_scale: Optional[int] = 1, tan_offset: Optional[int] = 0,
+                 tan_scale: Optional[int] = 1, offset: Optional[int] = 0, scale: Optional[int] = 1) -> None:
+        super().__init__()
+
+        self.sin_offset: Optional[int] = sin_offset
+        self.sin_scale: Optional[int] = sin_scale
+        self.cos_offset: Optional[int] = cos_offset
+        self.cos_scale: Optional[int] = cos_scale
+        self.tan_offset: Optional[int] = tan_offset
+        self.tan_scale: Optional[int] = tan_scale
+        self.offset: Optional[int] = offset
+        self.scale: Optional[int] = scale
+
+        self._name = 'Distortion'
+
+    def __repr__(self) -> str:
+        return f'<slate.Distortion sin_offset={self.sin_offset} sin_scale={self.sin_scale} cos_offset={self.cos_offset} cos_scale={self.cos_scale} tan_offset={self.tan_offset} ' \
+               f'tan_scale={self.tan_scale} offset={self.offset} scale={self.scale}>'
+
+    #
+
+    @property
+    def _payload(self) -> Dict[str, Dict[str, float]]:
+        return {
+            'distortion': {
+                'sinOffset': self.sin_offset, 'sinScale': self.sin_scale, 'cosOffset': self.cos_offset, 'cosScale': self.cos_scale, 'tanOffset': self.tan_offset,
+                'tanScale': self.tan_scale, 'offset': self.offset, 'scale': self.scale
+            }
+        }
 
 
 class Filter:
+    """
+    The main filter classed used to apply filters on a player.
 
-    def __init__(
-            self, *, filter: Filter = None, volume: Optional[float] = None, equalizer: Optional[Equalizer] = None, karaoke: Optional[Karaoke] = None,
-            timescale: Optional[Timescale] = None, tremolo: Optional[Tremolo] = None, vibrato: Optional[Vibrato] = None, rotation: Optional[Rotation] = None,
-            low_pass: Optional[LowPass] = None, channel_mix: Optional[ChannelMix] = None
-    ) -> None:
+    Parameters
+    ----------
+    filters : list[BaseFilter]
+        A list of instances of subclasses of :py:class:`BaseFilter` that you want to add to this filter.
+    filter : Optional[ :py:class:`Filter` ]
+        An optional Filter instance that allows you to overwrite the settings of certain filters while retaining old ones.
+    volume : Optional[float]
+        Optional volume filter. Not recommend for use as :py:meth:`BasePlayer.set_volume` works just as well.
 
-        self.filter = filter
-        self.volume = volume
-        self.equalizer = equalizer
-        self.karaoke = karaoke
-        self.timescale = timescale
-        self.tremolo = tremolo
-        self.vibrato = vibrato
-        self.rotation = rotation
-        self.low_pass = low_pass
-        self.channel_mix = channel_mix
+    """
+
+    def __init__(self, filters: List[Type[BaseFilter]], *, filter: Filter = None, volume: Optional[float] = None) -> None:
+
+        self.filters: List[Type[BaseFilter]] = filters
+        self.filter: Optional[BaseFilter] = filter
+        self.volume: Optional[float] = volume
+
+        for filter in self.filters:
+            if not issubclass(type(filter), BaseFilter):
+                raise ValueError('Arguments passed to this Filter must be subclasses of \'slate.BaseFilter\'.')
 
     def __repr__(self) -> str:
-        return f'<slate.Filter volume={self.volume} equalizer={self.equalizer} karaoke={self.karaoke} timescale={self.timescale} tremolo={self.tremolo} vibrato={self.vibrato} ' \
-               f'rotation={self.rotation} low_pass={self.low_pass} channel_mix={self.channel_mix}>'
+        return f'<slate.Filter filters={self.filters}, volume={self.volume}>'
 
     @property
-    def payload(self) -> Dict[str, Union[Dict[str, float], float]]:
+    def _payload(self):
 
-        payload = self.filter.payload.copy() if self.filter is not None else {}
+        payload = self.filter._payload.copy() if self.filter is not None else {}
 
         if self.volume is not None:
             payload['volume'] = self.volume
 
-        if self.equalizer:
-            payload['equalizer'] = self.equalizer.payload
-        if self.karaoke:
-            payload['karaoke'] = self.karaoke.payload
-        if self.timescale:
-            payload['timescale'] = self.timescale.payload
-        if self.tremolo:
-            payload['tremolo'] = self.tremolo.payload
-        if self.vibrato:
-            payload['vibrato'] = self.vibrato.payload
-        if self.rotation:
-            payload['rotation'] = self.rotation.payload
-        if self.low_pass:
-            payload['lowpass'] = self.low_pass.payload
-        if self.channel_mix:
-            payload['channelmix'] = self.channel_mix.payload
+        for filter in self.filters:
+            payload.update(filter._payload)
 
         return payload
