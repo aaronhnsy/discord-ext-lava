@@ -1,38 +1,11 @@
-.. py:currentmodule:: slate
-
 Objects
 =======
 
-Track
------
-.. autoclass:: Track
-    :members:
-    :undoc-members:
+.. toctree::
+    :maxdepth: 5
 
-
-Playlist
---------
-.. autoclass:: Playlist
-    :members:
-    :undoc-members:
-
-
-LavalinkStats
--------------
-.. autoclass:: LavalinkStats
-    :members:
-    :undoc-members:
-
-
-AndesiteStats
--------------
-.. autoclass:: AndesiteStats
-    :members:
-    :undoc-members:
-
-
-Metadata
---------
-.. autoclass:: Metadata
-    :members:
-    :undoc-members:
+    objects/events
+    objects/filters
+    objects/playlist
+    objects/stats
+    objects/track

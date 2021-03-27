@@ -1,6 +1,6 @@
 What is slate.py?
 ====================================
-Slate is a..........................
+Slate is a thing huh
 
 
 Documentation Contents:
@@ -11,6 +11,4 @@ Documentation Contents:
 
     api_reference
     objects
-    events
-    filters
     exceptions

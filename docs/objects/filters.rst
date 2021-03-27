@@ -4,9 +4,9 @@ Filters
 =======
 
 
-Filter
-------
-.. autoclass:: Filter
+BaseFilter
+----------
+.. autoclass:: BaseFilter
     :members:
     :undoc-members:
 
@@ -46,3 +46,36 @@ Vibrato
     :undoc-members:
 
 
+Rotation
+--------
+.. autoclass:: Rotation
+    :members:
+    :undoc-members:
+
+
+Low Pass
+--------
+.. autoclass:: LowPass
+    :members:
+    :undoc-members:
+
+
+Channel Mix
+-----------
+.. autoclass:: ChannelMix
+    :members:
+    :undoc-members:
+
+
+Distortion
+-----------
+.. autoclass:: Distortion
+    :members:
+    :undoc-members:
+
+
+Filter
+------
+.. autoclass:: Filter
+    :members:
+    :undoc-members:
