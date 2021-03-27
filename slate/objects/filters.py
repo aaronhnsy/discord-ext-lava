@@ -56,7 +56,7 @@ class Equalizer(BaseFilter):
         super().__init__()
         self._name = name
 
-        self._bands = self._bands(bands=bands)
+        self._bands = self._bands_generator(bands=bands)
 
     def __repr__(self) -> str:
         return f'<slate.Equalizer name=\'{self._name}\' bands={self._bands}>'
@@ -64,13 +64,13 @@ class Equalizer(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, float]:
-        return self._bands
+    def _payload(self) -> Dict[str, List[Dict[str, float]]]:
+        return {'equalizer': self._bands}
 
     #
 
     @staticmethod
-    def _bands(*, bands: List[Tuple[int, float]]) -> List[Dict[str, float]]:
+    def _bands_generator(*, bands: List[Tuple[int, float]]) -> List[Dict[str, float]]:
 
         for band, gain in bands:
 
