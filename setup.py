@@ -47,7 +47,7 @@ setuptools.setup(
     author='Axelancerr',
     author_email=None,
     url='https://github.com/Axelancerr/Slate',
-    packages=['slate'],
+    packages=['slate', 'slate.andesite', 'slate.lavalink', 'slate.bases', 'slate.objects'],
     classifiers=classifiers,
     license='MIT',
     install_requires=INSTALL_REQUIRES,
