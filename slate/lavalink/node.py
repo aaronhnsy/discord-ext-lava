@@ -9,6 +9,8 @@ import aiohttp
 from slate.bases.node import BaseNode
 from slate.objects.stats import LavalinkStats
 from slate.utils import ExponentialBackoff
+from slate.objects.routeplanner import RoutePlannerStatus
+from slate.exceptions import HTTPError
 
 if TYPE_CHECKING:
     from slate.client import Client
@@ -126,3 +128,68 @@ class LavalinkNode(BaseNode):
             self._lavalink_stats = LavalinkStats(data=message)
 
     #
+
+    async def route_planner_status(self) -> Optional[RoutePlannerStatus]:
+        """
+        Fetches the route planner status.
+
+        Returns
+        -------
+        Optional [ :py:class:`RoutePlannerStatus` ]:
+            The route planner status object. Could be None if a route planner has not been configured on :resource:`lavalink <lavalink>`.
+
+        Raises
+        ------
+        :py:class:`HTTPError`:
+            There was a non-200 status code while fetching the route planner status.
+        """
+
+        async with self.client.session.get(url=f'{self._http_url}/routeplanner/status', headers={'Authorization': self.password}) as response:
+
+            if response.status != 200:
+                __log__.error(f'ROUTEPLANNER | Non-200 status code while fetching route planner status. | Status code: {response.status}')
+                raise HTTPError('Non-200 status code while fetching route planner status.', status_code=response.status)
+
+            data = await response.json()
+
+        if not data.get('class'):
+            return None
+
+        return RoutePlannerStatus(data=dict(data))
+
+    async def route_planner_free_address(self, address: str) -> None:
+        """
+        Frees a route planner address.
+
+        Parameters
+        ----------
+        address: str
+            The address to free. An example is '1.0.0.1' or something similar.
+
+        Raises
+        ------
+        :py:class:`HTTPError`:
+            There was a non-204 status code while freeing the address.
+        """
+
+        async with self.client.session.post(url=f'{self._http_url}/routeplanner/free/address', headers={'Authorization': self.password}, data={'address': address}) as response:
+
+            if response.status != 204:
+                __log__.error(f'ROUTEPLANNER | Non-204 status code while freeing route planner address. | Status code: {response.status}')
+                raise HTTPError('Non-204 status code while freeing route planner address.', status_code=response.status)
+
+    async def route_planner_free_all_addresses(self) -> None:
+        """
+        Frees all route planner addresses.
+
+        Raises
+        ------
+        :py:class:`HTTPError`:
+            There was a non-204 status code while freeing the addresses.
+        """
+
+        async with self.client.session.post(url=f'{self._http_url}/routeplanner/free/all', headers={'Authorization': self.password}) as response:
+
+            if response.status != 204:
+                __log__.error(f'ROUTEPLANNER | Non-204 status code while freeing route planner addresses | Status code: {response.status}')
+                raise HTTPError('Non-204 status code while freeing route planner addresses.', status_code=response.status)

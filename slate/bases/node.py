@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import abc
 import asyncio
+import json
 import logging
 import urllib.parse
 from typing import Dict, List, Optional, Protocol, TYPE_CHECKING, Union
 
 import aiohttp
 from discord.ext import commands
-
-from slate.exceptions import NodeConnectionClosed, NodeConnectionError, TrackDecodeError, TrackLoadError, TrackLoadFailed
+from slate.exceptions import NodeConnectionClosed, NodeConnectionError, TrackLoadFailed, HTTPError
 from slate.objects.playlist import Playlist
 from slate.objects.track import Track
 from slate.utils import ExponentialBackoff
@@ -261,7 +261,8 @@ class BaseNode(abc.ABC):
 
     #
 
-    async def search(self, query: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, raw: bool = False) -> Optional[Union[Playlist, List[Track], Dict]]:
+    async def search(self, query: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
+                     raw: bool = False) -> Optional[Union[Playlist, List[Track], Dict]]:
         """
         Searches for and returns a list of :py:class:`Track`'s or a :py:class:`Playlist`.
 
@@ -269,31 +270,33 @@ class BaseNode(abc.ABC):
         ----------
         query: str
             The query to search with. Could be a link or a search term if prepended with 'scsearch:' (Soundcloud), 'ytsearch:' (Youtube) or 'ytmsearch: ' (Youtube music).
-        ctx: :py:class:`typing.Protocol` [ :py:class:`commands.Context`]
-            An optional context argument to pass to the track for quality of life features such as :py:attr:`Track.requester`.
+        ctx: :py:class:`typing.Protocol` [ :py:class:`commands.Context` ]
+            An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
         retry: Optional [ :py:class:`bool` ]
-            Whether or not to retry the search if a non-200 status code is received. If :py:class:`True` the search will be retried up to 5 times, with an exponential backoff.
+            Whether or not to retry the operation if a non-200 status code is received.
+        tries: Optional [ :py:class:`int` ]
+            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
         raw: Optional [ :py:class:`bool` ]
-            Whether or not to return the raw json result of the search.
+            Whether or not to return the raw result of the operation.
 
         Returns
         -------
-        Optional [ Union [ :py:class:`Playlist` , :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
-            The raw json result, list of Tracks, or Playlist that was found.
+        Optional [ :py:class:`Union` [ :py:class:`Playlist` , :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
+            The raw result, list of tracks, or playlist that was found.
 
         Raises
         ------
-        :py:class:`TrackLoadError`:
-            The server sent a non-200 HTTP status code while loading tracks.
+        :py:class:`HTTPError`:
+            There was a non-200 status code while searching.
         :py:class:`TrackLoadFailed`:
             The server did not error, but there was some kind of other problem while loading tracks. Could be a restricted video, youtube ratelimit, etc.
         """
 
         backoff = ExponentialBackoff()
 
-        for _ in range(5):
+        for _ in range(tries):
 
-            async with self.client.session.get(url=f'{self._http_url}/loadtracks?identifier={urllib.parse.quote(query)}', headers={'Authorization': self.password}) as response:
+            async with self.client.session.get(url=f'{self._http_url}/loadtracks', headers={'Authorization': self.password}, params={'identifier': query}) as response:
 
                 if response.status != 200:
                     if retry:
@@ -303,7 +306,7 @@ class BaseNode(abc.ABC):
                         continue
                     else:
                         __log__.error(f'LOADTRACKS | Non-200 status code error while loading tracks. Not retrying. | Status code: {response.status}')
-                        raise TrackLoadError('Non-200 status code error while loading tracks.', status_code=response.status)
+                        raise HTTPError('Non-200 status code error while loading tracks.', status_code=response.status)
 
                 data = await response.json()
 
@@ -328,16 +331,99 @@ class BaseNode(abc.ABC):
                 __log__.debug(f'LOADTRACKS | Tracks loaded for query: {query} | Amount: {len(data.get("tracks"))}')
                 return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
 
-        __log__.error(f'LOADTRACKS | Non-200 status code error while loading tracks. All 5 retries used.| Status code: {response.status}')
-        raise TrackLoadError('Non-200 status code error while loading tracks.', status_code=response.status)
+        __log__.error(f'LOADTRACKS | Non-200 status code error while loading tracks. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code error while loading tracks.', status_code=response.status)
 
-    async def decode_track(self, track_id: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, raw: bool = False) -> Optional[Union[Track, Dict]]:
+    async def decode_track(self, track_id: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
+                           raw: bool = False) -> Optional[Union[Track, Dict]]:
+        """
+        Returns a track object based on its track id.
+
+        Parameters
+        ----------
+        track_id: str
+            The track id to decode.
+        ctx: Optional[ :py:class:`commands.Context` ]:
+            An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
+        retry: Optional [ :py:class:`bool` ]
+            Whether or not to retry the operation if a non-200 status code is received.
+        tries: Optional [ :py:class:`int` ]
+            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
+        raw: Optional [ :py:class:`bool` ]
+            Whether or not to return the raw result of the operation.
+
+        Returns
+        -------
+        Optional [ :py:class:`Union` [ :py:class:`Track` , :py:class:`dict` ] ]:
+            The raw result or track that was returned.
+
+        Raises
+        ------
+        :py:class:`HTTPError`:
+            There was a non-200 status code while decoding tracks.
+        """
 
         backoff = ExponentialBackoff()
 
-        for _ in range(5):
+        for _ in range(tries):
 
             async with self.client.session.get(url=f'{self._http_url}/decodetrack', headers={'Authorization': self.password}, params={'track': track_id}) as response:
+
+                if response.status != 200:
+
+                    if retry:
+                        time = backoff.delay()
+                        __log__.warning(f'DECODETRACK | Non-200 status code while decoding track. Retrying in {time}s. | Status code: {response.status}')
+                        await asyncio.sleep(backoff.delay())
+                        continue
+                    else:
+                        __log__.error(f'DECODETRACK | Non-200 status code error while decoding track. Not retrying. | Status code: {response.status}')
+                        raise HTTPError('Non-200 status code error while decoding track.', status_code=response.status)
+
+                data = await response.json()
+
+            if raw:
+                return data
+
+            return Track(track_id=track_id, track_info=data.get('info', None) or data, ctx=ctx)
+
+        __log__.error(f'DECODETRACK | Non-200 status code error while decoding track. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code error while decoding track.', status_code=response.status)
+
+    async def decode_tracks(self, track_ids: List[str], *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
+                            raw: bool = False) -> Optional[Union[List[Track], Dict]]:
+        """
+        Returns track objects based on their track ids.
+
+        Parameters
+        ----------
+        track_ids: :py:class:`List` [ :py:class:`str` ]
+            A list of track id's to decode.
+        ctx: Optional[ :py:class:`commands.Context` ]:
+            An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
+        retry: Optional [ :py:class:`bool` ]
+            Whether or not to retry the operation if a non-200 status code is received.
+        tries: Optional [ :py:class:`int` ]
+            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
+        raw: Optional [ :py:class:`bool` ]
+            Whether or not to return the raw result of the operation.
+
+        Returns
+        -------
+        Optional [ :py:class:`Union` [ :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
+            The raw result or list of tracks that was returned.
+
+        Raises
+        ------
+        :py:class:`HTTPError`:
+            There was a non-200 status code while decoding tracks.
+        """
+
+        backoff = ExponentialBackoff()
+
+        for _ in range(tries):
+
+            async with self.client.session.post(url=f'{self._http_url}/decodetracks', headers={'Authorization': self.password}, data=json.dumps(track_ids)) as response:
 
                 if response.status != 200:
 
@@ -348,14 +434,14 @@ class BaseNode(abc.ABC):
                         continue
                     else:
                         __log__.error(f'DECODETRACKS | Non-200 status code error while decoding tracks. Not retrying. | Status code: {response.status}')
-                        raise TrackDecodeError('Non-200 status code error while decoding tracks.', status_code=response.status)
+                        raise HTTPError('Non-200 status code error while decoding tracks.', status_code=response.status)
 
                 data = await response.json()
 
             if raw:
                 return data
 
-            return Track(track_id=track_id, track_info=data.get('info', None) or data, ctx=ctx)
+            return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data]
 
-        __log__.error(f'DECODETRACKS | Non-200 status code error while decoding tracks. All 5 retries used. | Status code: {response.status}')
-        raise TrackDecodeError('Non-200 status code error while decoding tracks.', status_code=response.status)
+        __log__.error(f'DECODETRACKS | Non-200 status code error while decoding tracks. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code error while decoding tracks.', status_code=response.status)

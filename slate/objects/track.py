@@ -8,7 +8,7 @@ from discord.ext import commands
 
 class Track:
     """
-    A class representing a Track object sent from :resource:`lavalink <lavalink>` or :resource:`andesite <andesite>` (or another provider).
+    A class representing a Track object sent from :resource:`lavalink <lavalink>` or :resource:`andesite <andesite>`.
 
     Parameters
     ----------
@@ -49,8 +49,6 @@ class Track:
 
     def __repr__(self) -> str:
         return f'<slate.Track title=\'{self._title}\' uri=\'<{self._uri}>\' source=\'{self.source}\' length={self._length}>'
-
-    #
 
     @property
     def track_id(self) -> str:
@@ -135,7 +133,7 @@ class Track:
     @property
     def requester(self) -> Optional[Union[discord.Member, discord.User]]:
         """
-        Optional [ Union [ :py:class:`discord.Member` , :py:class:`discord.User` ] ]:
+        Optional [ :py:class:`Union` [ :py:class:`discord.Member` , :py:class:`discord.User` ] ]:
             The discord user or member who requested the track. Only available if :py:attr:`Track.context` is not None.
         """
         return self._requester

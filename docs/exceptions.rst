@@ -22,5 +22,5 @@ Exceptions
 .. autoexception:: TrackLoadFailed
     :members:
 
-.. autoexception:: TrackLoadError
+.. autoexception:: HTTPError
     :members:

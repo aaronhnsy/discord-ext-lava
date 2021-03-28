@@ -1,7 +1,7 @@
 
 __all__ = [
     'SlateException', 'NodeException', 'NodeCreationError', 'NodeConnectionError', 'NodeConnectionClosed', 'NodeNotFound', 'NoNodesAvailable', 'PlayerAlreadyExists',
-    'TrackLoadFailed', 'TrackLoadError', 'TrackDecodeError'
+    'TrackLoadFailed', 'HTTPError'
 ]
 
 
@@ -64,10 +64,15 @@ class PlayerAlreadyExists(SlateException):
 
 class TrackLoadFailed(SlateException):
     """
-    Raised when an external node returns an error for searching for tracks or playlists.
+    Raised when there is an error while loading tracks or playlists.
+
+    Parameters
+    ----------
+    data: dict
+        Information about the error.
     """
 
-    def __init__(self, data: dict) -> None:
+    def __init__(self, data: dict):
 
         self._data = data
 
@@ -87,27 +92,35 @@ class TrackLoadFailed(SlateException):
 
     @property
     def message(self) -> str:
-        """:py:class:`str`
-            The error message returned from the external node. Should be safe to show to end users.
+        """
+        :py:class:`str`
+            An error message. Should be safe to show to end users.
         """
         return self._message
 
     @property
     def severity(self) -> str:
-        """:py:class:`str`:
-            A string denoting the severity of the error. See this `file <https://github.com/sedmelluq/lavaplayer/blob/01dfac5fea1bf683d2a9bc8c8c28589099eb2540/main/src/main/java/com/sedmelluq/discord/lavaplayer/tools/FriendlyException.java#L26-L43>`_
+        """
+        :py:class:`str`:
+            The severity of the error. See this `file <https://github.com/sedmelluq/lavaplayer/blob/01dfac5fea1bf683d2a9bc8c8c28589099eb2540/main/src/main/java/com/sedmelluq/discord/lavaplayer/tools/FriendlyException.java#L26-L43>`_
             for more information.
         """
         return self._severity
 
 
-class TrackLoadError(SlateException):
+class HTTPError(SlateException):
     """
-    Raised when there was an error while using the external node to search for tracks or playlists.
+    Raised when there is an error during a HTTP operation.
+
+    Parameters
+    ----------
+    message: str
+        A message for what happened to cause this error.
+    status_code: int
+        The status code returned by the HTTP operation.
     """
 
-    def __init__(self, message: str, status_code: int) -> None:
-
+    def __init__(self, message: str, status_code: int):
         self._message = message
         self._status_code = status_code
 
@@ -123,30 +136,6 @@ class TrackLoadError(SlateException):
     def status_code(self) -> int:
         """
         :py:class:`int`:
-            The HTTP status code returned for the search operation that failed.
-        """
-        return self._status_code
-
-
-class TrackDecodeError(SlateException):
-
-    def __init__(self, message: str, status_code: int) -> None:
-
-        self._message = message
-        self._status_code = status_code
-
-    @property
-    def message(self) -> str:
-        """
-        :py:class:`str`:
-            A message for what happened to cause this error.
-        """
-        return self._message
-
-    @property
-    def status_code(self) -> int:
-        """
-        :py:class:`int`:
-            The HTTP status code returned for the search operation.
+            The status code returned by the HTTP operation.
         """
         return self._status_code

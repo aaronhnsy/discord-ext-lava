@@ -160,7 +160,7 @@ class Player(VoiceProtocol, ABC):
     @property
     def listeners(self) -> List[discord.Member]:
         """
-        List [ :py:class:`discord.Member` ]:
+        :py:class:`List` [ :py:class:`discord.Member` ]:
             A list of members in the player's voice channel who are not bots and who are not deafened.
         """
         return [member for member in self.channel.members if not member.bot and not member.voice.deaf or not member.voice.self_deaf]

@@ -15,7 +15,7 @@ class Playlist:
     ----------
     playlist_info : dict
         Information about the playlist.
-    tracks : List [dict]
+    tracks : :py:class:`List` [dict]
         A list of dictionaries containing track information.
     ctx : Optional [ :py:class:`commands.Context` ]
         An optional discord.py context object that allows for quality of life attributes such as :py:attr:`Track.requester`.
@@ -66,7 +66,7 @@ class Playlist:
     @property
     def tracks(self) -> List[Track]:
         """
-        List [ :py:class:`Track` ]:
+        :py:class:`List` [ :py:class:`Track` ]:
             A list of Track objects that this playlist has.
         """
         return self._tracks

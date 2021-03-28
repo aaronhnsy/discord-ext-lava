@@ -46,7 +46,7 @@ class Equalizer(BaseFilter):
 
     Parameters
     ----------
-    bands : List [tuple[int, float]
+    bands : :py:class:`List` [tuple[int, float]
         A list of tuples of each band and it's gain.
     name: str
         A custom name for the equalizer filter.
@@ -398,7 +398,7 @@ class Filter:
 
     Parameters
     ----------
-    filters : List [ :py:class:`BaseFilter` ]
+    filters : :py:class:`List` [ :py:class:`BaseFilter` ]
         A list of instances of subclasses of :py:class:`BaseFilter` that you want to add to this filter.
     filter : Optional[ :py:class:`Filter` ]
         An optional Filter instance that allows you to overwrite the settings of certain filters while retaining old ones.
