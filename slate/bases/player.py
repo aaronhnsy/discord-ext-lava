@@ -202,7 +202,7 @@ class Player(VoiceProtocol, ABC):
         op = 'voice-server-update' if isinstance(self.node, AndesiteNode) else 'voiceUpdate'
         await self.node._send(op=op, guildId=str(self.guild.id), sessionId=self._session_id, event=self._voice_server_update_data)
 
-    async def _update_state(self, *, state: dict) -> None:
+    async def _update_state(self, state: dict) -> None:
 
         __log__.info(f'PLAYER | Updating player state. | State: {state}')
 
@@ -218,7 +218,7 @@ class Player(VoiceProtocol, ABC):
             self._volume = state.get('volume', 100)
             # self._filter = state.get('filters', Filter())
 
-    def _dispatch_event(self, *, data: dict) -> None:
+    def _dispatch_event(self, data: dict) -> None:
 
         event = getattr(events, data.get('type'), None)
         if not event:

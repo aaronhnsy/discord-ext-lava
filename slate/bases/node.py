@@ -114,7 +114,7 @@ class BaseNode(abc.ABC):
     @property
     def players(self) -> Dict[int, Protocol[Player]]:
         """
-        Dict [ :py:class:`int` , :py:class:`typing.Protocol` [ :py:class:`Player`] ]:
+        :py:class:`Dict` [ :py:class:`int` , :py:class:`typing.Protocol` [ :py:class:`Player`] ]:
             A mapping of player guild id's to players that this node is managing.
         """
         return self._players
@@ -305,8 +305,8 @@ class BaseNode(abc.ABC):
                         await asyncio.sleep(backoff.delay())
                         continue
                     else:
-                        __log__.error(f'LOADTRACKS | Non-200 status code error while loading tracks. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code error while loading tracks.', status_code=response.status)
+                        __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. Not retrying. | Status code: {response.status}')
+                        raise HTTPError('Non-200 status code while loading tracks.', status_code=response.status)
 
                 data = await response.json()
 
@@ -331,8 +331,8 @@ class BaseNode(abc.ABC):
                 __log__.debug(f'LOADTRACKS | Tracks loaded for query: {query} | Amount: {len(data.get("tracks"))}')
                 return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
 
-        __log__.error(f'LOADTRACKS | Non-200 status code error while loading tracks. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code error while loading tracks.', status_code=response.status)
+        __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code while loading tracks.', status_code=response.status)
 
     async def decode_track(self, track_id: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
                            raw: bool = False) -> Optional[Union[Track, Dict]]:
@@ -377,8 +377,8 @@ class BaseNode(abc.ABC):
                         await asyncio.sleep(backoff.delay())
                         continue
                     else:
-                        __log__.error(f'DECODETRACK | Non-200 status code error while decoding track. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code error while decoding track.', status_code=response.status)
+                        __log__.error(f'DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}')
+                        raise HTTPError('Non-200 status code while decoding track.', status_code=response.status)
 
                 data = await response.json()
 
@@ -387,8 +387,8 @@ class BaseNode(abc.ABC):
 
             return Track(track_id=track_id, track_info=data.get('info', None) or data, ctx=ctx)
 
-        __log__.error(f'DECODETRACK | Non-200 status code error while decoding track. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code error while decoding track.', status_code=response.status)
+        __log__.error(f'DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code while decoding track.', status_code=response.status)
 
     async def decode_tracks(self, track_ids: List[str], *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
                             raw: bool = False) -> Optional[Union[List[Track], Dict]]:
@@ -433,8 +433,8 @@ class BaseNode(abc.ABC):
                         await asyncio.sleep(backoff.delay())
                         continue
                     else:
-                        __log__.error(f'DECODETRACKS | Non-200 status code error while decoding tracks. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code error while decoding tracks.', status_code=response.status)
+                        __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}')
+                        raise HTTPError('Non-200 status code while decoding tracks.', status_code=response.status)
 
                 data = await response.json()
 
@@ -443,5 +443,5 @@ class BaseNode(abc.ABC):
 
             return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data]
 
-        __log__.error(f'DECODETRACKS | Non-200 status code error while decoding tracks. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code error while decoding tracks.', status_code=response.status)
+        __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code while decoding tracks.', status_code=response.status)

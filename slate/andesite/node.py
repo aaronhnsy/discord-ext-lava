@@ -8,6 +8,7 @@ from typing import Optional, TYPE_CHECKING
 import aiohttp
 import async_timeout
 
+from slate.exceptions import HTTPError
 from slate.bases.node import BaseNode
 from slate.objects.stats import AndesiteStats, LavalinkStats, Metadata
 from slate.utils import ExponentialBackoff
@@ -59,10 +60,8 @@ class AndesiteNode(BaseNode):
 
         self._connection_id: Optional[int] = None
         self._metadata: Optional[Metadata] = None
-        self._andesite_stats: Optional[AndesiteStats] = None
         self._lavalink_stats: Optional[LavalinkStats] = None
 
-        self._andesite_stats_event = asyncio.Event()
         self._pong_event = asyncio.Event()
 
     def __repr__(self) -> str:
@@ -98,15 +97,6 @@ class AndesiteNode(BaseNode):
             :py:attr:`AndesiteNode.use_compatibility` is :py:class:`True`.
         """
         return self._metadata
-
-    @property
-    def andesite_stats(self) -> Optional[AndesiteStats]:
-        """
-        Optional [ :py:class:`AndesiteStats` ]:
-            Stats sent from :resource:`andesite <andesite>` that contains information about the system and current status. These stats are sent upon using
-            :py:meth:`AndesiteNode.request_andesite_stats`.
-        """
-        return self._andesite_stats
 
     @property
     def lavalink_stats(self) -> Optional[LavalinkStats]:
@@ -185,10 +175,8 @@ class AndesiteNode(BaseNode):
 
         elif op == 'stats':
 
-            stats = message.get('stats', None)
-            if stats:
+            if stats := message.get('stats'):
                 self._andesite_stats = AndesiteStats(data=stats)
-                self._andesite_stats_event.set()
             else:
                 self._lavalink_stats = LavalinkStats(data=message)
 
@@ -196,12 +184,12 @@ class AndesiteNode(BaseNode):
 
     async def ping(self) -> float:
         """
-        Returns the latency between this node and it's websocket in milliseconds. This works on both the :resource:`lavalink <lavalink>` compatible websocket and the normal websocket.
+        Returns the latency between this node and it's websocket server in milliseconds.
 
         Returns
         -------
         :py:class:`float`
-            The latency in milliseconds.
+            The latency, in milliseconds.
 
         Raises
         ------
@@ -220,27 +208,104 @@ class AndesiteNode(BaseNode):
 
         return end_time - start_time
 
-    async def request_andesite_stats(self) -> AndesiteStats:
+    async def request_andesite_stats(self, retry: bool = False, tries: int = 3, raw: bool = False) -> AndesiteStats:
         """
-        Requests :resource:`andesite <andesite>` stats from the node. This works on both the :resource:`lavalink <lavalink>` compatible websocket and the normal websocket.
+        Requests :resource:`andesite <andesite>` stats from the node.
+
+        Parameters
+        ----------
+        retry: Optional [ :py:class:`bool` ]
+            Whether or not to retry the operation if a non-200 status code is received.
+        tries: Optional [ :py:class:`int` ]
+            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
+        raw: Optional [ :py:class:`bool` ]
+            Whether or not to return the raw result of the operation.
 
         Returns
         -------
         :py:class:`AndesiteStats`
-            The stats that were returned.
+            The andesite stats that were returned.
 
         Raises
         ------
-        :py:class:`asyncio.TimeoutError`
-            Requesting the stats took over 30 seconds.
+        :py:class:`HTTPError`:
+            There was a non-200 status code while fetching the stats.
         """
 
-        await self._send(op='get-stats')
+        backoff = ExponentialBackoff()
 
-        async with async_timeout.timeout(timeout=30):
-            await self._andesite_stats_event.wait()
+        for _ in range(tries):
 
-        self._andesite_stats_event.clear()
-        return self._andesite_stats
+            async with self.client.session.get(url=f'{self._http_url}/stats', headers={'Authorization': self.password}) as response:
 
-    #
+                if response.status != 200:
+
+                    if retry:
+                        time = backoff.delay()
+                        __log__.warning(f'GET-ANDESITE-STATS | Non-200 status code while fetching andesite stats. Retrying in {time}s. | Status code: {response.status}')
+                        await asyncio.sleep(backoff.delay())
+                        continue
+                    else:
+                        __log__.error(f'GET-ANDESITE-STATS | Non-200 status code while fetching andesite stats. Not retrying. | Status code: {response.status}')
+                        raise HTTPError('Non-200 status code while fetching andesite stats.', status_code=response.status)
+
+                data = await response.json()
+
+            if raw:
+                return data
+
+            return AndesiteStats(dict(data))
+
+        __log__.error(f'GET-ANDESITE-STATS | Non-200 status code while fetching andesite stats. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code fetching andesite stats.', status_code=response.status)
+
+    async def request_lavalink_stats(self, retry: bool = False, tries: int = 3, raw: bool = False) -> LavalinkStats:
+        """
+        Requests :resource:`lavalink <lavalink>` stats from the node.
+
+        Parameters
+        ----------
+        retry: Optional [ :py:class:`bool` ]
+            Whether or not to retry the operation if a non-200 status code is received.
+        tries: Optional [ :py:class:`int` ]
+            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
+        raw: Optional [ :py:class:`bool` ]
+            Whether or not to return the raw result of the operation.
+
+        Returns
+        -------
+        :py:class:`LavalinkStats`
+            The lavalink stats that were returned.
+
+        Raises
+        ------
+        :py:class:`HTTPError`:
+            There was a non-200 status code while fetching the stats.
+        """
+
+        backoff = ExponentialBackoff()
+
+        for _ in range(tries):
+
+            async with self.client.session.get(url=f'{self._http_url}/stats/lavalink', headers={'Authorization': self.password}) as response:
+
+                if response.status != 200:
+
+                    if retry:
+                        time = backoff.delay()
+                        __log__.warning(f'GET-LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Retrying in {time}s. | Status code: {response.status}')
+                        await asyncio.sleep(backoff.delay())
+                        continue
+                    else:
+                        __log__.error(f'GET-LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Not retrying. | Status code: {response.status}')
+                        raise HTTPError('Non-200 status code while fetching lavalink stats.', status_code=response.status)
+
+                data = await response.json()
+
+            if raw:
+                return data
+
+            return LavalinkStats(dict(data))
+
+        __log__.error(f'GET-LAVALINK-STATS | Non-200 status code while fetching lavalink stats. All {tries} retries used. | Status code: {response.status}')
+        raise HTTPError('Non-200 status code fetching lavalink stats.', status_code=response.status)

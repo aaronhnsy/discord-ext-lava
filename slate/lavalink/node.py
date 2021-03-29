@@ -62,8 +62,7 @@ class LavalinkNode(BaseNode):
     def lavalink_stats(self) -> Optional[LavalinkStats]:
         """
         Optional [ :py:class:`LavalinkStats` ]:
-            Stats sent from :resource:`lavalink <lavalink>`. These stats are sent every 30 or so seconds. Could be :py:class:`None` if :py:attr:`AndesiteNode.use_compatibility`
-            is :py:class:`False`.
+            Stats sent from :resource:`lavalink <lavalink>`. Sent every 30 or so seconds.
         """
         return self._lavalink_stats
 

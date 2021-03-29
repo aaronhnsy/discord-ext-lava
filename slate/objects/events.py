@@ -13,7 +13,7 @@ class TrackStartEvent:
 
     __slots__ = 'data', 'player', 'track'
 
-    def __init__(self, *, data: dict) -> None:
+    def __init__(self, data: dict) -> None:
 
         self.data: dict = data
 
@@ -31,7 +31,7 @@ class TrackEndEvent:
 
     __slots__ = 'data', 'player', 'track', 'reason', 'may_start_next'
 
-    def __init__(self, *, data: dict) -> None:
+    def __init__(self, data: dict) -> None:
 
         self.data: dict = data
 
@@ -52,7 +52,7 @@ class TrackExceptionEvent:
 
     __slots__ = 'data', 'player', 'track', 'message', 'cause', 'stack', 'suppressed', 'severity'
 
-    def __init__(self, *, data: dict) -> None:
+    def __init__(self, data: dict) -> None:
 
         self.data: dict = data
 
@@ -77,7 +77,7 @@ class TrackStuckEvent:
 
     __slots__ = 'data', 'player', 'track', 'threshold_ms'
 
-    def __init__(self, *, data: dict) -> None:
+    def __init__(self, data: dict) -> None:
 
         self.data: dict = data
 
@@ -97,7 +97,7 @@ class WebSocketClosedEvent:
 
     __slots__ = 'data', 'player', 'track', 'reason', 'code', 'by_remote'
 
-    def __init__(self, *, data: dict) -> None:
+    def __init__(self, data: dict) -> None:
 
         self.data: dict = data
 

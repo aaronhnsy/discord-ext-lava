@@ -60,7 +60,7 @@ class Client:
     @property
     def nodes(self) -> Dict[str, Protocol[BaseNode]]:
         """
-        Dict [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
+        :py:class:`Dict` [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
             A mapping of node identifier's to nodes that this client is managing.
         """
 
