@@ -332,7 +332,7 @@ class BaseNode(abc.ABC):
                 return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
 
         __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code while loading tracks.', status_code=response.status)
+        raise HTTPError(f'Non-200 status code while loading tracks. All {tries} retries used.', status_code=response.status)
 
     async def decode_track(self, track_id: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
                            raw: bool = False) -> Optional[Union[Track, Dict]]:
@@ -388,7 +388,7 @@ class BaseNode(abc.ABC):
             return Track(track_id=track_id, track_info=data.get('info', None) or data, ctx=ctx)
 
         __log__.error(f'DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code while decoding track.', status_code=response.status)
+        raise HTTPError(f'Non-200 status code while decoding track. All {tries} retries used.', status_code=response.status)
 
     async def decode_tracks(self, track_ids: List[str], *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
                             raw: bool = False) -> Optional[Union[List[Track], Dict]]:
@@ -444,4 +444,4 @@ class BaseNode(abc.ABC):
             return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data]
 
         __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code while decoding tracks.', status_code=response.status)
+        raise HTTPError(f'Non-200 status code while decoding tracks. All {tries} retries used.', status_code=response.status)

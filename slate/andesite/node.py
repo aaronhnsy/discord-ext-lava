@@ -268,7 +268,7 @@ class AndesiteNode(BaseNode):
             return self._andesite_stats
 
         __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code fetching andesite stats.', status_code=response.status)
+        raise HTTPError(f'Non-200 status code fetching andesite stats. All {tries} retries used.', status_code=response.status)
 
     async def request_lavalink_stats(self, retry: bool = False, tries: int = 3, raw: bool = False) -> LavalinkStats:
         """
@@ -320,4 +320,4 @@ class AndesiteNode(BaseNode):
             return self._lavalink_stats
 
         __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError('Non-200 status code fetching lavalink stats.', status_code=response.status)
+        raise HTTPError(f'Non-200 status code fetching lavalink stats. All {tries} retries used.', status_code=response.status)
