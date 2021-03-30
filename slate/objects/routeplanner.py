@@ -93,7 +93,7 @@ class RoutePlannerStatus:
         :py:class:`str`:
             The size of the IP block being used.
         """
-        return self.ip_block_size
+        return self._ip_block_size
 
     @property
     def failing_addresses(self) -> List[FailingAddress]:
@@ -101,4 +101,4 @@ class RoutePlannerStatus:
         :py:class:`List` [ :py:class:`FailingAddresses` ]:
             A list of FailingAddress objects.
         """
-        return self.failing_addresses
+        return self._failing_addresses
