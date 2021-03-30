@@ -60,6 +60,7 @@ class AndesiteNode(BaseNode):
 
         self._connection_id: Optional[int] = None
         self._metadata: Optional[Metadata] = None
+        self._andesite_stats: Optional[AndesiteStats] = None
         self._lavalink_stats: Optional[LavalinkStats] = None
 
         self._pong_event = asyncio.Event()
@@ -99,11 +100,20 @@ class AndesiteNode(BaseNode):
         return self._metadata
 
     @property
+    def andesite_stats(self) -> Optional[AndesiteStats]:
+        """
+        Optional [ :py:class:`AndesiteStats` ]:
+            Stats sent from :resource:`andesite <andesite>` that contains information about the system and current status. These stats are set by using
+            :py:meth:`AndesiteNode.request_andesite_stats`.
+        """
+        return self._andesite_stats
+
+    @property
     def lavalink_stats(self) -> Optional[LavalinkStats]:
         """
         Optional [ :py:class:`LavalinkStats` ]:
-            Stats sent from :resource:`andesite <andesite>` when using the :resource:`lavalink <lavalink>` compatible websocket. These stats are sent every 30 or so seconds. This
-            could be :py:class:`None` if :py:attr:`AndesiteNode.use_compatibility` is :py:class:`False`.
+            Stats sent from :resource:`andesite <andesite>` when using the :resource:`lavalink <lavalink>` compatible websocket. These stats are set every 30~ seconds using the
+            lavalink compatible websocket, or by using :py:meth:`AndesiteNode.request_lavalink_stats`
         """
         return self._lavalink_stats
 
@@ -125,7 +135,7 @@ class AndesiteNode(BaseNode):
                     await player.destroy()
 
                 retry = backoff.delay()
-                __log__.warning(f'WEBSOCKET | \'{self.identifier}\'s websocket is disconnected, sleeping for {round(retry, 2)} seconds.')
+                __log__.warning(f'WEBSOCKET | \'{self.identifier}\'s websocket is disconnected, sleeping for {round(retry)} seconds.')
                 await asyncio.sleep(retry)
 
                 if not self.is_connected:
@@ -241,12 +251,12 @@ class AndesiteNode(BaseNode):
                 if response.status != 200:
 
                     if retry:
-                        time = backoff.delay()
-                        __log__.warning(f'GET-ANDESITE-STATS | Non-200 status code while fetching andesite stats. Retrying in {time}s. | Status code: {response.status}')
-                        await asyncio.sleep(backoff.delay())
+                        retry_time = backoff.delay()
+                        __log__.warning(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Retrying in {round(retry_time)}s. | Status code: {response.status}')
+                        await asyncio.sleep(retry_time)
                         continue
                     else:
-                        __log__.error(f'GET-ANDESITE-STATS | Non-200 status code while fetching andesite stats. Not retrying. | Status code: {response.status}')
+                        __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Not retrying. | Status code: {response.status}')
                         raise HTTPError('Non-200 status code while fetching andesite stats.', status_code=response.status)
 
                 data = await response.json()
@@ -254,9 +264,10 @@ class AndesiteNode(BaseNode):
             if raw:
                 return data
 
-            return AndesiteStats(dict(data))
+            self._andesite_stats = AndesiteStats(dict(data))
+            return self._andesite_stats
 
-        __log__.error(f'GET-ANDESITE-STATS | Non-200 status code while fetching andesite stats. All {tries} retries used. | Status code: {response.status}')
+        __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError('Non-200 status code fetching andesite stats.', status_code=response.status)
 
     async def request_lavalink_stats(self, retry: bool = False, tries: int = 3, raw: bool = False) -> LavalinkStats:
@@ -292,12 +303,12 @@ class AndesiteNode(BaseNode):
                 if response.status != 200:
 
                     if retry:
-                        time = backoff.delay()
-                        __log__.warning(f'GET-LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Retrying in {time}s. | Status code: {response.status}')
-                        await asyncio.sleep(backoff.delay())
+                        retry_time = backoff.delay()
+                        __log__.warning(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Retrying in {round(retry_time)}s. | Status code: {response.status}')
+                        await asyncio.sleep(retry_time)
                         continue
                     else:
-                        __log__.error(f'GET-LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Not retrying. | Status code: {response.status}')
+                        __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Not retrying. | Status code: {response.status}')
                         raise HTTPError('Non-200 status code while fetching lavalink stats.', status_code=response.status)
 
                 data = await response.json()
@@ -305,7 +316,8 @@ class AndesiteNode(BaseNode):
             if raw:
                 return data
 
-            return LavalinkStats(dict(data))
+            self._lavalink_stats = LavalinkStats(dict(data))
+            return self._lavalink_stats
 
-        __log__.error(f'GET-LAVALINK-STATS | Non-200 status code while fetching lavalink stats. All {tries} retries used. | Status code: {response.status}')
+        __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError('Non-200 status code fetching lavalink stats.', status_code=response.status)
