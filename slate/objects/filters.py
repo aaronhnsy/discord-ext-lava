@@ -16,7 +16,7 @@ class BaseFilter(abc.ABC):
         self._name = 'BaseFilter'
 
     def __repr__(self) -> str:
-        pass
+        return f'slate.BaseFilter name=\'{self.name}\''
 
     def __str__(self) -> str:
         return self._name
@@ -34,7 +34,7 @@ class BaseFilter(abc.ABC):
     @property
     @abc.abstractmethod
     def _payload(self) -> Dict[str, Dict[str, Any]]:
-        pass
+        raise NotImplementedError
 
 
 class Equalizer(BaseFilter):
@@ -429,7 +429,7 @@ class Filter:
         if self.volume is not None:
             payload['volume'] = self.volume
 
-        for filter in self.filters:
-            payload.update(filter._payload)
+        for _filter in self.filters:
+            payload.update(_filter._payload)
 
         return payload
