@@ -63,7 +63,7 @@ class Queue:
 
     @property
     def is_looping_current(self) -> bool:
-        return self._looping_current
+        return self.is_looping and self._looping_current
 
     @property
     def is_empty(self) -> bool:
@@ -144,19 +144,17 @@ class Queue:
     def clear_history(self) -> None:
         self._queue_history.clear()
 
-    def set_looping(self, looping: bool, *, current: bool = False):
+    def set_looping(self, *, looping: bool, current: bool = False):
 
-        if current:
-            if looping:
+        if looping:
+            self._looping = True
+            if current:
                 self._looping_current = True
-                self._looping = True
-            else:
-                self._looping_current = False
-                self._looping = False
         else:
-            self._looping = looping
-            self._looping_current = False
-
+            self._looping = False
+            if current:
+                self._looping = True
+                self._looping_current = True
 
 class ExponentialBackoff:
     """
@@ -204,4 +202,3 @@ class ExponentialBackoff:
 
         self._exp = min(self._exp + 1, self._max)
         return self._randfunc(0, self._base * 2 ** self._exp)
-

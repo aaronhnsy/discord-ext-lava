@@ -5,7 +5,8 @@ __all__ = ['LavalinkStats', 'AndesiteStats', 'Metadata']
 
 class LavalinkStats:
     """
-    A collection of Lavalink stats sent by :resource:`lavalink <lavalink>` every 30 or so seconds, and from :resource:`andesite <andesite>` when using the :resource:`lavalink <lavalink>` compatible websocket.
+    A collection of Lavalink stats sent by :resource:`lavalink <lavalink>` every 30 or so seconds, and from :resource:`andesite <andesite>` when using the
+    :resource:`lavalink <lavalink>` compatible websocket.
     """
 
     __slots__ = 'node', 'data', 'playing_players', 'total_players', 'uptime', 'memory_reservable', 'memory_allocated', 'memory_used', 'memory_free', 'system_load', \
