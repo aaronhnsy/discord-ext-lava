@@ -408,14 +408,14 @@ class Filter:
 
     """
 
-    def __init__(self, filters: List[Type[BaseFilter]], *, filter: Filter = None, volume: Optional[float] = None) -> None:
+    def __init__(self, filters: List[Type[BaseFilter]], _filter: Filter = None, volume: Optional[float] = None) -> None:
 
         self.filters: List[Type[BaseFilter]] = filters
-        self.filter: Optional[BaseFilter] = filter
+        self.filter: Optional[BaseFilter] = _filter
         self.volume: Optional[float] = volume
 
-        for filter in self.filters:
-            if not issubclass(type(filter), BaseFilter):
+        for _ in self.filters:
+            if not issubclass(type(_), BaseFilter):
                 raise ValueError('Arguments passed to this Filter must be subclasses of \'slate.BaseFilter\'.')
 
     def __repr__(self) -> str:

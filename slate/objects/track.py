@@ -167,4 +167,4 @@ class Track:
         if (thumbnail := self._track_info.get('thumbnail', None)) is not None:
             return thumbnail
 
-        return f'https://dummyimage.com/1280x720/000/fff.png&text=+'
+        return 'https://dummyimage.com/1280x720/000/fff.png&text=+'

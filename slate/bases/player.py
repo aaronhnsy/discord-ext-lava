@@ -356,18 +356,18 @@ class Player(VoiceProtocol, ABC):
 
         __log__.info(f'PLAYER | Player for guild \'{self.guild.id}\' is playing the track {self._current!r}.')
 
-    async def set_filter(self, filter: Filter) -> None:
+    async def set_filter(self, filter_instance: Filter) -> None:
         """
         Sets a filter on the player.
 
         Parameters
         ----------
-        filter: :py:class:`Filter`
+        filter_instance: :py:class:`Filter`
             An instance of a filter object.
         """
 
-        await self.node._send(op='filters', guildId=str(self.guild.id), **filter._payload)
-        self._filter = filter
+        await self.node._send(op='filters', guildId=str(self.guild.id), **filter_instance._payload)
+        self._filter = filter_instance
 
         __log__.info(f'PLAYER | Guild player \'{self.guild.id}\' is using the filter {self._filter!r}')
 

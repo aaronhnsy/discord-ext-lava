@@ -4,12 +4,12 @@ import abc
 import asyncio
 import json
 import logging
-import urllib.parse
 from typing import Dict, List, Optional, Protocol, TYPE_CHECKING, Union
 
 import aiohttp
 from discord.ext import commands
-from slate.exceptions import NodeConnectionClosed, NodeConnectionError, TrackLoadFailed, HTTPError
+
+from slate.exceptions import HTTPError, NodeConnectionClosed, NodeConnectionError, TrackLoadFailed
 from slate.objects.playlist import Playlist
 from slate.objects.track import Track
 from slate.utils import ExponentialBackoff
@@ -141,11 +141,11 @@ class BaseNode(abc.ABC):
 
     @abc.abstractmethod
     async def _listen(self) -> None:
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def _handle_message(self, message: dict) -> None:
-        pass
+        raise NotImplementedError
 
     #
 
@@ -207,9 +207,9 @@ class BaseNode(abc.ABC):
             if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
                 __log__.warning(f'NODE | \'{self.identifier}\' failed to connect due to invalid authorization.')
                 raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect due to invalid authorization.')
-            else:
-                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect. Error: {error}')
-                raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect.\n{error}')
+
+            __log__.warning(f'NODE | \'{self.identifier}\' failed to connect. Error: {error}')
+            raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect.\n{error}')
 
         else:
 
@@ -299,14 +299,15 @@ class BaseNode(abc.ABC):
             async with self.client.session.get(url=f'{self._http_url}/loadtracks', headers={'Authorization': self.password}, params={'identifier': query}) as response:
 
                 if response.status != 200:
+
                     if retry:
                         time = backoff.delay()
                         __log__.warning(f'LOADTRACKS | Non-200 status code while loading tracks. Retrying in {round(time)}s. | Status code: {response.status}')
                         await asyncio.sleep(time)
                         continue
-                    else:
-                        __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code while loading tracks.', status_code=response.status)
+
+                    __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. Not retrying. | Status code: {response.status}')
+                    raise HTTPError('Non-200 status code while loading tracks.', status_code=response.status)
 
                 data = await response.json()
 
@@ -319,15 +320,15 @@ class BaseNode(abc.ABC):
                 __log__.debug(f'LOADTRACKS | No matches found for query: {query}')
                 return None
 
-            elif load_type == 'LOAD_FAILED':
+            if load_type == 'LOAD_FAILED':
                 __log__.warning(f'LOADTRACKS | Encountered a LOAD_FAILED while getting tracks for query: {query} | Data: {data}')
                 raise TrackLoadFailed(data=data)
 
-            elif load_type == 'PLAYLIST_LOADED':
+            if load_type == 'PLAYLIST_LOADED':
                 __log__.debug(f'LOADTRACKS | Playlist loaded for query: {query} | Name: {data.get("playlistInfo", {}).get("name", "UNKNOWN")}')
                 return Playlist(playlist_info=data.get('playlistInfo'), tracks=data.get('tracks'), ctx=ctx)
 
-            elif load_type in ['SEARCH_RESULT', 'TRACK_LOADED']:
+            if load_type in ['SEARCH_RESULT', 'TRACK_LOADED']:
                 __log__.debug(f'LOADTRACKS | Tracks loaded for query: {query} | Amount: {len(data.get("tracks"))}')
                 return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
 
@@ -376,9 +377,9 @@ class BaseNode(abc.ABC):
                         __log__.warning(f'DECODETRACK | Non-200 status code while decoding track. Retrying in {round(time)}s. | Status code: {response.status}')
                         await asyncio.sleep(time)
                         continue
-                    else:
-                        __log__.error(f'DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code while decoding track.', status_code=response.status)
+
+                    __log__.error(f'DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}')
+                    raise HTTPError('Non-200 status code while decoding track.', status_code=response.status)
 
                 data = await response.json()
 
@@ -432,9 +433,9 @@ class BaseNode(abc.ABC):
                         __log__.warning(f'DECODETRACKS | Non-200 status code while decoding tracks. Retrying in {round(time)}s. | Status code: {response.status}')
                         await asyncio.sleep(time)
                         continue
-                    else:
-                        __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code while decoding tracks.', status_code=response.status)
+
+                    __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}')
+                    raise HTTPError('Non-200 status code while decoding tracks.', status_code=response.status)
 
                 data = await response.json()
 

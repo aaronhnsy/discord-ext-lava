@@ -44,7 +44,7 @@ class AndesiteNode(BaseNode):
         Custom keyword arguments that have been passed to this node from :py:meth:`Client.create_node`.
     """
 
-    def __init__(self, use_compatibility: bool = False, *args, **kwargs) -> None:
+    def __init__(self, *args, use_compatibility: bool = False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self._use_compatibility: bool = use_compatibility
@@ -255,9 +255,9 @@ class AndesiteNode(BaseNode):
                         __log__.warning(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Retrying in {round(retry_time)}s. | Status code: {response.status}')
                         await asyncio.sleep(retry_time)
                         continue
-                    else:
-                        __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code while fetching andesite stats.', status_code=response.status)
+
+                    __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Not retrying. | Status code: {response.status}')
+                    raise HTTPError('Non-200 status code while fetching andesite stats.', status_code=response.status)
 
                 data = await response.json()
 
@@ -307,9 +307,9 @@ class AndesiteNode(BaseNode):
                         __log__.warning(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Retrying in {round(retry_time)}s. | Status code: {response.status}')
                         await asyncio.sleep(retry_time)
                         continue
-                    else:
-                        __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Not retrying. | Status code: {response.status}')
-                        raise HTTPError('Non-200 status code while fetching lavalink stats.', status_code=response.status)
+
+                    __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Not retrying. | Status code: {response.status}')
+                    raise HTTPError('Non-200 status code while fetching lavalink stats.', status_code=response.status)
 
                 data = await response.json()
 
