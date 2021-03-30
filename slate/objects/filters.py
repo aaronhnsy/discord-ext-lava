@@ -149,9 +149,9 @@ class Timescale(BaseFilter):
     def __init__(self, *, speed: Optional[float] = 1.0, pitch: Optional[float] = 1.0, rate: Optional[float] = 1.0) -> None:
         super().__init__()
 
-        self.speed: Optional[float]  = speed
-        self.pitch: Optional[float]  = pitch
-        self.rate: Optional[float]  = rate
+        self.speed: Optional[float] = speed
+        self.pitch: Optional[float] = pitch
+        self.rate: Optional[float] = rate
 
         self._name = 'Timescale'
 
@@ -291,7 +291,8 @@ class LowPass(BaseFilter):
 
 class ChannelMix(BaseFilter):
     """
-    A channel mix filter that allows you to mix left and right audio channels with a configurable factor on how much each one affects the the other. By default both channels are kept separate from eachother, while a value of 0.5 on each factor means both channels get the same audio.
+    A channel mix filter that allows you to mix left and right audio channels with a configurable factor on how much each one affects the the other. By default both channels are
+    kept separate from eachother, while a value of 0.5 on each factor means both channels get the same audio.
 
     .. note::
         All values must be more than or equal to 0, or less than or equal to 1.
