@@ -301,8 +301,8 @@ class BaseNode(abc.ABC):
                 if response.status != 200:
                     if retry:
                         time = backoff.delay()
-                        __log__.warning(f'LOADTRACKS | Non-200 status code while loading tracks. Retrying in {time}s. | Status code: {response.status}')
-                        await asyncio.sleep(backoff.delay())
+                        __log__.warning(f'LOADTRACKS | Non-200 status code while loading tracks. Retrying in {round(time)}s. | Status code: {response.status}')
+                        await asyncio.sleep(time)
                         continue
                     else:
                         __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. Not retrying. | Status code: {response.status}')
@@ -373,8 +373,8 @@ class BaseNode(abc.ABC):
 
                     if retry:
                         time = backoff.delay()
-                        __log__.warning(f'DECODETRACK | Non-200 status code while decoding track. Retrying in {time}s. | Status code: {response.status}')
-                        await asyncio.sleep(backoff.delay())
+                        __log__.warning(f'DECODETRACK | Non-200 status code while decoding track. Retrying in {round(time)}s. | Status code: {response.status}')
+                        await asyncio.sleep(time)
                         continue
                     else:
                         __log__.error(f'DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}')
@@ -429,8 +429,8 @@ class BaseNode(abc.ABC):
 
                     if retry:
                         time = backoff.delay()
-                        __log__.warning(f'DECODETRACKS | Non-200 status code while decoding tracks. Retrying in {time}s. | Status code: {response.status}')
-                        await asyncio.sleep(backoff.delay())
+                        __log__.warning(f'DECODETRACKS | Non-200 status code while decoding tracks. Retrying in {round(time)}s. | Status code: {response.status}')
+                        await asyncio.sleep(time)
                         continue
                     else:
                         __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}')

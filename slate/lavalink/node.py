@@ -84,7 +84,7 @@ class LavalinkNode(BaseNode):
                     await player.destroy()
 
                 retry = backoff.delay()
-                __log__.warning(f'WEBSOCKET | \'{self.identifier}\'s websocket is disconnected, sleeping for {round(retry, 2)} seconds.')
+                __log__.warning(f'WEBSOCKET | \'{self.identifier}\'s websocket is disconnected, sleeping for {round(retry)} seconds.')
                 await asyncio.sleep(retry)
 
                 if not self.is_connected:
