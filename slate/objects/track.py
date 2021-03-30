@@ -77,7 +77,7 @@ class Track:
     @property
     def author(self) -> str:
         """
-    `   :py:class:`str` :
+        :py:class:`str`:
             The author of the track.
         """
         return self._author

@@ -65,6 +65,7 @@ class TrackLoadFailed(SlateException):
     """
 
     def __init__(self, data: dict):
+        super().__init__()
 
         self._data = data
 
@@ -113,6 +114,8 @@ class HTTPError(SlateException):
     """
 
     def __init__(self, message: str, status_code: int):
+        super().__init__()
+
         self._message = message
         self._status_code = status_code
 
