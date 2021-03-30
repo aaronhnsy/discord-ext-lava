@@ -139,7 +139,7 @@ class Client:
             raise NoNodesAvailable('There are no Nodes available.')
 
         if identifier is None:
-            return random.choice([node for node in available_nodes.values()])
+            return random.choice(list(available_nodes.values()))
 
         return available_nodes.get(identifier, None)
 
