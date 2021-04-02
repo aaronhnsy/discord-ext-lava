@@ -13,8 +13,8 @@ with open(os.path.abspath(os.path.join(os.path.dirname(__file__), 'slate/__init_
     VERSION = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
 
 
-classifiers = [
-    'Development Status :: 3 - Alpha',
+CLASSIFIERS = [
+    'Development Status :: 4 - Beta',
     'Framework :: AsyncIO',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
@@ -32,25 +32,34 @@ classifiers = [
     'Typing :: Typed'
 ]
 
-project_urls = {
-    'Documentation': 'https://github.com/Axelancerr/Slate',
+PROJECT_URLS = {
+    'Documentation': 'https://slate-py.readthedocs.io/en/latest/',
     'Source': 'https://github.com/Axelancerr/Slate',
     'Issue Tracker': 'https://github.com/Axelancerr/Slate/issues',
 }
 
+
+EXTRAS_REQUIRE = {
+    'docs': [
+        'sphinx',
+        'sphinxcontrib_trio',
+        'faculty-sphinx-theme',
+    ],
+}
+
 setuptools.setup(
-    name='Slate',
-    version=VERSION,
+    author='Axelancerr',
+    classifiers=CLASSIFIERS,
     description='A Lavalink and Andesite wrapper.',
+    extras_require=EXTRAS_REQUIRE,
+    install_requires=INSTALL_REQUIRES,
+    license='MIT',
+    name='Slate',
+    packages=['slate', 'slate.andesite', 'slate.lavalink', 'slate.bases', 'slate.objects'],
+    project_urls=PROJECT_URLS,
+    python_requires=">=3.8",
+    url='https://github.com/Axelancerr/Slate',
+    version=VERSION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    author='Axelancerr',
-    author_email=None,
-    url='https://github.com/Axelancerr/Slate',
-    packages=['slate', 'slate.andesite', 'slate.lavalink', 'slate.bases', 'slate.objects'],
-    classifiers=classifiers,
-    license='MIT',
-    install_requires=INSTALL_REQUIRES,
-    python_requires=">=3.8",
-    project_urls=project_urls,
 )

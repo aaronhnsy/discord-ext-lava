@@ -2,7 +2,7 @@ __title__ = 'slate'
 __author__ = 'Axelancerr'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Axelancerr'
-__version__ = '0.2.0'
+__version__ = '2021.04.02'
 
 import logging
 from collections import namedtuple
@@ -21,5 +21,5 @@ from .objects.stats import AndesiteStats, LavalinkStats, Metadata
 from .objects.track import Track
 from .utils import ExponentialBackoff, Queue
 
-version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=0, minor=2, micro=0, releaselevel='alpha', serial=0)
+version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=2021, minor=4, micro=2, releaselevel='final', serial=0)
 logging.getLogger('slate')
