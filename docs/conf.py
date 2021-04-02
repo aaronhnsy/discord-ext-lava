@@ -9,7 +9,7 @@ project = 'slate.py'
 copyright = '2020-Present, Axel#3456'
 author = 'Axel#3456'
 
-with open(os.path.abspath(os.path.join(os.path.dirname(__file__), 'slate/__init__.py'))) as f:
+with open(os.path.abspath(os.path.join(os.path.dirname(__file__), '../slate/__init__.py'))) as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
     release = version
 
