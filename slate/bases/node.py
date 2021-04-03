@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Protocol, TYPE_CHECKING, Union
 import aiohttp
 from discord.ext import commands
 
-from slate import PlayerType
 from slate.exceptions import HTTPError, NodeConnectionClosed, NodeConnectionError, TrackLoadFailed
 from slate.objects.playlist import Playlist
 from slate.objects.track import Track
@@ -17,6 +16,7 @@ from slate.utils import ExponentialBackoff
 
 if TYPE_CHECKING:
     from slate.client import Client
+    from slate import PlayerType
 
 
 __log__ = logging.getLogger('slate.bases.node')

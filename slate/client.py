@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Dict, Optional, Protocol, Type
+from typing import Dict, Optional, Protocol, TYPE_CHECKING, Type
 
 import aiohttp
 import discord
 
-from slate import BaseNodeType, PlayerType
 from slate.bases.node import BaseNode
 from slate.bases.player import Player
 from slate.exceptions import NoNodesAvailable, NodeCreationError, NodeNotFound, PlayerAlreadyExists
+
+if TYPE_CHECKING:
+    from slate import BaseNodeType, PlayerType
+
 
 __log__ = logging.getLogger(__name__)
 __all__ = ['Client']

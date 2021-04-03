@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from slate import PlayerType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from slate import PlayerType
+
 
 __all__ = ['TrackStartEvent', 'TrackEndEvent', 'TrackExceptionEvent', 'TrackStuckEvent', 'WebSocketClosedEvent']
 

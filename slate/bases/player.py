@@ -8,7 +8,6 @@ from typing import List, Optional, Protocol, TYPE_CHECKING
 import discord
 from discord import VoiceProtocol
 
-from slate import BaseNodeType
 from slate.andesite.node import AndesiteNode
 from slate.lavalink.node import LavalinkNode
 from slate.objects import events
@@ -16,6 +15,7 @@ from slate.objects import events
 if TYPE_CHECKING:
     from slate.objects.track import Track
     from slate.objects.filters import Filter
+    from slate import BaseNodeType
 
 
 __log__ = logging.getLogger('slate.bases.player')
