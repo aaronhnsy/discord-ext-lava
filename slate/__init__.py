@@ -2,7 +2,7 @@ __title__ = 'slate'
 __author__ = 'Axelancerr'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Axelancerr'
-__version__ = '2021.04.02'
+__version__ = '2021.04.03'
 
 import logging
 from collections import namedtuple
@@ -25,5 +25,5 @@ from .utils import ExponentialBackoff, Queue
 PlayerType = TypeVar('PlayerType', bound=Player)
 BaseNodeType = TypeVar('BaseNodeType', bound=BaseNode)
 
-version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=2021, minor=4, micro=2, releaselevel='final', serial=0)
+version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=2021, minor=4, micro=3, releaselevel='final', serial=0)
 logging.getLogger('slate')
