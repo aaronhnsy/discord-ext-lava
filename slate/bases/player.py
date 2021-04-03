@@ -8,12 +8,12 @@ from typing import List, Optional, Protocol, TYPE_CHECKING
 import discord
 from discord import VoiceProtocol
 
+from slate import BaseNodeType
 from slate.andesite.node import AndesiteNode
 from slate.lavalink.node import LavalinkNode
 from slate.objects import events
 
 if TYPE_CHECKING:
-    from slate.bases.node import BaseNode
     from slate.objects.track import Track
     from slate.objects.filters import Filter
 
@@ -42,7 +42,7 @@ class Player(VoiceProtocol, ABC):
         self.channel: Optional[discord.VoiceChannel] = channel
         self._guild: discord.Guild = channel.guild
 
-        self._node: Optional[Protocol[BaseNode]] = None
+        self._node: Optional[BaseNodeType] = None
         self._current: Optional[Track] = None
         self._filter: Optional[Filter] = None
         self._volume: int = 100
@@ -80,7 +80,7 @@ class Player(VoiceProtocol, ABC):
     #
 
     @property
-    def node(self) -> Optional[Protocol[BaseNode]]:
+    def node(self) -> Optional[BaseNodeType]:
         """
         Optional [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
             The node that is managing this player.

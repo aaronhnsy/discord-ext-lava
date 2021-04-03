@@ -9,13 +9,13 @@ from typing import Dict, List, Optional, Protocol, TYPE_CHECKING, Union
 import aiohttp
 from discord.ext import commands
 
+from slate import PlayerType
 from slate.exceptions import HTTPError, NodeConnectionClosed, NodeConnectionError, TrackLoadFailed
 from slate.objects.playlist import Playlist
 from slate.objects.track import Track
 from slate.utils import ExponentialBackoff
 
 if TYPE_CHECKING:
-    from slate.bases.player import Player
     from slate.client import Client
 
 
@@ -52,7 +52,7 @@ class BaseNode(abc.ABC):
         self._password: str = password
         self._identifier: str = identifier
 
-        self._players: Dict[int, Protocol[Player]] = {}
+        self._players: Dict[int, PlayerType] = {}
 
         self._http_url: Optional[str] = None
         self._ws_url: Optional[str] = None
@@ -112,7 +112,7 @@ class BaseNode(abc.ABC):
     #
 
     @property
-    def players(self) -> Dict[int, Protocol[Player]]:
+    def players(self) -> Dict[int, PlayerType]:
         """
         :py:class:`Dict` [ :py:class:`int` , :py:class:`typing.Protocol` [ :py:class:`Player`] ]:
             A mapping of player guild id's to players that this node is managing.

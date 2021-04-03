@@ -1,27 +1,22 @@
 from __future__ import annotations
 
-from typing import Protocol, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from slate.bases.player import Player
-
+from slate import PlayerType
 
 __all__ = ['TrackStartEvent', 'TrackEndEvent', 'TrackExceptionEvent', 'TrackStuckEvent', 'WebSocketClosedEvent']
 
 
 class TrackStartEvent:
 
-    __slots__ = 'data', 'player', 'track'
+    __slots__ = 'data', 'player', 'track_id'
 
     def __init__(self, data: dict) -> None:
-
         self.data: dict = data
 
-        self.player: Protocol[Player] = data.get('player')
-        self.track: str = data.get('track')
+        self.player: PlayerType = data.get('player')
+        self.track_id: str = data.get('track')
 
     def __repr__(self) -> str:
-        return f'<slate.TrackStartEvent player={self.player!r} track=\'{self.track}\''
+        return f'<slate.TrackStartEvent player={self.player!r} track_id=\'{self.track_id}\''
 
     def __str__(self) -> str:
         return 'track_start'
@@ -29,20 +24,19 @@ class TrackStartEvent:
 
 class TrackEndEvent:
 
-    __slots__ = 'data', 'player', 'track', 'reason', 'may_start_next'
+    __slots__ = 'data', 'player', 'track_id', 'reason', 'may_start_next'
 
     def __init__(self, data: dict) -> None:
-
         self.data: dict = data
 
-        self.player: Protocol[Player] = data.get('player')
-        self.track: str = data.get('track')
+        self.player: PlayerType = data.get('player')
+        self.track_id: str = data.get('track')
 
         self.reason: str = data.get('reason')
         self.may_start_next: bool = data.get('mayStartNext', False)
 
     def __repr__(self) -> str:
-        return f'<slate.TrackEndEvent player={self.player!r} track=\'{self.track}\' reason=\'{self.reason}\''
+        return f'<slate.TrackEndEvent player={self.player!r} track=\'{self.track_id}\' reason=\'{self.reason}\''
 
     def __str__(self) -> str:
         return 'track_end'
@@ -50,14 +44,13 @@ class TrackEndEvent:
 
 class TrackExceptionEvent:
 
-    __slots__ = 'data', 'player', 'track', 'message', 'cause', 'stack', 'suppressed', 'severity'
+    __slots__ = 'data', 'player', 'track_id', 'message', 'cause', 'stack', 'suppressed', 'severity'
 
     def __init__(self, data: dict) -> None:
-
         self.data: dict = data
 
-        self.player: Protocol[Player] = data.get('player')
-        self.track: str = data.get('track')
+        self.player: PlayerType = data.get('player')
+        self.track_id: str = data.get('track')
 
         exception = data.get('exception')
         self.message: str = exception.get('message')
@@ -67,7 +60,7 @@ class TrackExceptionEvent:
         self.severity: str = exception.get('severity', 'UNKNOWN')
 
     def __repr__(self) -> str:
-        return f'<slate.TrackExceptionEvent player={self.player} track=\'{self.track}\' message=\'{self.message}\' severity=\'{self.severity}\' cause=\'{self.cause}\''
+        return f'<slate.TrackExceptionEvent player={self.player} track=\'{self.track_id}\' message=\'{self.message}\' severity=\'{self.severity}\' cause=\'{self.cause}\''
 
     def __str__(self) -> str:
         return 'track_exception'
@@ -75,19 +68,18 @@ class TrackExceptionEvent:
 
 class TrackStuckEvent:
 
-    __slots__ = 'data', 'player', 'track', 'threshold_ms'
+    __slots__ = 'data', 'player', 'track_id', 'threshold_ms'
 
     def __init__(self, data: dict) -> None:
-
         self.data: dict = data
 
-        self.player: Protocol[Player] = data.get('player')
-        self.track: str = data.get('track')
+        self.player: PlayerType = data.get('player')
+        self.track_id: str = data.get('track')
 
         self.threshold_ms: str = data.get('thresholdMs')
 
     def __repr__(self) -> str:
-        return f'<slate.TrackStuckEvent player={self.player} track=\'{self.track}\' threshold_ms=\'{self.threshold_ms}\''
+        return f'<slate.TrackStuckEvent player={self.player} track=\'{self.track_id}\' threshold_ms=\'{self.threshold_ms}\''
 
     def __str__(self) -> str:
         return 'track_stuck'
@@ -95,13 +87,12 @@ class TrackStuckEvent:
 
 class WebSocketClosedEvent:
 
-    __slots__ = 'data', 'player', 'track', 'reason', 'code', 'by_remote'
+    __slots__ = 'data', 'player', 'track_id', 'reason', 'code', 'by_remote'
 
     def __init__(self, data: dict) -> None:
-
         self.data: dict = data
 
-        self.player: Protocol[Player] = data.get('player')
+        self.player: PlayerType = data.get('player')
         self.reason: str = data.get('reason')
         self.code: str = data.get('code')
         self.by_remote: str = data.get('byRemote')

@@ -7,6 +7,7 @@ from typing import Dict, Optional, Protocol, Type
 import aiohttp
 import discord
 
+from slate import BaseNodeType, PlayerType
 from slate.bases.node import BaseNode
 from slate.bases.player import Player
 from slate.exceptions import NoNodesAvailable, NodeCreationError, NodeNotFound, PlayerAlreadyExists
@@ -32,7 +33,7 @@ class Client:
         self._bot: Protocol[discord.Client] = bot
         self._session: aiohttp.ClientSession = session or aiohttp.ClientSession()
 
-        self._nodes: Dict[str, Protocol[BaseNode]] = {}
+        self._nodes: Dict[str, BaseNodeType] = {}
 
     def __repr__(self) -> str:
         return f'<slate.Client node_count={len(self.nodes)}>'
@@ -58,7 +59,7 @@ class Client:
     #
 
     @property
-    def nodes(self) -> Dict[str, Protocol[BaseNode]]:
+    def nodes(self) -> Dict[str, BaseNodeType]:
         """
         :py:class:`Dict` [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
             A mapping of node identifier's to nodes that this client is managing.
@@ -68,7 +69,7 @@ class Client:
 
     #
 
-    async def create_node(self, *, host: str, port: str, password: str, identifier: str, cls: Type[Protocol[BaseNode]], **kwargs) -> Protocol[BaseNode]:
+    async def create_node(self, *, host: str, port: str, password: str, identifier: str, cls: Type[BaseNodeType], **kwargs) -> BaseNodeType:
         """
         Creates a node and attempts to connect it to it's external websocket.
 
@@ -114,7 +115,7 @@ class Client:
         await node.connect()
         return node
 
-    def get_node(self, *, identifier: Optional[str] = None) -> Optional[Protocol[BaseNode]]:
+    def get_node(self, *, identifier: Optional[str] = None) -> Optional[BaseNodeType]:
         """
         Returns the node with the given identifier.
 
@@ -143,7 +144,7 @@ class Client:
 
         return available_nodes.get(identifier, None)
 
-    async def create_player(self, *, channel: discord.VoiceChannel, node_identifier: Optional[str] = None, cls: Optional[Type[Protocol[Player]]] = Player) -> Protocol[Player]:
+    async def create_player(self, *, channel: discord.VoiceChannel, node_identifier: Optional[str] = None, cls: Optional[Type[PlayerType]] = Player) -> PlayerType:
         """
         Creates a player for the given :py:class:`discord.VoiceChannel`.
 
