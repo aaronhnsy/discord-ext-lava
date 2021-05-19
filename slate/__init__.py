@@ -11,7 +11,7 @@ from typing import TypeVar
 from discord.ext import commands
 
 from .andesite.node import AndesiteNode
-from .bases.node import BaseNode
+from .bases.node import Node
 from .bases.player import Player
 from .client import Client
 from .exceptions import *
@@ -25,7 +25,7 @@ from .objects.track import Track
 from .utils import ExponentialBackoff, Queue
 
 PlayerType = TypeVar('PlayerType', bound=Player)
-BaseNodeType = TypeVar('BaseNodeType', bound=BaseNode)
+NodeType = TypeVar('NodeType', bound=Node)
 ContextType = TypeVar('ContextType', bound=commands.Context)
 
 

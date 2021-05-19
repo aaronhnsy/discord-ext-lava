@@ -1,8 +1,8 @@
 
-__all__ = [
+__all__ = (
     'SlateException', 'NodeException', 'NodeCreationError', 'NodeConnectionError', 'NodeConnectionClosed', 'NodeNotFound', 'NoNodesAvailable', 'PlayerAlreadyExists',
     'TrackLoadFailed', 'HTTPError'
-]
+)
 
 
 class SlateException(Exception):
@@ -20,7 +20,7 @@ class NodeException(SlateException):
 class NodeCreationError(NodeException):
     """
     Raised when there was an error creating a node such as a duplicate identifier or the node class being passed to :py:meth:`Client.create_node` not being a subclass of
-    :py:class:`BaseNode`.
+    :py:class:`Node`.
     """
 
 

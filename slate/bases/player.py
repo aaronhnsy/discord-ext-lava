@@ -15,11 +15,10 @@ from slate.objects import events
 if TYPE_CHECKING:
     from slate.objects.track import Track
     from slate.objects.filters import Filter
-    from slate import BaseNodeType
+    from slate import NodeType
 
 
 __log__ = logging.getLogger('slate.bases.player')
-__all__ = ['Player']
 
 
 class Player(VoiceProtocol, ABC):
@@ -42,7 +41,7 @@ class Player(VoiceProtocol, ABC):
         self.channel: Optional[discord.VoiceChannel] = channel
         self._guild: discord.Guild = channel.guild
 
-        self._node: Optional[BaseNodeType] = None
+        self._node: Optional[NodeType] = None
         self._current: Optional[Track] = None
         self._filter: Optional[Filter] = None
         self._volume: int = 100
@@ -80,9 +79,9 @@ class Player(VoiceProtocol, ABC):
     #
 
     @property
-    def node(self) -> Optional[BaseNodeType]:
+    def node(self) -> Optional[NodeType]:
         """
-        Optional [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
+        Optional [ :py:class:`typing.Protocol` [ :py:class:`Node` ] ]:
             The node that is managing this player.
         """
         return self._node

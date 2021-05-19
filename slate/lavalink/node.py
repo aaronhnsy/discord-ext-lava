@@ -6,7 +6,7 @@ from typing import Optional, TYPE_CHECKING
 
 import aiohttp
 
-from slate.bases.node import BaseNode
+from slate.bases.node import Node
 from slate.objects.stats import LavalinkStats
 from slate.utils import ExponentialBackoff
 from slate.objects.routeplanner import RoutePlannerStatus
@@ -17,12 +17,11 @@ if TYPE_CHECKING:
 
 
 __log__ = logging.getLogger('slate.lavalink.node')
-__all__ = ['LavalinkNode']
 
 
-class LavalinkNode(BaseNode):
+class LavalinkNode(Node):
     """
-    An implementation of :py:class:`BaseNode` that allows connection to :resource:`lavalink <lavalink>` nodes.
+    An implementation of :py:class:`Node` that allows connection to :resource:`lavalink <lavalink>` nodes.
 
     Parameters
     ----------
@@ -43,7 +42,7 @@ class LavalinkNode(BaseNode):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._http_url: str = f'http://{self._host}:{self._port}/'
+        self._http_url: str = f'https://{self._host}:{self._port}/'
         self._ws_url: str = f'ws://{self._host}:{self._port}/'
         self._headers: dict = {
             'Authorization': self._password,

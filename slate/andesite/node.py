@@ -9,7 +9,7 @@ import aiohttp
 import async_timeout
 
 from slate.exceptions import HTTPError
-from slate.bases.node import BaseNode
+from slate.bases.node import Node
 from slate.objects.stats import AndesiteStats, LavalinkStats, Metadata
 from slate.utils import ExponentialBackoff
 
@@ -18,12 +18,11 @@ if TYPE_CHECKING:
 
 
 __log__ = logging.getLogger('slate.andesite.node')
-__all__ = ['AndesiteNode']
 
 
-class AndesiteNode(BaseNode):
+class AndesiteNode(Node):
     """
-    An implementation of :py:class:`BaseNode` that allows connection to :resource:`andesite <andesite>` nodes with support for their :resource:`lavalink <lavalink>`
+    An implementation of :py:class:`Node` that allows connection to :resource:`andesite <andesite>` nodes with support for their :resource:`lavalink <lavalink>`
     compatible websocket.
 
     Parameters
@@ -49,7 +48,7 @@ class AndesiteNode(BaseNode):
 
         self._use_compatibility: bool = use_compatibility
 
-        self._http_url: str = f'http://{self._host}:{self._port}/'
+        self._http_url: str = f'https://{self._host}:{self._port}/'
         self._ws_url: str = f'ws://{self._host}:{self._port}/{"websocket" if not self._use_compatibility else ""}'
         self._headers: dict = {
             'Authorization': self._password,

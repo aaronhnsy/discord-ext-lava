@@ -20,10 +20,9 @@ if TYPE_CHECKING:
 
 
 __log__ = logging.getLogger('slate.bases.node')
-__all__ = ['BaseNode']
 
 
-class BaseNode(abc.ABC):
+class Node(abc.ABC):
     """
     The abstract base class for creating a node with. Nodes connect to a websocket such as :resource:`andesite <andesite>` or :resource:`lavalink <lavalink>`
     using custom logic defined in that nodes subclass. All nodes passed to :py:meth:`Client.create_node` must inherit from this class.
@@ -65,7 +64,7 @@ class BaseNode(abc.ABC):
         self._available: bool = False
 
     def __repr__(self) -> str:
-        return f'<slate.BaseNode is_connected={self.is_connected} is_available={self.is_available} identifier=\'{self._identifier}\' player_count={len(self._players)}>'
+        return f'<slate.Node is_connected={self.is_connected} is_available={self.is_available} identifier=\'{self._identifier}\' player_count={len(self._players)}>'
 
     #
 
@@ -246,7 +245,7 @@ class BaseNode(abc.ABC):
 
     async def destroy(self, *, force: bool = False) -> None:
         """
-        Calls :py:meth:`BaseNode.disconnect` and removes this node from it's client.
+        Calls :py:meth:`Node.disconnect` and removes this node from it's client.
 
         Parameters
         ----------

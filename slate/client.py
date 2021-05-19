@@ -7,16 +7,15 @@ from typing import Dict, Optional, Protocol, TYPE_CHECKING, Type
 import aiohttp
 import discord
 
-from slate.bases.node import BaseNode
+from slate.bases.node import Node
 from slate.bases.player import Player
 from slate.exceptions import NoNodesAvailable, NodeCreationError, NodeNotFound, PlayerAlreadyExists
 
 if TYPE_CHECKING:
-    from slate import BaseNodeType, PlayerType
+    from slate import NodeType, PlayerType
 
 
 __log__ = logging.getLogger(__name__)
-__all__ = ['Client']
 
 
 class Client:
@@ -36,7 +35,7 @@ class Client:
         self._bot: Protocol[discord.Client] = bot
         self._session: aiohttp.ClientSession = session or aiohttp.ClientSession()
 
-        self._nodes: Dict[str, BaseNodeType] = {}
+        self._nodes: Dict[str, NodeType] = {}
 
     def __repr__(self) -> str:
         return f'<slate.Client node_count={len(self.nodes)}>'
@@ -62,9 +61,9 @@ class Client:
     #
 
     @property
-    def nodes(self) -> Dict[str, BaseNodeType]:
+    def nodes(self) -> Dict[str, NodeType]:
         """
-        :py:class:`Dict` [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]:
+        :py:class:`Dict` [ :py:class:`str` , :py:class:`typing.Protocol` [ :py:class:`Node` ] ]:
             A mapping of node identifier's to nodes that this client is managing.
         """
 
@@ -72,7 +71,7 @@ class Client:
 
     #
 
-    async def create_node(self, *, host: str, port: str, password: str, identifier: str, cls: Type[BaseNodeType], **kwargs) -> BaseNodeType:
+    async def create_node(self, *, host: str, port: str, password: str, identifier: str, cls: Type[NodeType], **kwargs) -> NodeType:
         """
         Creates a node and attempts to connect it to it's external websocket.
 
@@ -86,20 +85,20 @@ class Client:
             The password used for authentification.
         identifier: :py:class:`str`
             A unique identifier used to refer to the created node.
-        cls: :py:class:`typing.Type` [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]
-            The class used to connect to the external node. Must be a subclass of :py:class:`BaseNode`.
+        cls: :py:class:`typing.Type` [ :py:class:`typing.Protocol` [ :py:class:`Node` ] ]
+            The class used to connect to the external node. Must be a subclass of :py:class:`Node`.
         **kwargs:
             Optional keyword arguments to pass to the created node.
 
         Returns
         -------
-        :py:class:`typing.Protocol` [ :py:class:`BaseNode` ]
+        :py:class:`typing.Protocol` [ :py:class:`Node` ]
             The node that was created.
 
         Raises
         ------
         :py:class:`NodeCreationError`
-            Either a node with the given identifier already exists, or the given class was not a subclass of :py:class:`BaseNode`.
+            Either a node with the given identifier already exists, or the given class was not a subclass of :py:class:`Node`.
         :py:class:`NodeConnectionError`
             There was an error while connecting to the external node. Could mean there was invalid authorization or an incorrect host address/port, etc.
         """
@@ -109,8 +108,8 @@ class Client:
         if identifier in self.nodes.keys():
             raise NodeCreationError(f'Node with identifier \'{identifier}\' already exists.')
 
-        if not issubclass(cls, BaseNode):
-            raise NodeCreationError(f'The \'node\' argument must be a subclass of \'{BaseNode.__name__}\'.')
+        if not issubclass(cls, Node):
+            raise NodeCreationError(f'The \'node\' argument must be a subclass of \'{Node.__name__}\'.')
 
         node = cls(client=self, host=host, port=port, password=password, identifier=identifier, **kwargs)
         __log__.debug(f'NODE | Attempting \'{node.__class__.__name__}\' connection with identifier \'{identifier}\'.')
@@ -118,7 +117,7 @@ class Client:
         await node.connect()
         return node
 
-    def get_node(self, *, identifier: Optional[str] = None) -> Optional[BaseNodeType]:
+    def get_node(self, *, identifier: Optional[str] = None) -> Optional[NodeType]:
         """
         Returns the node with the given identifier.
 
@@ -129,7 +128,7 @@ class Client:
 
         Returns
         -------
-        Optional [ :py:class:`typing.Protocol` [ :py:class:`BaseNode` ] ]
+        Optional [ :py:class:`typing.Protocol` [ :py:class:`Node` ] ]
             The node that was found. Could return :py:class:`None` if no nodes with the given identifier were found.
 
         Raises
@@ -145,7 +144,7 @@ class Client:
         if identifier is None:
             return random.choice(list(available_nodes.values()))
 
-        return available_nodes.get(identifier, None)
+        return available_nodes.get(identifier)
 
     async def create_player(self, *, channel: discord.VoiceChannel, node_identifier: Optional[str] = None, cls: Optional[Type[PlayerType]] = Player) -> PlayerType:
         """
