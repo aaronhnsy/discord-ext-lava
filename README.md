@@ -3,7 +3,7 @@ Slate is an (at the moment) [Lavalink](https://github.com/Frederikam/Lavalink/) 
 commands extension of [discord.py](https://github.com/Rapptz/discord.py).
 
 # Support
-Support for using Slate can be found in my [discord server](https://discord.com/invite/xP8xsHr), or by opening an issue on this github.
+Support for using Slate can be found in my [discord server](https://discord.com/invite/xP8xsHr), or by opening an issue on this GitHub.
 
 # Documentation
 Slate uses [readthedocs.org](https://readthedocs.org/). The latest versions documentation can be found [here](https://slate-py.readthedocs.io/en/latest/) and previous versions can
@@ -54,7 +54,7 @@ class Music(commands.Cog):
     
     async def load(self):
         await self.slate.create_node(host='127.0.0.1', port='20000', 
-                                     password='securepassword', identifier='ALPHA', 
+                                     password='secure password', identifier='ALPHA', 
                                      cls=slate.AndesiteNode)
         
     @commands.command(name='join', aliases=['connect'])
