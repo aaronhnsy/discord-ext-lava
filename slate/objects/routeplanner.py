@@ -1,6 +1,6 @@
 from typing import List
 
-__all__ = ['FailingAddress', 'RoutePlannerStatus']
+__all__ = ('FailingAddress', 'RoutePlannerStatus')
 
 
 class FailingAddress:

@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from slate import PlayerType
 
 
-__all__ = ['TrackStartEvent', 'TrackEndEvent', 'TrackExceptionEvent', 'TrackStuckEvent', 'WebSocketClosedEvent']
+__all__ = ('TrackStartEvent', 'TrackEndEvent', 'TrackExceptionEvent', 'TrackStuckEvent', 'WebSocketClosedEvent')
 
 
 class TrackStartEvent:

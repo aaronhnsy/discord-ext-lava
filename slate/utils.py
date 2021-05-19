@@ -4,7 +4,7 @@ import random
 import time
 from typing import Any, Generator, Iterator, List, Optional, Union
 
-__all__ = ['ExponentialBackoff', 'Queue']
+__all__ = ('ExponentialBackoff', 'Queue')
 
 
 class Queue:

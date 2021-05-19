@@ -4,7 +4,7 @@ import abc
 import collections
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-__all__ = ['BaseFilter', 'Equalizer', 'Karaoke', 'Timescale', 'Tremolo', 'Vibrato', 'Rotation', 'LowPass', 'ChannelMix', 'Distortion', 'Filter']
+__all__ = ('BaseFilter', 'Equalizer', 'Karaoke', 'Timescale', 'Tremolo', 'Vibrato', 'Rotation', 'LowPass', 'ChannelMix', 'Distortion', 'Filter')
 
 
 class BaseFilter(abc.ABC):
@@ -292,7 +292,7 @@ class LowPass(BaseFilter):
 class ChannelMix(BaseFilter):
     """
     A channel mix filter that allows you to mix left and right audio channels with a configurable factor on how much each one affects the the other. By default both channels are
-    kept separate from eachother, while a value of 0.5 on each factor means both channels get the same audio.
+    kept separate from each other, while a value of 0.5 on each factor means both channels get the same audio.
 
     .. note::
         All values must be more than or equal to 0, or less than or equal to 1.
