@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Protocol
+from typing import List, Optional, TYPE_CHECKING, Union
 
+import discord
 from discord.ext import commands
 
 from slate.objects.track import Track
+
+if TYPE_CHECKING:
+    from slate import ContextType
 
 
 class Playlist:
@@ -25,21 +29,46 @@ class Playlist:
         This class uses :ref:`py:slots` which means you can't use dynamic attributes.
     """
 
-    __slots__ = '_playlist_info', '_raw_tracks', '_ctx', '_tracks', '_name', '_selected_track'
+    __slots__ = '_playlist_info', '_tracks', '_ctx', '_requester', '_name', '_selected_track'
 
-    def __init__(self, *, playlist_info: dict, tracks: List[Dict], ctx: Protocol[commands.Context] = None) -> None:
+    def __init__(self, *, playlist_info: dict, tracks: List[dict], ctx: ContextType = None) -> None:
 
-        self._playlist_info = playlist_info
-        self._raw_tracks = tracks
-        self._ctx = ctx
+        self._tracks: List[Track] = [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in tracks]
+        self._ctx: ContextType = ctx
 
-        self._tracks = [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in self._raw_tracks]
+        self._requester: Optional[Union[discord.User, discord.Member]] = ctx.author if ctx else None
 
-        self._name = self._playlist_info.get('name')
-        self._selected_track = self._playlist_info.get('selectedTrack')
+        self._name: str = playlist_info.get('name')
+        self._selected_track: int = playlist_info.get('selectedTrack')
 
     def __repr__(self) -> str:
         return f'<slate.Playlist name=\'{self._name}\' selected_track={self.selected_track} track_count={len(self._tracks)}>'
+
+    #
+
+    @property
+    def tracks(self) -> List[Track]:
+        """
+        :py:class:`List` [ :py:class:`Track` ]:
+            A list of Track objects that this playlist has.
+        """
+        return self._tracks
+
+    @property
+    def ctx(self) -> Optional[ContextType]:
+        """
+        Optional [ :py:class:`commands.Context` ]:
+            A discord.py context object that allows access to attributes such as :py:attr:`Track.requester`.
+        """
+        return self._ctx
+
+    @property
+    def requester(self) -> Optional[Union[discord.Member, discord.User]]:
+        """
+        Optional [ :py:class:`Union` [ :py:class:`discord.Member` , :py:class:`discord.User` ] ]:
+            The discord user or member who requested the track. Only available if :py:attr:`Track.context` is not None.
+        """
+        return self._requester
 
     #
 
@@ -62,11 +91,3 @@ class Playlist:
             return self._tracks[self._selected_track]
         except IndexError:
             return None
-
-    @property
-    def tracks(self) -> List[Track]:
-        """
-        :py:class:`List` [ :py:class:`Track` ]:
-            A list of Track objects that this playlist has.
-        """
-        return self._tracks

@@ -8,6 +8,8 @@ import logging
 from collections import namedtuple
 from typing import TypeVar
 
+from discord.ext import commands
+
 from .andesite.node import AndesiteNode
 from .bases.node import BaseNode
 from .bases.player import Player
@@ -24,6 +26,8 @@ from .utils import ExponentialBackoff, Queue
 
 PlayerType = TypeVar('PlayerType', bound=Player)
 BaseNodeType = TypeVar('BaseNodeType', bound=BaseNode)
+ContextType = TypeVar('ContextType', bound=commands.Context)
+
 
 version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=2021, minor=4, micro=3, releaselevel='final', serial=0)
 logging.getLogger('slate')
