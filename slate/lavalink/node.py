@@ -42,7 +42,7 @@ class LavalinkNode(Node):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._http_url: str = f'https://{self._host}:{self._port}/'
+        self._http_url: str = f'http://{self._host}:{self._port}/'
         self._ws_url: str = f'ws://{self._host}:{self._port}/'
         self._headers: dict = {
             'Authorization': self._password,

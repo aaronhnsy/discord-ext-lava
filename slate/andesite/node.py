@@ -48,7 +48,7 @@ class AndesiteNode(Node):
 
         self._use_compatibility: bool = use_compatibility
 
-        self._http_url: str = f'https://{self._host}:{self._port}/'
+        self._http_url: str = f'http://{self._host}:{self._port}/'
         self._ws_url: str = f'ws://{self._host}:{self._port}/{"websocket" if not self._use_compatibility else ""}'
         self._headers: dict = {
             'Authorization': self._password,
