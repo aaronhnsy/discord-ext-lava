@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from abc import ABC
-from typing import List, Optional, Protocol, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 
 import discord
 from discord import VoiceProtocol
@@ -12,12 +12,14 @@ from slate.andesite.node import AndesiteNode
 from slate.lavalink.node import LavalinkNode
 from slate.objects import events
 
+
 if TYPE_CHECKING:
     from slate.objects.track import Track
     from slate.objects.filters import Filter
-    from slate import NodeType
+    from slate import NodeType, BotType
 
 
+__all__ = ['Player']
 __log__ = logging.getLogger('slate.bases.player')
 
 
@@ -27,17 +29,17 @@ class Player(VoiceProtocol, ABC):
 
     Parameters
     ----------
-    client: :py:class:`typing.Protocol` [ :py:class:`discord.Client` ]
+    client: :py:class:`discord.Client`
         The bot instance that this client should be connected to.
     channel: :py:class:`discord.VoiceChannel`
         The voice channel that this player should connect to.
     """
 
-    def __init__(self, client: Protocol[discord.Client], channel: discord.VoiceChannel) -> None:
+    def __init__(self, client: BotType, channel: discord.VoiceChannel) -> None:
         super().__init__(client=client, channel=channel)
 
-        self.client: Protocol[discord.Client] = client
-        self._bot: Protocol[discord.Client] = self.client
+        self.client: BotType = client
+        self._bot: BotType = self.client
         self.channel: Optional[discord.VoiceChannel] = channel
         self._guild: discord.Guild = channel.guild
 
@@ -61,9 +63,9 @@ class Player(VoiceProtocol, ABC):
     #
 
     @property
-    def bot(self) -> Protocol[discord.Client]:
+    def bot(self) -> BotType:
         """
-        :py:class:`typing.Protocol` [ :py:class:`discord.Client` ]:
+        :py:class:`discord.Client`:
             The bot instance that this player is connected to.
         """
         return self._bot
@@ -81,7 +83,7 @@ class Player(VoiceProtocol, ABC):
     @property
     def node(self) -> Optional[NodeType]:
         """
-        Optional [ :py:class:`typing.Protocol` [ :py:class:`Node` ] ]:
+        Optional [ :py:class:`Node` ]:
             The node that is managing this player.
         """
         return self._node

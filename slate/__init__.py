@@ -6,8 +6,9 @@ __version__ = '2021.04.03'
 
 import logging
 from collections import namedtuple
-from typing import TypeVar
+from typing import TypeVar, Union
 
+import discord
 from discord.ext import commands
 
 from .andesite.node import AndesiteNode
@@ -24,8 +25,10 @@ from .objects.stats import AndesiteStats, LavalinkStats, Metadata
 from .objects.track import Track
 from .utils import ExponentialBackoff, Queue
 
-PlayerType = TypeVar('PlayerType', bound=Player)
-NodeType = TypeVar('NodeType', bound=Node)
+
+BotType = TypeVar('BotType', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
+PlayerType = TypeVar('PlayerType', bound=Union[Player, discord.VoiceProtocol])
+NodeType = TypeVar('NodeType', bound=Union[Node, AndesiteNode, LavalinkNode])
 ContextType = TypeVar('ContextType', bound=commands.Context)
 
 

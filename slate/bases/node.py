@@ -4,7 +4,7 @@ import abc
 import asyncio
 import json
 import logging
-from typing import Dict, List, Optional, Protocol, TYPE_CHECKING, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Union
 
 import aiohttp
 from discord.ext import commands
@@ -14,11 +14,13 @@ from slate.objects.playlist import Playlist
 from slate.objects.track import Track
 from slate.utils import ExponentialBackoff
 
+
 if TYPE_CHECKING:
     from slate.client import Client
-    from slate import PlayerType
+    from slate import PlayerType, ContextType
 
 
+__all__ = ['Node']
 __log__ = logging.getLogger('slate.bases.node')
 
 
@@ -113,7 +115,7 @@ class Node(abc.ABC):
     @property
     def players(self) -> Dict[int, PlayerType]:
         """
-        :py:class:`Dict` [ :py:class:`int` , :py:class:`typing.Protocol` [ :py:class:`Player`] ]:
+        :py:class:`Dict` [ :py:class:`int` , :py:class:`Player` ]:
             A mapping of player guild id's to players that this node is managing.
         """
         return self._players
@@ -260,7 +262,7 @@ class Node(abc.ABC):
 
     #
 
-    async def search(self, query: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
+    async def search(self, query: str, *, ctx: ContextType = None, retry: bool = True, tries: int = 3,
                      raw: bool = False) -> Optional[Union[Playlist, List[Track], Dict]]:
         """
         Searches for and returns a list of :py:class:`Track`'s or a :py:class:`Playlist`.
@@ -269,7 +271,7 @@ class Node(abc.ABC):
         ----------
         query: str
             The query to search with. Could be a link or a search term if prepended with 'scsearch:' (Soundcloud), 'ytsearch:' (Youtube) or 'ytmsearch: ' (Youtube music).
-        ctx: :py:class:`typing.Protocol` [ :py:class:`commands.Context` ]
+        ctx: :py:class:`commands.Context`
             An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
         retry: Optional [ :py:class:`bool` ]
             Whether or not to retry the operation if a non-200 status code is received.
@@ -334,7 +336,7 @@ class Node(abc.ABC):
         __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError(f'Non-200 status code while loading tracks. All {tries} retries used.', status_code=response.status)
 
-    async def decode_track(self, track_id: str, *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
+    async def decode_track(self, track_id: str, *, ctx: ContextType = None, retry: bool = True, tries: int = 3,
                            raw: bool = False) -> Optional[Union[Track, Dict]]:
         """
         Returns a track object based on its track id.
@@ -390,7 +392,7 @@ class Node(abc.ABC):
         __log__.error(f'DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError(f'Non-200 status code while decoding track. All {tries} retries used.', status_code=response.status)
 
-    async def decode_tracks(self, track_ids: List[str], *, ctx: Protocol[commands.Context] = None, retry: bool = True, tries: int = 3,
+    async def decode_tracks(self, track_ids: List[str], *, ctx: ContextType = None, retry: bool = True, tries: int = 3,
                             raw: bool = False) -> Optional[Union[List[Track], Dict]]:
         """
         Returns track objects based on their track ids.
