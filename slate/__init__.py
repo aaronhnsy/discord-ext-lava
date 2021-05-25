@@ -2,7 +2,7 @@ __title__ = 'slate'
 __author__ = 'Axelancerr'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Axelancerr'
-__version__ = '2021.04.03'
+__version__ = '2021.05.26'
 
 import logging
 from collections import namedtuple
@@ -32,5 +32,5 @@ NodeType = TypeVar('NodeType', bound=Union[Node, AndesiteNode, LavalinkNode])
 ContextType = TypeVar('ContextType', bound=commands.Context)
 
 
-version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=2021, minor=4, micro=3, releaselevel='final', serial=0)
+version_info = namedtuple('VersionInfo', 'major minor micro releaselevel serial')(major=2021, minor=5, micro=26, releaselevel='final', serial=0)
 logging.getLogger('slate')

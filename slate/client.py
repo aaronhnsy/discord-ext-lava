@@ -47,7 +47,7 @@ class Client:
     @property
     def bot(self) -> BotType:
         """
-         :py:class:`discord.Client`:
+        :py:class:`discord.Client`:
             The bot instance that this client is connected to.
         """
         return self._bot
