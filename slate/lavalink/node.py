@@ -7,15 +7,17 @@ from typing import Optional, TYPE_CHECKING
 import aiohttp
 
 from slate.bases.node import Node
+from slate.exceptions import HTTPError
+from slate.objects.routeplanner import RoutePlannerStatus
 from slate.objects.stats import LavalinkStats
 from slate.utils import ExponentialBackoff
-from slate.objects.routeplanner import RoutePlannerStatus
-from slate.exceptions import HTTPError
+
 
 if TYPE_CHECKING:
     from slate.client import Client
 
 
+__all__ = ['LavalinkNode']
 __log__ = logging.getLogger('slate.lavalink.node')
 
 

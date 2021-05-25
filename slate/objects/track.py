@@ -5,8 +5,12 @@ from typing import Optional, TYPE_CHECKING, Union
 import discord
 from discord.ext import commands
 
+
 if TYPE_CHECKING:
     from slate import ContextType
+
+
+__all__ = ['Track']
 
 
 class Track:

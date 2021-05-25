@@ -7,8 +7,12 @@ from discord.ext import commands
 
 from slate.objects.track import Track
 
+
 if TYPE_CHECKING:
     from slate import ContextType
+
+
+__all__ = ['Playlist']
 
 
 class Playlist:

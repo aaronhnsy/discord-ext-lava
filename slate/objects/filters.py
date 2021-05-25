@@ -4,7 +4,8 @@ import abc
 import collections
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-__all__ = ('BaseFilter', 'Equalizer', 'Karaoke', 'Timescale', 'Tremolo', 'Vibrato', 'Rotation', 'LowPass', 'ChannelMix', 'Distortion', 'Filter')
+
+__all__ = ['BaseFilter', 'Equalizer', 'Karaoke', 'Timescale', 'Tremolo', 'Vibrato', 'Rotation', 'LowPass', 'ChannelMix', 'Distortion', 'Filter']
 
 
 class BaseFilter(abc.ABC):

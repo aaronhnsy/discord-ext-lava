@@ -1,6 +1,6 @@
 
 
-__all__ = ('LavalinkStats', 'AndesiteStats', 'Metadata')
+__all__ = ['LavalinkStats', 'AndesiteStats', 'Metadata']
 
 
 class LavalinkStats:

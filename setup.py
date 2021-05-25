@@ -3,6 +3,7 @@ import re
 
 import setuptools
 
+
 with open('README.md', 'r') as file:
     LONG_DESCRIPTION = file.read()
 
