@@ -4,18 +4,19 @@ import random
 import time
 from typing import Any, Generator, Iterator, List, Optional, Union
 
-__all__ = ('ExponentialBackoff', 'Queue')
+
+__all__ = ['ExponentialBackoff', 'Queue']
 
 
 class Queue:
 
     def __init__(self) -> None:
 
-        self._queue = []
-        self._queue_history = []
+        self._queue: List[Any] = []
+        self._queue_history: List[Any] = []
 
-        self._looping = False
-        self._looping_current = False
+        self._looping: bool = False
+        self._looping_current: bool = False
 
     def __repr__(self) -> str:
         return f'<slate.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>'
@@ -53,7 +54,7 @@ class Queue:
         if not isinstance(other, list):
             raise TypeError(f'unsupported operand type(s) for -: \'list\' and \'{type(other)}\'')
 
-        self._queue.extend(other)
+        self._queue = [item for item in self._queue if item not in other]
 
     #
 
@@ -99,7 +100,7 @@ class Queue:
 
     #
 
-    def get(self, *, position: int = 0, put_history: bool = True) -> Optional[Any]:
+    def get(self, position: int = 0, *, put_history: bool = True) -> Optional[Any]:
 
         try:
 
@@ -113,17 +114,17 @@ class Queue:
         except IndexError:
             return None
 
-    def get_history(self, *, position: int = 0) -> Optional[Any]:
+    def get_history(self, position: int = 0) -> Optional[Any]:
 
         try:
             return list(reversed(self._queue_history))[position]
         except IndexError:
             return None
 
-    def put(self, *, items: Union[List[Any], Any], position: int = None) -> None:
+    def put(self, items: Union[List[Any], Any], *, position: int = None) -> None:
         self._put(iterable=self._queue, items=items, position=position)
 
-    def put_history(self, *, items: Union[List[Any], Any], position: int = None) -> None:
+    def put_history(self, items: Union[List[Any], Any], *, position: int = None) -> None:
         self._put(iterable=self._queue_history, items=items, position=position)
 
     def shuffle(self) -> None:
