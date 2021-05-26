@@ -1,18 +1,17 @@
-# Slate
-Slate is an (at the moment) [Lavalink](https://github.com/Frederikam/Lavalink/) and [Andesite](https://github.com/natanbc/andesite) compatible python library for use with the 
-commands extension of [discord.py](https://github.com/Rapptz/discord.py).
+![](slate.jpg)
+
+A [Lavalink](https://github.com/Frederikam/Lavalink/) [Andesite](https://github.com/natanbc/andesite) and [Obsidian](https://github.com/mixtape-bot/obsidian) compatible python wrapper for use with the commands extension of [discord.py](https://github.com/Rapptz/discord.py).
 
 # Support
 Support for using Slate can be found in my [discord server](https://discord.com/invite/xP8xsHr), or by opening an issue on this GitHub.
 
 # Documentation
-Slate uses [readthedocs.org](https://readthedocs.org/). The latest versions documentation can be found [here](https://slate-py.readthedocs.io/en/latest/) and previous versions can
-be viewed by clicking the banner at the bottom of the sidebar on the main documentation page.
+Slate uses [readthedocs.org](https://readthedocs.org/). The latest versions documentation can be found [here](https://slate-py.readthedocs.io/en/latest/) and previous versions can be viewed by clicking the banner at the bottom of the sidebar on the main documentation page.
 
 # Installation
 At the moment Slate is not on PyPi however it can be installed from git.
 
-### Please note that Slate requires python 3.7 or higher.
+#### Please note that Slate requires python 3.7 or higher.
 ```shell
 pip install -U git+https://github.com/Axelancerr/Slate
 ```
