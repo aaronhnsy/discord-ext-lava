@@ -1,57 +1,32 @@
 from __future__ import annotations
 
-import abc
 import asyncio
 import json
 import logging
-from typing import Dict, Generic, List, Optional, TYPE_CHECKING, TypeVar, Union
+from typing import Dict, List, Optional, TypeVar, Union
 
 import aiohttp
-from discord.ext import commands
 
-from ..exceptions import HTTPError, NodeConnectionClosed, NodeConnectionError, TrackLoadFailed
-from slate.objects.playlist import Playlist
-from slate.objects.track import Track
-from slate.utils import ExponentialBackoff
-
-
-if TYPE_CHECKING:
-
-    from slate.client import Client
-
-from ..obsidian.player import ObsidianPlayer
-from ..lavalink.player import LavalinkPlayer
-from ..andesite.player import AndesitePlayer
-
-ContextType = TypeVar('ContextType', bound=commands.Context)
-PlayerType = TypeVar('PlayerType', bound=Union[ObsidianPlayer, LavalinkPlayer, AndesitePlayer])
-
-__all__ = ['Node']
-__log__ = logging.getLogger('slate.bases.node')
+from .objects.enums import Op
+from .objects.exceptions import HTTPError, TrackLoadError
+from .objects.playlist import ObsidianPlaylist
+from .objects.stats import ObsidianStats
+from .objects.track import ObsidianTrack
+from .player import ObsidianPlayer
+from ..client import Client
+from ..exceptions import NodeConnectionClosed, NodeConnectionError
+from ..utils import ExponentialBackoff
 
 
-class Node(abc.ABC, Generic[ContextType]):
-    """
-    The abstract base class for creating a node with. Nodes connect to a websocket such as :resource:`andesite <andesite>` or :resource:`lavalink <lavalink>`
-    using custom logic defined in that nodes subclass. All nodes passed to :py:meth:`Client.create_node` must inherit from this class.
+PlayerType = TypeVar('PlayerType', bound=ObsidianPlayer)
 
-    Parameters
-    ----------
-    client: :py:class:`Client`
-        The slate client that this node is associated with.
-    host: :py:class:`str`
-        The host address of the node's websocket.
-    port: :py:class:`str`
-        The port to connect to the node's websocket with.
-    password: :py:class:`str`
-        The password used for authentification with the node's websocket and HTTP connections.
-    identifier: :py:class:`str`
-        This nodes unique identifier.
-    **kwargs
-        Custom keyword arguments that have been passed to this node from :py:meth:`Client.create_node`
-    """
 
-    def __init__(self, *, client: Client, host: str, port: str, password: str, identifier: str, **kwargs) -> None:
+__log__ = logging.getLogger('slate.obsidian.node')
+
+
+class ObsidianNode:
+
+    def __init__(self, *, client: Client, host: str, port: str, password: str, identifier: str) -> None:
 
         self._client: Client = client
         self._host: str = host
@@ -61,18 +36,24 @@ class Node(abc.ABC, Generic[ContextType]):
 
         self._players: Dict[int, PlayerType] = {}
 
-        self._http_url: Optional[str] = None
-        self._ws_url: Optional[str] = None
-        self._headers: Optional[Dict[str]] = {}
+        self._http_url: str = f'http://{self._host}:{self._port}/'
+        self._ws_url: str = f'ws://{self._host}:{self._port}/magma'
+
+        self._headers: dict = {
+            'Authorization': self._password,
+            'User-Id': str(self._client.bot.user.id),
+            'Client-Name': 'Slate/0.1.0',
+        }
+
+        self._stats: Optional[ObsidianStats] = None
 
         self._websocket: Optional[aiohttp.ClientWebSocketResponse] = None
-
         self._task: Optional[asyncio.Task] = None
 
         self._available: bool = False
 
     def __repr__(self) -> str:
-        return f'<slate.Node is_connected={self.is_connected} is_available={self.is_available} identifier=\'{self._identifier}\' player_count={len(self._players)}>'
+        return f'<slate.ObsidianNode is_connected={self.is_connected} is_available={self.is_available} identifier=\'{self._identifier}\' player_count={len(self._players)}>'
 
     #
 
@@ -146,23 +127,79 @@ class Node(abc.ABC, Generic[ContextType]):
 
     #
 
-    @abc.abstractmethod
-    async def _listen(self) -> None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def _handle_message(self, message: dict) -> None:
-        raise NotImplementedError
+    @property
+    def stats(self) -> Optional[ObsidianStats]:
+        return self._stats
 
     #
 
-    async def _send(self, **data) -> None:
+    async def _listen(self) -> None:
+
+        backoff = ExponentialBackoff(base=7)
+
+        while True:
+
+            message = await self._websocket.receive()
+
+            if message.type is aiohttp.WSMsgType.CLOSED:
+
+                self._available = False
+
+                for player in self._players.copy().values():
+                    await player.destroy()
+
+                retry = backoff.delay()
+                __log__.warning(f'WEBSOCKET | \'{self.identifier}\'s websocket is disconnected, sleeping for {round(retry)} seconds.')
+                await asyncio.sleep(retry)
+
+                if not self.is_connected:
+                    __log__.warning(f'WEBSOCKET | \'{self.identifier}\'s websocket is disconnected, attempting reconnection.')
+                    self.client.bot.loop.create_task(self._reconnect())
+
+            else:
+
+                data = message.json()
+
+                try:
+                    op = Op(data.get('op', None))
+                except ValueError:
+                    __log__.warning(f'WEBSOCKET | \'{self.identifier}\' received payload with invalid/missing op code. | Payload: {data}')
+                    continue
+
+                else:
+                    __log__.debug(f'WEBSOCKET | \'{self.identifier}\' received payload with op \'{op}\'. | Payload: {data}')
+                    await self.client.bot.loop.create_task(self._handle_message(op=op, data=data.get('d')))
+
+    async def _handle_message(self, op: Op, data: dict) -> None:
+
+        if op is Op.PLAYER_UPDATE:
+
+            if not (player := self.players.get(int(data.get('guild_id')))):
+                return
+
+            await player._update_state(data)
+
+        elif op is Op.PLAYER_EVENT:
+
+            if not (player := self.players.get(int(data.get('guild_id')))):
+                return
+
+            player._dispatch_event(data)
+
+        elif op is Op.STATS:
+            self._stats = ObsidianStats(data)
+
+    #
+
+    async def _send(self, op: Op, **data) -> None:
 
         if not self.is_connected:
             raise NodeConnectionClosed(f'Node \'{self.identifier}\' is not connected.')
 
-        __log__.debug(f'WEBSOCKET | Node \'{self.identifier}\' sent a \'{data.get("op")}\' payload. | Payload: {data}')
+        data = {'op': op.value, 'd': data}
+
         await self._websocket.send_json(data)
+        __log__.debug(f'WEBSOCKET | Node \'{self.identifier}\' sent a \'{op}\' payload. | Payload: {data}')
 
     async def _reconnect(self) -> None:
 
@@ -268,35 +305,8 @@ class Node(abc.ABC, Generic[ContextType]):
 
     #
 
-    async def search(self, query: str, *, ctx: ContextType = None, retry: bool = True, tries: int = 3, raw: bool = False) -> Optional[Union[Playlist, List[Track], Dict]]:
-        """
-        Searches for and returns a list of :py:class:`Track`'s or a :py:class:`Playlist`.
 
-        Parameters
-        ----------
-        query: str
-            The query to search with. Could be a link or a search term if prepended with 'scsearch:' (Soundcloud), 'ytsearch:' (Youtube) or 'ytmsearch: ' (Youtube music).
-        ctx: :py:class:`commands.Context`
-            An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
-        retry: Optional [ :py:class:`bool` ]
-            Whether or not to retry the operation if a non-200 status code is received.
-        tries: Optional [ :py:class:`int` ]
-            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
-        raw: Optional [ :py:class:`bool` ]
-            Whether or not to return the raw result of the operation.
-
-        Returns
-        -------
-        Optional [ :py:class:`Union` [ :py:class:`Playlist` , :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
-            The raw result, list of tracks, or playlist that was found.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-200 status code while searching.
-        :py:class:`TrackLoadFailed`:
-            The server did not error, but there was some kind of other problem while loading tracks. Could be a restricted video, youtube ratelimit, etc.
-        """
+    async def search(self, query: str, *, ctx: ContextType = None, retry: bool = True, tries: int = 3, raw: bool = False) -> Optional[Union[ObsidianPlaylist, List[ObsidianTrack], Dict]]:
 
         backoff = ExponentialBackoff()
 
@@ -320,54 +330,33 @@ class Node(abc.ABC, Generic[ContextType]):
             if raw:
                 return data
 
-            load_type = data.pop('loadType')
+            load_type = data.get('load_type')
 
             if load_type == 'NO_MATCHES':
-                __log__.debug(f'LOADTRACKS | No matches found for query: {query}')
+                __log__.info(f'LOADTRACKS | NO_MATCHES for query: {query} | Data: {data}')
                 return None
 
             if load_type == 'LOAD_FAILED':
-                __log__.warning(f'LOADTRACKS | Encountered a LOAD_FAILED while getting tracks for query: {query} | Data: {data}')
-                raise TrackLoadFailed(data=data)
+                __log__.warning(f'LOADTRACKS | LOAD_FAILED for query: {query} | Data: {data}')
+                raise TrackLoadError(data=data.get('exception'))
 
             if load_type == 'PLAYLIST_LOADED':
-                __log__.debug(f'LOADTRACKS | Playlist loaded for query: {query} | Name: {data.get("playlistInfo", {}).get("name", "UNKNOWN")}')
-                return Playlist(playlist_info=data.get('playlistInfo'), tracks=data.get('tracks'), ctx=ctx)
+
+                playlist_info = data.get('playlist_info')
+                playlist_info['uri'] = query
+
+                __log__.info(f'LOADTRACKS | PLAYLIST_LOADED for query: {query} | Data: {data}')
+                return ObsidianPlaylist(playlist_info=playlist_info, tracks=data.get('tracks'), ctx=ctx)
 
             if load_type in ['SEARCH_RESULT', 'TRACK_LOADED']:
-                __log__.debug(f'LOADTRACKS | Tracks loaded for query: {query} | Amount: {len(data.get("tracks"))}')
-                return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
+                __log__.info(f'LOADTRACKS | SEARCH_RESULT/TRACK_LOADED for query: {query} | Data: {data}')
+                return [ObsidianTrack(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
 
         __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError(f'Non-200 status code while loading tracks. All {tries} retries used.', status_code=response.status)
 
-    async def decode_track(self, track_id: str, *, ctx: ContextType = None, retry: bool = True, tries: int = 3, raw: bool = False) -> Optional[Union[Track, Dict]]:
-        """
-        Returns a track object based on its track id.
 
-        Parameters
-        ----------
-        track_id: str
-            The track id to decode.
-        ctx: Optional[ :py:class:`commands.Context` ]:
-            An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
-        retry: Optional [ :py:class:`bool` ]
-            Whether or not to retry the operation if a non-200 status code is received.
-        tries: Optional [ :py:class:`int` ]
-            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
-        raw: Optional [ :py:class:`bool` ]
-            Whether or not to return the raw result of the operation.
-
-        Returns
-        -------
-        Optional [ :py:class:`Union` [ :py:class:`Track` , :py:class:`dict` ] ]:
-            The raw result or track that was returned.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-200 status code while decoding tracks.
-        """
+    async def decode_track(self, track_id: str, *, ctx: ContextType = None, retry: bool = True, tries: int = 3, raw: bool = False) -> Optional[Union[ObsidianTrack, Dict]]:
 
         backoff = ExponentialBackoff()
 
@@ -391,38 +380,12 @@ class Node(abc.ABC, Generic[ContextType]):
             if raw:
                 return data
 
-            return Track(track_id=track_id, track_info=data.get('info', None) or data, ctx=ctx)
+            return ObsidianTrack(track_id=track_id, track_info=data.get('info', None) or data, ctx=ctx)
 
         __log__.error(f'DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError(f'Non-200 status code while decoding track. All {tries} retries used.', status_code=response.status)
 
-    async def decode_tracks(self, track_ids: List[str], *, ctx: ContextType = None, retry: bool = True, tries: int = 3, raw: bool = False) -> Optional[Union[List[Track], Dict]]:
-        """
-        Returns track objects based on their track ids.
-
-        Parameters
-        ----------
-        track_ids: :py:class:`List` [ :py:class:`str` ]
-            A list of track id's to decode.
-        ctx: Optional[ :py:class:`commands.Context` ]:
-            An optional discord.py context argument to pass to the result for quality of life features such as :py:attr:`Track.requester`.
-        retry: Optional [ :py:class:`bool` ]
-            Whether or not to retry the operation if a non-200 status code is received.
-        tries: Optional [ :py:class:`int` ]
-            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
-        raw: Optional [ :py:class:`bool` ]
-            Whether or not to return the raw result of the operation.
-
-        Returns
-        -------
-        Optional [ :py:class:`Union` [ :py:class:`List` [ :py:class:`Track` ] , :py:class:`dict` ] ]:
-            The raw result or list of tracks that was returned.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-200 status code while decoding tracks.
-        """
+    async def decode_tracks(self, track_ids: List[str], *, ctx: ContextType = None, retry: bool = True, tries: int = 3,  raw: bool = False) -> Optional[Union[List[ObsidianTrack], Dict]]:
 
         backoff = ExponentialBackoff()
 
@@ -446,7 +409,7 @@ class Node(abc.ABC, Generic[ContextType]):
             if raw:
                 return data
 
-            return [Track(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data]
+            return [ObsidianTrack(track_id=track.get('track'), track_info=track.get('info'), ctx=ctx) for track in data]
 
         __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. All {tries} retries used. | Status code: {response.status}')
         raise HTTPError(f'Non-200 status code while decoding tracks. All {tries} retries used.', status_code=response.status)

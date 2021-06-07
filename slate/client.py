@@ -2,25 +2,28 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Dict, Optional, TYPE_CHECKING, Type
+from typing import Dict, Generic, Optional, Type, TypeVar, Union
 
 import aiohttp
 import discord
+from discord.ext import commands
 
-from slate.bases.node import Node
-from slate.bases.player import Player
-from slate.exceptions import NoNodesAvailable, NodeNotFound, PlayerAlreadyExists
+from .bases.node import Node
+from .bases.player import Player
+from .exceptions import NoNodesAvailable, NodeNotFound, PlayerAlreadyExists
+from .obsidian.node import ObsidianNode
+from .obsidian.player import ObsidianPlayer
 
 
-if TYPE_CHECKING:
-    from slate import NodeType, PlayerType, BotType
-
+BotType = TypeVar('BotType', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
+NodeType = TypeVar('NodeType', bound=Union[Node, ObsidianNode])
+PlayerType = TypeVar('PlayerType', bound=Union[Player, ObsidianPlayer])
 
 __log__ = logging.getLogger('slate.client')
 __all__ = ['Client']
 
 
-class Client:
+class Client(Generic[BotType, NodeType, PlayerType]):
     """
     The client used to manage nodes and players.
 
@@ -148,7 +151,7 @@ class Client:
 
         return available_nodes.get(identifier)
 
-    async def create_player(self, channel: discord.VoiceChannel, *, node_identifier: Optional[str] = None, cls: Optional[Type[PlayerType]] = Player) -> PlayerType:
+    async def create_player(self, channel: discord.VoiceChannel, *, node_identifier: Optional[str] = None, cls: Optional[Type[PlayerType]]) -> PlayerType:
         """
         Creates a player for the given :py:class:`discord.VoiceChannel`.
 

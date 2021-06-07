@@ -1,6 +1,6 @@
 ![](slate.jpg)
 
-A [Lavalink](https://github.com/Frederikam/Lavalink/) [Andesite](https://github.com/natanbc/andesite) and [Obsidian](https://github.com/mixtape-bot/obsidian) compatible python wrapper for use with the commands extension of [discord.py](https://github.com/Rapptz/discord.py).
+A [Lavalink](https://github.com/Frederikam/Lavalink/), [Andesite](https://github.com/natanbc/andesite) and [Obsidian](https://github.com/mixtape-bot/obsidian) compatible python wrapper for use with the commands extension of [discord.py](https://github.com/Rapptz/discord.py).
 
 # Support
 Support for using Slate can be found in my [discord server](https://discord.com/invite/xP8xsHr), or by opening an issue on this GitHub.

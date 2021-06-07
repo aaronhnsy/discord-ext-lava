@@ -200,8 +200,8 @@ class Player(VoiceProtocol, ABC):
         if not self._session_id or not self._voice_server_update_data:
             return
 
-        op = 'voice-server-update' if isinstance(self.node, AndesiteNode) else 'voiceUpdate'
-        await self.node._send(op=op, guildId=str(self.guild.id), sessionId=self._session_id, event=self._voice_server_update_data)
+        data = {'op': 'voice-server-update' if isinstance(self.node, AndesiteNode) else 'voiceUpdate', 'guildId': str(self.guild.id), 'sessionId': self._session_id, 'event':self._voice_server_update_data}
+        await self.node._send(**data)
 
     async def _update_state(self, state: dict) -> None:
 
