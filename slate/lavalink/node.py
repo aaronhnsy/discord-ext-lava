@@ -1,71 +1,172 @@
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Generic, Optional, TypeVar, Union
 
 import aiohttp
+import discord
+from discord.ext import commands
 
-from slate.bases.node import Node
-from slate.exceptions import HTTPError
-from slate.objects.routeplanner import RoutePlannerStatus
-from slate.objects.stats import LavalinkStats
-from slate.utils import ExponentialBackoff
-
-
-if TYPE_CHECKING:
-    from slate.client import Client
+from ..node import BaseNode
 
 
 __all__ = ['LavalinkNode']
-__log__ = logging.getLogger('slate.lavalink.node')
+__log__ = logging.getLogger('slate.obsidian.node')
 
 
-class LavalinkNode(Node):
-    """
-    An implementation of :py:class:`Node` that allows connection to :resource:`lavalink <lavalink>` nodes.
+BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
 
-    Parameters
-    ----------
-    client: :py:class:`Client`
-        The slate client that this node is associated with.
-    host: :py:class:`str`
-        The host address of the node's websocket.
-    port: :py:class:`str`
-        The port to connect to the node's websocket with.
-    password: :py:class:`str`
-        The password used for authentification with the node's websocket and HTTP connections.
-    identifier: :py:class:`str`
-        This node's unique identifier.
-    **kwargs
-        Custom keyword arguments that have been passed to this node from :py:meth:`Client.create_node`.
-    """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+class LavalinkNode(BaseNode, Generic[BotT]):
 
-        self._http_url: str = f'http://{self._host}:{self._port}/'
-        self._ws_url: str = f'ws://{self._host}:{self._port}/'
-        self._headers: dict = {
-            'Authorization': self._password,
-            'User-Id': str(self._client.bot.user.id),
-            'Client-Name': 'Slate/0.1.0',
-        }
+    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion], **kwargs) -> None:
+        super().__init__(bot, host, port, password, identifier, region, **kwargs)
 
-        self._lavalink_stats: Optional[LavalinkStats] = None
+        self._players: list[ObsidianPlayer] = []
 
     def __repr__(self) -> str:
-        return f'<slate.AndesiteNode is_connected={self.is_connected} is_available={self.is_available} identifier=\'{self._identifier}\' player_count={len(self._players)}>'
+        return f'<slate.ObsidianNode>'
 
     #
 
     @property
-    def lavalink_stats(self) -> Optional[LavalinkStats]:
+    def players(self) -> list[ObsidianPlayer]:
         """
-        Optional [ :py:class:`LavalinkStats` ]:
-            Stats sent from :resource:`lavalink <lavalink>`. Sent every 30 or so seconds.
+        :py:class:`Dict` [ :py:class:`int` , :py:class:`Player` ]:
+            A mapping of player guild id's to players that this node is managing.
         """
-        return self._lavalink_stats
+        return self._players
+
+    #
+
+    @property
+    def http_url(self) -> str:
+        return f'http://{self._host}:{self._port}/'
+
+    @property
+    def ws_url(self) -> str:
+        return f'ws://{self._host}:{self._port}/magma'
+
+    @property
+    def headers(self) -> dict[str, Any]:
+        return {
+            'Authorization': self._password,
+            'User-Id': str(self._bot.bot.user.id),
+            'Client-Name': 'Slate/0.1.0',
+        }
+
+    #
+
+    async def connect(self) -> None:
+
+        await self.bot.bot.wait_until_ready()
+
+        try:
+            websocket = await self.client.session.ws_connect(self._ws_url, headers=self._headers)
+
+        except Exception as error:
+
+            self._available = False
+
+            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
+                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect due to invalid authorization.')
+                raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect due to invalid authorization.')
+
+            __log__.warning(f'NODE | \'{self.identifier}\' failed to connect. Error: {error}')
+            raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect.\n{error}')
+
+        else:
+
+            self._available = True
+            self._websocket = websocket
+
+            if not self._task:
+                self._task = asyncio.create_task(self._listen())
+
+            self._client.nodes[self.identifier] = self
+            __log__.info(f'NODE | \'{self.identifier}\' connected successfully.')
+
+    async def reconnect(self) -> None:
+
+        await self.client.bot.wait_until_ready()
+
+        try:
+            websocket = await self.client.session.ws_connect(self._ws_url, headers=self._headers)
+
+        except Exception as error:
+
+            self._available = False
+
+            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
+                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect due to invalid authorization.')
+            else:
+                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect. Error: {error}')
+
+        else:
+
+            self._available = True
+            self._websocket = websocket
+
+            if not self._task:
+                self._task = asyncio.create_task(self._listen())
+
+            self._client.nodes[self.identifier] = self
+            __log__.info(f'NODE | \'{self.identifier}\' connected successfully.')
+
+    async def disconnect(self, *, force: bool = False) -> None:
+
+
+        for player in self._players.copy().values():
+            await player.destroy(force=force)
+
+        if self.is_connected:
+            await self._websocket.close()
+        self._websocket = None
+
+        self._task.cancel()
+        self._task = None
+
+        __log__.info(f'NODE | \'{self.identifier}\' has been disconnected.')
+
+    async def destroy(self, *, force: bool = False) -> None:
+
+        await self.disconnect(force=force)
+        del self._client.nodes[self.identifier]
+
+        __log__.info(f'NODE | \'{self.identifier}\' has been destroyed.')
+
+    async def send(self, op, **payload) -> None:
+
+        if not self.is_connected:
+            raise NodeConnectionClosed(f'Node \'{self.identifier}\' is not connected.')
+
+        data = {'op': op.value, 'd': data}
+
+        await self._websocket.send_json(data)
+        __log__.debug(f'WEBSOCKET | Node \'{self.identifier}\' sent a \'{op}\' payload. | Payload: {data}')
 
     #
 
@@ -94,102 +195,33 @@ class LavalinkNode(Node):
 
             else:
 
-                message = message.json()
+                data = message.json()
 
-                op = message.get('op', None)
-                if not op:
-                    __log__.warning(f'WEBSOCKET | \'{self.identifier}\' received payload with no op code. | Payload: {message}')
+                try:
+                    op = Op(data.get('op', None))
+                except ValueError:
+                    __log__.warning(f'WEBSOCKET | \'{self.identifier}\' received payload with invalid/missing op code. | Payload: {data}')
                     continue
 
-                __log__.debug(f'WEBSOCKET | \'{self.identifier}\' received payload with op \'{op}\'. | Payload: {message}')
-                await self.client.bot.loop.create_task(self._handle_message(message=message))
+                else:
+                    __log__.debug(f'WEBSOCKET | \'{self.identifier}\' received payload with op \'{op}\'. | Payload: {data}')
+                    await self.client.bot.loop.create_task(self._handle_message(op=op, data=data.get('d')))
 
-    async def _handle_message(self, message: dict) -> None:
+    async def _handle_payload(self, op, data: dict[str, Any]) -> None:
 
-        op = message['op']
+        if op is Op.PLAYER_UPDATE:
 
-        if op == 'playerUpdate':
-
-            player = self.players.get(int(message.get('guildId')))
-            if not player:
+            if not (player := self.players.get(int(data.get('guild_id')))):
                 return
 
-            await player._update_state(state=message.get('state'))
+            await player._update_state(data)
 
-        elif op == 'event':
+        elif op is Op.PLAYER_EVENT:
 
-            player = self.players.get(int(message.get('guildId')))
-            if not player:
+            if not (player := self.players.get(int(data.get('guild_id')))):
                 return
 
-            player._dispatch_event(data=message)
+            player._dispatch_event(data)
 
-        elif op == 'stats':
-            self._lavalink_stats = LavalinkStats(data=message)
-
-    #
-
-    async def route_planner_status(self) -> Optional[RoutePlannerStatus]:
-        """
-        Fetches the route planner status.
-
-        Returns
-        -------
-        Optional [ :py:class:`RoutePlannerStatus` ]:
-            The route planner status object. Could be None if a route planner has not been configured on :resource:`lavalink <lavalink>`.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-200 status code while fetching the route planner status.
-        """
-
-        async with self.client.session.get(url=f'{self._http_url}/routeplanner/status', headers={'Authorization': self.password}) as response:
-
-            if response.status != 200:
-                __log__.error(f'ROUTEPLANNER | Non-200 status code while fetching route planner status. | Status code: {response.status}')
-                raise HTTPError('Non-200 status code while fetching route planner status.', status_code=response.status)
-
-            data = await response.json()
-
-        if not data.get('class'):
-            return None
-
-        return RoutePlannerStatus(data=dict(data))
-
-    async def route_planner_free_address(self, address: str) -> None:
-        """
-        Frees a route planner address.
-
-        Parameters
-        ----------
-        address: str
-            The address to free. An example is '1.0.0.1' or something similar.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-204 status code while freeing the address.
-        """
-
-        async with self.client.session.post(url=f'{self._http_url}/routeplanner/free/address', headers={'Authorization': self.password}, data={'address': address}) as response:
-
-            if response.status != 204:
-                __log__.error(f'ROUTEPLANNER | Non-204 status code while freeing route planner address. | Status code: {response.status}')
-                raise HTTPError('Non-204 status code while freeing route planner address.', status_code=response.status)
-
-    async def route_planner_free_all_addresses(self) -> None:
-        """
-        Frees all route planner addresses.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-204 status code while freeing the addresses.
-        """
-
-        async with self.client.session.post(url=f'{self._http_url}/routeplanner/free/all', headers={'Authorization': self.password}) as response:
-
-            if response.status != 204:
-                __log__.error(f'ROUTEPLANNER | Non-204 status code while freeing route planner addresses | Status code: {response.status}')
-                raise HTTPError('Non-204 status code while freeing route planner addresses.', status_code=response.status)
+        elif op is Op.STATS:
+            self._stats = ObsidianStats(data)

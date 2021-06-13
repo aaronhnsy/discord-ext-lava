@@ -1,7 +1,7 @@
 [tool.pyright]
 
 include = ["slate"]
-exclude = ["slate/objects/", "slate/lavalink/", "slate/andesite/"]
+exclude = ["slate/lavalink", "slate/andesite"]
 ignore = []
 strict = []
 
@@ -29,7 +29,7 @@ strictParameterNoneValue = true # false
 reportMissingImports = "none"
 # reportMissingModuleSource = "warning"
 # reportMissingTypeStubs = "none"
-reportImportCycles = true # "none"
+# reportImportCycles = "none"
 reportUnusedImport = "none"
 reportUnusedClass = true # "none"
 reportUnusedFunction =  true # "none"

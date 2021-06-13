@@ -20,32 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__all__ = ['SlateError', 'NodeError', 'NodesNotFound', 'NodeNotFound', 'NodeAlreadyExists', 'NodeConnectionError', 'NodeNotConnected']
+from enum import Enum
 
 
-class SlateError(Exception):
-    pass
+__all__ = ['ExceptionSeverity']
 
 
-class NodeError(SlateError):
-    pass
-
-
-class NodesNotFound(NodeError):
-    pass
-
-
-class NodeNotFound(NodeError):
-    pass
-
-
-class NodeAlreadyExists(NodeError):
-    pass
-
-
-class NodeConnectionError(NodeError):
-    pass
-
-
-class NodeNotConnected(NodeError):
-    pass
+class ExceptionSeverity(Enum):
+    COMMON = 'COMMON'
+    SUSPICIOUS = 'SUSPICIOUS'
+    FAULT = 'FAULT'

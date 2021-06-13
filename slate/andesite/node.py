@@ -1,122 +1,172 @@
+"""
+Copyright (c) 2020-present Axelancerr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from __future__ import annotations
 
 import asyncio
 import logging
-import time
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Generic, Optional, TypeVar, Union
 
 import aiohttp
-import async_timeout
+import discord
+from discord.ext import commands
 
-from slate.bases.node import Node
-from slate.exceptions import HTTPError
-from slate.objects.stats import AndesiteStats, LavalinkStats, Metadata
-from slate.utils import ExponentialBackoff
-
-
-if TYPE_CHECKING:
-    from slate.client import Client
+from ..node import BaseNode
 
 
 __all__ = ['AndesiteNode']
-__log__ = logging.getLogger('slate.andesite.node')
+__log__ = logging.getLogger('slate.obsidian.node')
 
 
-class AndesiteNode(Node):
-    """
-    An implementation of :py:class:`Node` that allows connection to :resource:`andesite <andesite>` nodes with support for their :resource:`lavalink <lavalink>`
-    compatible websocket.
+BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
 
-    Parameters
-    ----------
-    client: :py:class:`Client`
-        The slate client that this node is associated with.
-    host: :py:class:`str`
-        The host address of the node's websocket.
-    port: :py:class:`str`
-        The port to connect to the node's websocket with.
-    password: :py:class:`str`
-        The password used for authentification with the node's websocket and HTTP connections.
-    identifier: :py:class:`str`
-        This node's unique identifier.
-    use_compatibility: :py:class:`bool`
-        Whether or not this node should use the :resource:`lavalink <lavalink>` compatible websocket.
-    **kwargs
-        Custom keyword arguments that have been passed to this node from :py:meth:`Client.create_node`.
-    """
 
-    def __init__(self, *args, use_compatibility: bool = False, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+class AndesiteNode(BaseNode, Generic[BotT]):
 
-        self._use_compatibility: bool = use_compatibility
+    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion], **kwargs) -> None:
+        super().__init__(bot, host, port, password, identifier, region, **kwargs)
 
-        self._http_url: str = f'http://{self._host}:{self._port}/'
-        self._ws_url: str = f'ws://{self._host}:{self._port}/{"websocket" if not self._use_compatibility else ""}'
-        self._headers: dict = {
-            'Authorization': self._password,
-            'User-Id': str(self._client.bot.user.id),
-            'Client-Name': 'Slate/0.1.0',
-            'Andesite-Short-Errors': 'True'
-        }
-
-        self._connection_id: Optional[int] = None
-        self._metadata: Optional[Metadata] = None
-        self._andesite_stats: Optional[AndesiteStats] = None
-        self._lavalink_stats: Optional[LavalinkStats] = None
-
-        self._pong_event = asyncio.Event()
+        self._players: list[ObsidianPlayer] = []
 
     def __repr__(self) -> str:
-        return f'<slate.AndesiteNode is_connected={self.is_connected} is_available={self.is_available} identifier=\'{self._identifier}\' player_count={len(self._players)} ' \
-               f'use_compatibility={self._use_compatibility}>'
+        return f'<slate.ObsidianNode>'
 
     #
 
     @property
-    def use_compatibility(self) -> bool:
+    def players(self) -> list[ObsidianPlayer]:
         """
-        :py:class:`bool`:
-            Whether or not this node is using the :resource:`lavalink <lavalink>` compatible websocket.
+        :py:class:`Dict` [ :py:class:`int` , :py:class:`Player` ]:
+            A mapping of player guild id's to players that this node is managing.
         """
-        return self._use_compatibility
+        return self._players
 
     #
 
     @property
-    def connection_id(self) -> Optional[int]:
-        """
-        Optional [ :py:class:`int` ]:
-            The connection id sent upon successful connection with :resource:`andesite <andesite>`. This could be :py:class:`None` if
-            :py:attr:`AndesiteNode.use_compatibility` is :py:class:`True`.
-        """
-        return self._connection_id
+    def http_url(self) -> str:
+        return f'http://{self._host}:{self._port}/'
 
     @property
-    def metadata(self) -> Optional[Metadata]:
-        """
-        Optional [ :py:class:`Metadata` ]:
-            Metadata sent from :resource:`andesite <andesite>` that contains version information and node information. This could be :py:class:`None` if
-            :py:attr:`AndesiteNode.use_compatibility` is :py:class:`True`.
-        """
-        return self._metadata
+    def ws_url(self) -> str:
+        return f'ws://{self._host}:{self._port}/magma'
 
     @property
-    def andesite_stats(self) -> Optional[AndesiteStats]:
-        """
-        Optional [ :py:class:`AndesiteStats` ]:
-            Stats sent from :resource:`andesite <andesite>` that contains information about the system and current status. These stats are set by using
-            :py:meth:`AndesiteNode.request_andesite_stats`.
-        """
-        return self._andesite_stats
+    def headers(self) -> dict[str, Any]:
+        return {
+            'Authorization': self._password,
+            'User-Id': str(self._bot.bot.user.id),
+            'Client-Name': 'Slate/0.1.0',
+        }
 
-    @property
-    def lavalink_stats(self) -> Optional[LavalinkStats]:
-        """
-        Optional [ :py:class:`LavalinkStats` ]:
-            Stats sent from :resource:`andesite <andesite>` when using the :resource:`lavalink <lavalink>` compatible websocket. These stats are set every 30~ seconds using the
-            lavalink compatible websocket, or by using :py:meth:`AndesiteNode.request_lavalink_stats`
-        """
-        return self._lavalink_stats
+    #
+
+    async def connect(self) -> None:
+
+        await self.bot.bot.wait_until_ready()
+
+        try:
+            websocket = await self.client.session.ws_connect(self._ws_url, headers=self._headers)
+
+        except Exception as error:
+
+            self._available = False
+
+            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
+                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect due to invalid authorization.')
+                raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect due to invalid authorization.')
+
+            __log__.warning(f'NODE | \'{self.identifier}\' failed to connect. Error: {error}')
+            raise NodeConnectionError(f'Node \'{self.identifier}\' failed to connect.\n{error}')
+
+        else:
+
+            self._available = True
+            self._websocket = websocket
+
+            if not self._task:
+                self._task = asyncio.create_task(self._listen())
+
+            self._client.nodes[self.identifier] = self
+            __log__.info(f'NODE | \'{self.identifier}\' connected successfully.')
+
+    async def reconnect(self) -> None:
+
+        await self.client.bot.wait_until_ready()
+
+        try:
+            websocket = await self.client.session.ws_connect(self._ws_url, headers=self._headers)
+
+        except Exception as error:
+
+            self._available = False
+
+            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
+                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect due to invalid authorization.')
+            else:
+                __log__.warning(f'NODE | \'{self.identifier}\' failed to connect. Error: {error}')
+
+        else:
+
+            self._available = True
+            self._websocket = websocket
+
+            if not self._task:
+                self._task = asyncio.create_task(self._listen())
+
+            self._client.nodes[self.identifier] = self
+            __log__.info(f'NODE | \'{self.identifier}\' connected successfully.')
+
+    async def disconnect(self, *, force: bool = False) -> None:
+
+
+        for player in self._players.copy().values():
+            await player.destroy(force=force)
+
+        if self.is_connected:
+            await self._websocket.close()
+        self._websocket = None
+
+        self._task.cancel()
+        self._task = None
+
+        __log__.info(f'NODE | \'{self.identifier}\' has been disconnected.')
+
+    async def destroy(self, *, force: bool = False) -> None:
+
+        await self.disconnect(force=force)
+        del self._client.nodes[self.identifier]
+
+        __log__.info(f'NODE | \'{self.identifier}\' has been destroyed.')
+
+    async def send(self, op, **payload) -> None:
+
+        if not self.is_connected:
+            raise NodeConnectionClosed(f'Node \'{self.identifier}\' is not connected.')
+
+        data = {'op': op.value, 'd': data}
+
+        await self._websocket.send_json(data)
+        __log__.debug(f'WEBSOCKET | Node \'{self.identifier}\' sent a \'{op}\' payload. | Payload: {data}')
 
     #
 
@@ -145,180 +195,33 @@ class AndesiteNode(Node):
 
             else:
 
-                message = message.json()
+                data = message.json()
 
-                op = message.get('op', None)
-                if not op:
-                    __log__.warning(f'WEBSOCKET | \'{self.identifier}\' received payload with no op code. | Payload: {message}')
+                try:
+                    op = Op(data.get('op', None))
+                except ValueError:
+                    __log__.warning(f'WEBSOCKET | \'{self.identifier}\' received payload with invalid/missing op code. | Payload: {data}')
                     continue
 
-                __log__.debug(f'WEBSOCKET | \'{self.identifier}\' received payload with op \'{op}\'. | Payload: {message}')
-                await self.client.bot.loop.create_task(self._handle_message(message=message))
+                else:
+                    __log__.debug(f'WEBSOCKET | \'{self.identifier}\' received payload with op \'{op}\'. | Payload: {data}')
+                    await self.client.bot.loop.create_task(self._handle_message(op=op, data=data.get('d')))
 
-    async def _handle_message(self, message: dict) -> None:
+    async def _handle_payload(self, op, data: dict[str, Any]) -> None:
 
-        op = message['op']
+        if op is Op.PLAYER_UPDATE:
 
-        if op == 'metadata':
-            self._metadata = Metadata(data=message.get('data'))
-
-        elif op == 'connection-id':
-            self._connection_id = message.get('id')
-
-        elif op == 'pong':
-            self._pong_event.set()
-
-        elif op in ['player-update', 'playerUpdate']:
-
-            player = self.players.get(int(message.get('guildId')))
-            if not player:
+            if not (player := self.players.get(int(data.get('guild_id')))):
                 return
 
-            await player._update_state(state=message.get('state'))
+            await player._update_state(data)
 
-        elif op == 'event':
+        elif op is Op.PLAYER_EVENT:
 
-            player = self.players.get(int(message.get('guildId')))
-            if not player:
+            if not (player := self.players.get(int(data.get('guild_id')))):
                 return
 
-            player._dispatch_event(data=message)
+            player._dispatch_event(data)
 
-        elif op == 'stats':
-
-            if stats := message.get('stats'):
-                self._andesite_stats = AndesiteStats(data=stats)
-            else:
-                self._lavalink_stats = LavalinkStats(data=message)
-
-    #
-
-    async def ping(self) -> float:
-        """
-        Returns the latency between this node and it's websocket server in milliseconds.
-
-        Returns
-        -------
-        :py:class:`float`
-            The latency, in milliseconds.
-
-        Raises
-        ------
-        :py:class:`asyncio.TimeoutError`
-            Requesting the latency took over 30 seconds.
-        """
-
-        start_time = time.time()
-        await self._send(op='ping')
-
-        async with async_timeout.timeout(timeout=30):
-            await self._pong_event.wait()
-
-        end_time = time.time()
-        self._pong_event.clear()
-
-        return end_time - start_time
-
-    async def request_andesite_stats(self, retry: bool = False, tries: int = 3, raw: bool = False) -> AndesiteStats:
-        """
-        Requests :resource:`andesite <andesite>` stats from the node.
-
-        Parameters
-        ----------
-        retry: Optional [ :py:class:`bool` ]
-            Whether or not to retry the operation if a non-200 status code is received.
-        tries: Optional [ :py:class:`int` ]
-            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
-        raw: Optional [ :py:class:`bool` ]
-            Whether or not to return the raw result of the operation.
-
-        Returns
-        -------
-        :py:class:`AndesiteStats`
-            The andesite stats that were returned.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-200 status code while fetching the stats.
-        """
-
-        backoff = ExponentialBackoff()
-
-        for _ in range(tries):
-
-            async with self.client.session.get(url=f'{self._http_url}/stats', headers={'Authorization': self.password}) as response:
-
-                if response.status != 200:
-
-                    if retry:
-                        retry_time = backoff.delay()
-                        __log__.warning(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Retrying in {round(retry_time)}s. | Status code: {response.status}')
-                        await asyncio.sleep(retry_time)
-                        continue
-
-                    __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. Not retrying. | Status code: {response.status}')
-                    raise HTTPError('Non-200 status code while fetching andesite stats.', status_code=response.status)
-
-                data = await response.json()
-
-            if raw:
-                return data
-
-            self._andesite_stats = AndesiteStats(dict(data))
-            return self._andesite_stats
-
-        __log__.error(f'ANDESITE-STATS | Non-200 status code while fetching andesite stats. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError(f'Non-200 status code fetching andesite stats. All {tries} retries used.', status_code=response.status)
-
-    async def request_lavalink_stats(self, retry: bool = False, tries: int = 3, raw: bool = False) -> LavalinkStats:
-        """
-        Requests :resource:`lavalink <lavalink>` stats from the node.
-
-        Parameters
-        ----------
-        retry: Optional [ :py:class:`bool` ]
-            Whether or not to retry the operation if a non-200 status code is received.
-        tries: Optional [ :py:class:`int` ]
-            The amount of times to retry the operation if a non-200 status code is received. Defaults to 3.
-        raw: Optional [ :py:class:`bool` ]
-            Whether or not to return the raw result of the operation.
-
-        Returns
-        -------
-        :py:class:`LavalinkStats`
-            The lavalink stats that were returned.
-
-        Raises
-        ------
-        :py:class:`HTTPError`:
-            There was a non-200 status code while fetching the stats.
-        """
-
-        backoff = ExponentialBackoff()
-
-        for _ in range(tries):
-
-            async with self.client.session.get(url=f'{self._http_url}/stats/lavalink', headers={'Authorization': self.password}) as response:
-
-                if response.status != 200:
-
-                    if retry:
-                        retry_time = backoff.delay()
-                        __log__.warning(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Retrying in {round(retry_time)}s. | Status code: {response.status}')
-                        await asyncio.sleep(retry_time)
-                        continue
-
-                    __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. Not retrying. | Status code: {response.status}')
-                    raise HTTPError('Non-200 status code while fetching lavalink stats.', status_code=response.status)
-
-                data = await response.json()
-
-            if raw:
-                return data
-
-            self._lavalink_stats = LavalinkStats(dict(data))
-            return self._lavalink_stats
-
-        __log__.error(f'LAVALINK-STATS | Non-200 status code while fetching lavalink stats. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError(f'Non-200 status code fetching lavalink stats. All {tries} retries used.', status_code=response.status)
+        elif op is Op.STATS:
+            self._stats = ObsidianStats(data)

@@ -20,32 +20,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__all__ = ['SlateError', 'NodeError', 'NodesNotFound', 'NodeNotFound', 'NodeAlreadyExists', 'NodeConnectionError', 'NodeNotConnected']
+from typing import Any, Optional
+
+from ..exceptions import SlateError
+from ..objects.enums import ExceptionSeverity
 
 
-class SlateError(Exception):
+__all__ = ['ObsidianError', 'TrackLoadError', 'HTTPError']
+
+
+class ObsidianError(SlateError):
     pass
 
 
-class NodeError(SlateError):
-    pass
+class TrackLoadError(ObsidianError):
+
+    def __init__(self, data: dict[str, Any]) -> None:
+        super().__init__()
+
+        self._message: Optional[str] = data.get('message')
+        self._severity: ExceptionSeverity = ExceptionSeverity(data.get('severity'))
+
+    @property
+    def message(self) -> Optional[str]:
+        return self._message
+
+    @property
+    def severity(self) -> ExceptionSeverity:
+        return self._severity
 
 
-class NodesNotFound(NodeError):
-    pass
+class HTTPError(ObsidianError):
 
+    def __init__(self, message: str, status_code: int) -> None:
+        super().__init__()
 
-class NodeNotFound(NodeError):
-    pass
+        self._message = message
+        self._status_code = status_code
 
+    @property
+    def message(self) -> str:
+        return self._message
 
-class NodeAlreadyExists(NodeError):
-    pass
-
-
-class NodeConnectionError(NodeError):
-    pass
-
-
-class NodeNotConnected(NodeError):
-    pass
+    @property
+    def status_code(self) -> int:
+        return self._status_code
