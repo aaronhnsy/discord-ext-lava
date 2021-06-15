@@ -22,10 +22,9 @@ SOFTWARE.
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
-from typing import Callable, Generic, Optional, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Generic, Optional, TYPE_CHECKING, Type, TypeVar, Union
 
 import discord
 from discord.ext import commands
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
 
 
 __all__ = ['NodePool']
-__log__ = logging.getLogger('slate.pool')
+__log__: logging.Logger = logging.getLogger('slate.pool')
 
 
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
@@ -67,15 +66,14 @@ class NodePool(Generic[BotT, NodeT]):
 
     @classmethod
     async def create_node(
-            cls, *, type: Type[NodeT], bot: BotT, host: str, port: str, password: str, identifier: Optional[str] = None, region: Optional[discord.VoiceRegion] = None,
-            dumps: Callable[..., str] = json.dumps,
+            cls, *, type: Type[NodeT], bot: BotT, host: str, port: str, password: str, identifier: Optional[str] = None, region: Optional[discord.VoiceRegion] = None, **kwargs
     ) -> NodeT:
 
         identifier = identifier or str(uuid.uuid4())
         if identifier in cls._nodes:
             raise NodeAlreadyExists(f'Node with identifier \'{identifier}\' already exists.')
 
-        node = type(bot=bot, host=host, port=port, password=password, identifier=identifier, region=region, dumps=dumps)
+        node = type(bot, host, port, password, identifier, region, **kwargs)
         await node.connect()
 
         cls._nodes[node.identifier] = node

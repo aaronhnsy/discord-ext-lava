@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import abc
 import asyncio
+import json
 import logging
 from typing import Any, Callable, Generic, Optional, TypeVar, Union
 
@@ -35,7 +36,7 @@ from .exceptions import NodeNotConnected
 
 
 __all__ = ['BaseNode']
-__log__ = logging.getLogger('slate.node')
+__log__: logging.Logger = logging.getLogger('slate.node')
 
 
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
@@ -43,7 +44,7 @@ BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoSh
 
 class BaseNode(abc.ABC, Generic[BotT]):
 
-    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion], **kwargs) -> None:
+    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion] = None, **kwargs) -> None:
 
         self._bot: BotT = bot
         self._host: str = host
@@ -52,7 +53,7 @@ class BaseNode(abc.ABC, Generic[BotT]):
         self._identifier: str = identifier
         self._region: Optional[discord.VoiceRegion] = region
 
-        self._dumps: Callable[..., str] = kwargs['dumps']
+        self._dumps: Callable[..., str] = kwargs.get('dumps') or json.dumps
         self._session: aiohttp.ClientSession = kwargs.get('session') or aiohttp.ClientSession()
 
         self._websocket: Optional[aiohttp.ClientWebSocketResponse] = None
@@ -148,7 +149,12 @@ class BaseNode(abc.ABC, Generic[BotT]):
             raise NodeNotConnected(f'Node \'{self.identifier}\' is not connected.')
 
         payload = {'op': op.value, 'd': data}
-        await self._websocket.send_json(payload)
+
+        data = self._dumps(data)
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+
+        await self._websocket.send_str(data)
 
         __log__.debug(f'NODE | \'{self.identifier}\' node sent a {op!r} payload. | Payload: {payload}')
 
