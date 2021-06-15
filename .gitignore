@@ -1,6 +1,7 @@
 *.pyc
 *.ini
 *.log*
+py.typed
 
 .idea/
 venv/
