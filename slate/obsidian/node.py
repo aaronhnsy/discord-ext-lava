@@ -47,7 +47,7 @@ if TYPE_CHECKING:
 
 
 __all__ = ['ObsidianNode']
-__log__ = logging.getLogger('slate.obsidian.node')
+__log__: logging.Logger = logging.getLogger('slate.obsidian.node')
 
 
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
@@ -56,7 +56,7 @@ ContextT = TypeVar('ContextT', bound=commands.Context)
 
 class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
-    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion], **kwargs) -> None:
+    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion] = None, **kwargs) -> None:
         super().__init__(bot, host, port, password, identifier, region, **kwargs)
 
         self._players: dict[int, ObsidianPlayer[Any, Any]] = {}

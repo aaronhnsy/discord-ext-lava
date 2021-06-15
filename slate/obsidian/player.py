@@ -39,7 +39,7 @@ from ..pool import NodePool
 
 
 __all__ = ['ObsidianPlayer']
-__log__ = logging.getLogger('slate.obsidian.player')
+__log__: logging.Logger = logging.getLogger('slate.obsidian.player')
 
 
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])

@@ -31,7 +31,7 @@ from discord.ext import commands
 
 
 __all__ = ['BasePlayer']
-__log__ = logging.getLogger('slate.player')
+__log__: logging.Logger = logging.getLogger('slate.player')
 
 
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])

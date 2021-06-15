@@ -86,7 +86,7 @@ class Tremolo(BaseFilter):
 
 class Equalizer(BaseFilter):
 
-    def __init__(self, *, gains: List[float], name='Equalizer') -> None:
+    def __init__(self, *, gains: List[float], name: str = 'Equalizer') -> None:
         super().__init__()
 
         for gain in gains:

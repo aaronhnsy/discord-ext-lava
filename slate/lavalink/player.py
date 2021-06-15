@@ -17,7 +17,7 @@ BotType = TypeVar('BotType', bound=Union[discord.Client, commands.Bot, commands.
 TrackType = TypeVar('TrackType', bound=ObsidianTrack)
 
 __all__ = ['LavalinkPlayer']
-__log__ = logging.getLogger('slate.obsidian.player')
+__log__: logging.Logger = logging.getLogger('slate.obsidian.player')
 
 
 class LavalinkPlayer(VoiceProtocol, Generic[BotType, TrackType]):

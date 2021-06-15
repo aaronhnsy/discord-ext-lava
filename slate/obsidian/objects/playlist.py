@@ -81,7 +81,7 @@ class ObsidianPlaylist(Generic[ContextType]):
             return None
 
     @property
-    def uri(self):
+    def uri(self) -> Optional[str]:
         return self._uri
 
     #

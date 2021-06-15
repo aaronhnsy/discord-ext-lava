@@ -34,7 +34,7 @@ from ..node import BaseNode
 
 
 __all__ = ['AndesiteNode']
-__log__ = logging.getLogger('slate.obsidian.node')
+__log__: logging.Logger = logging.getLogger('slate.obsidian.node')
 
 
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
