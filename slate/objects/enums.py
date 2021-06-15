@@ -23,10 +23,16 @@ SOFTWARE.
 from enum import Enum
 
 
-__all__ = ['ExceptionSeverity']
+__all__ = ['ExceptionSeverity', 'QueueLoopingMode']
 
 
 class ExceptionSeverity(Enum):
     COMMON = 'COMMON'
     SUSPICIOUS = 'SUSPICIOUS'
     FAULT = 'FAULT'
+
+
+class QueueLoopingMode(Enum):
+    NONE = 0
+    CURRENT = 1
+    QUEUE = 2
