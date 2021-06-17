@@ -24,7 +24,7 @@ import random
 from collections import Iterator
 from typing import Any, Generic, Optional, TypeVar, Union
 
-from ..objects.enums import QueueLoopingMode
+from ..objects.enums import QueueLoopMode
 
 
 __all__ = (
@@ -44,7 +44,7 @@ class Queue(Generic[Item]):
         self._queue: list[Item] = []
         self._queue_history: list[Item] = []
 
-        self._loop_mode: QueueLoopingMode = QueueLoopingMode.NONE
+        self._loop_mode: QueueLoopMode = QueueLoopMode.OFF
 
     def __repr__(self) -> str:
         return f'<slate.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>'
@@ -52,10 +52,10 @@ class Queue(Generic[Item]):
     #
 
     @property
-    def loop_mode(self) -> QueueLoopingMode:
+    def loop_mode(self) -> QueueLoopMode:
         return self._loop_mode
 
-    def set_loop_mode(self, mode: QueueLoopingMode) -> None:
+    def set_loop_mode(self, mode: QueueLoopMode) -> None:
         self._loop_mode = mode
 
     #
@@ -63,12 +63,8 @@ class Queue(Generic[Item]):
     def __len__(self) -> int:
         return len(self._queue)
 
-    def __getitem__(self, index: int) -> Item:
-
-        if not isinstance(index, int):
-            raise ValueError(f'\'Queue\' indices must be integers, not \'{type(index)}\'')
-
-        return self._queue[index]
+    def __getitem__(self, key: int) -> Item:
+        return self._queue[key]
 
     def __setitem__(self, index: int, value: Item) -> None:
 
@@ -148,8 +144,8 @@ class Queue(Generic[Item]):
         if put_history:
             self.put_history(items=item, position=position)
 
-        if self._loop_mode is not QueueLoopingMode.NONE:
-            self.put(item, position=0 if self._loop_mode is QueueLoopingMode.CURRENT else None)
+        if self._loop_mode is not QueueLoopMode.OFF:
+            self.put(item, position=0 if self._loop_mode is QueueLoopMode.CURRENT else None)
 
         return item
 

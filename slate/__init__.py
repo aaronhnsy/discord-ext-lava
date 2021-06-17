@@ -25,7 +25,8 @@ from typing import Final, Literal, NamedTuple
 
 from .exceptions import *
 from .node import BaseNode
-from .objects.enums import ExceptionSeverity, QueueLoopingMode
+from .objects.enums import ErrorSeverity, LoadType, QueueLoopMode, SearchType, Source
+from .objects.search import SearchResult
 from .player import BasePlayer
 from .pool import NodePool
 from .utils.queue import Queue

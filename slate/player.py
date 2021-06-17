@@ -26,27 +26,27 @@ import abc
 import logging
 from typing import Any, Generic, Optional, TypeVar, Union
 
-import discord
-from discord.ext import commands
+from discord import Client, Guild, VoiceChannel, VoiceProtocol, Member
+from discord.ext.commands import AutoShardedBot, Bot
 
 
 __all__ = ['BasePlayer']
 __log__: logging.Logger = logging.getLogger('slate.player')
 
 
-BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
+BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
 
 
-class BasePlayer(discord.VoiceProtocol, Generic[BotT], abc.ABC):
+class BasePlayer(VoiceProtocol, Generic[BotT], abc.ABC):
 
-    def __init__(self, client: BotT, channel: discord.VoiceChannel) -> None:
+    def __init__(self, client: BotT, channel: VoiceChannel) -> None:
         super().__init__(client, channel)
 
         self.client: BotT = client
-        self.channel: Optional[discord.VoiceChannel] = channel
+        self.channel: Optional[VoiceChannel] = channel
 
         self._bot: BotT = client
-        self._guild: discord.Guild = channel.guild
+        self._guild: Guild = channel.guild
 
     def __repr__(self) -> str:
         return f'<slate.BasePlayer>'
@@ -56,7 +56,7 @@ class BasePlayer(discord.VoiceProtocol, Generic[BotT], abc.ABC):
         return self._bot
 
     @property
-    def guild(self) -> discord.Guild:
+    def guild(self) -> Guild:
         return self._guild
 
     #
@@ -67,8 +67,14 @@ class BasePlayer(discord.VoiceProtocol, Generic[BotT], abc.ABC):
     #
 
     @property
+    def listeners(self) -> list[Member]:
+        return [member for member in getattr(self.channel, 'members', []) if not member.bot and not member.voice.deaf or not member.voice.self_deaf]
+
+    #
+
+    @property
     @abc.abstractmethod
-    def node(self) -> ...:
+    def node(self) -> Any:
         raise NotImplementedError
 
     #
@@ -106,5 +112,5 @@ class BasePlayer(discord.VoiceProtocol, Generic[BotT], abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def move_to(self, channel: discord.VoiceChannel) -> None:
+    async def move_to(self, channel: VoiceChannel) -> None:
         raise NotImplementedError

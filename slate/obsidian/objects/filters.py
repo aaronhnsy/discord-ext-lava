@@ -23,7 +23,7 @@ SOFTWARE.
 from __future__ import annotations
 
 import abc
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 __all__ = ['BaseFilter', 'Tremolo', 'Equalizer', 'Distortion', 'Timescale', 'Karaoke', 'ChannelMix', 'Vibrato', 'Rotation', 'LowPass', 'ObsidianFilter']
@@ -80,13 +80,13 @@ class Tremolo(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, float]:
+    def _payload(self) -> dict[str, float]:
         return {'frequency': self.frequency, 'depth': self.depth}
 
 
 class Equalizer(BaseFilter):
 
-    def __init__(self, *, gains: List[float], name: str = 'Equalizer') -> None:
+    def __init__(self, *, gains: list[float], name: str = 'Equalizer') -> None:
         super().__init__()
 
         for gain in gains:
@@ -103,7 +103,7 @@ class Equalizer(BaseFilter):
     #
 
     @property
-    def _payload(self) -> List[float]:
+    def _payload(self) -> list[float]:
         return self._gains
 
     #
@@ -143,7 +143,7 @@ class Distortion(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, float]:
+    def _payload(self) -> dict[str, float]:
         return {
             'sinOffset': self.sin_offset, 'sinScale': self.sin_scale, 'cosOffset': self.cos_offset, 'cosScale': self.cos_scale, 'tanOffset': self.tan_offset, 'tanScale': self.tan_scale,
             'offset': self.offset, 'scale': self.scale
@@ -186,7 +186,7 @@ class Timescale(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, Optional[float]]:
+    def _payload(self) -> dict[str, Optional[float]]:
         return {
             'pitch': self.pitch, 'pitch_octaves': self.pitch_octaves, 'pitch_semi_tones': self.pitch_semi_tones, 'rate': self.rate, 'rate_change': self.rate_change, 'speed': self.speed,
             'speed_change': self.speed_change
@@ -211,7 +211,7 @@ class Karaoke(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, float]:
+    def _payload(self) -> dict[str, float]:
         return {'level': self.level, 'mono_level': self.mono_level, 'filter_band': self.filter_band, 'filter_width': self.filter_width}
 
 
@@ -242,7 +242,7 @@ class ChannelMix(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, float]:
+    def _payload(self) -> dict[str, float]:
         return {'left_to_left': self.left_to_left, 'right_to_right': self.right_to_right, 'left_to_right': self.left_to_right, 'right_to_left': self.right_to_left}
 
 
@@ -267,7 +267,7 @@ class Vibrato(BaseFilter):
     #
 
     @property
-    def _payload(self) -> Dict[str, float]:
+    def _payload(self) -> dict[str, float]:
         return {'frequency': self.frequency, 'depth': self.depth}
 
 

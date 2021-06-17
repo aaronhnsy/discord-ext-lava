@@ -26,37 +26,55 @@ import abc
 import asyncio
 import json
 import logging
-from typing import Any, Callable, Generic, Optional, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, Optional, TypeVar, Union
 
-import aiohttp
-import discord
-from discord.ext import commands
+from aiohttp import ClientSession, ClientWebSocketResponse
+from discord import Client, VoiceRegion
+from discord.ext.commands import AutoShardedBot, Bot
+from spotify import Client as SpotifyClient, HTTPClient as SpotifyHTTPClient
 
-from .exceptions import NodeNotConnected
+from .exceptions import HTTPError, NodeNotConnected
+from .utils.backoff import ExponentialBackoff
 
 
 __all__ = ['BaseNode']
 __log__: logging.Logger = logging.getLogger('slate.node')
 
 
-BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
+BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
+
+
+def ordinal(number: int) -> str:
+    return f"{number}{'tsnrhtdd'[(number // 10 % 10 != 1) * (number % 10 < 4) * number % 10::4]}"
 
 
 class BaseNode(abc.ABC, Generic[BotT]):
 
-    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion] = None, **kwargs) -> None:
+    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[VoiceRegion] = None, **kwargs) -> None:
 
         self._bot: BotT = bot
         self._host: str = host
         self._port: str = port
         self._password: str = password
         self._identifier: str = identifier
-        self._region: Optional[discord.VoiceRegion] = region
+        self._region: Optional[VoiceRegion] = region
 
-        self._dumps: Callable[..., str] = kwargs.get('dumps') or json.dumps
-        self._session: aiohttp.ClientSession = kwargs.get('session') or aiohttp.ClientSession()
+        self._dumps: Callable[[dict[str, Any]], str] = kwargs.get('dumps') or json.dumps
+        self._loads: Callable[[str], dict[str, Any]] = kwargs.get('loads') or json.loads
 
-        self._websocket: Optional[aiohttp.ClientWebSocketResponse] = None
+        self._spotify_client_id: Optional[str] = kwargs.get('spotify_client_id')
+        self._spotify_client_secret: Optional[str] = kwargs.get('spotify_client_secret')
+
+        self._spotify: Optional[SpotifyClient] = None
+        self._spotify_http: Optional[SpotifyHTTPClient] = None
+
+        if self._spotify_client_id and self._spotify_client_secret:
+            self._spotify = SpotifyClient(self._spotify_client_id, self._spotify_client_secret)
+            self._spotify_http = SpotifyHTTPClient(self._spotify_client_id, self._spotify_client_secret)
+
+        self._session: ClientSession = kwargs.get('session') or ClientSession()
+
+        self._websocket: Optional[ClientWebSocketResponse] = None
         self._task: Optional[asyncio.Task] = None
 
     def __repr__(self) -> str:
@@ -83,22 +101,28 @@ class BaseNode(abc.ABC, Generic[BotT]):
         return self._identifier
 
     @property
-    def region(self) -> Optional[discord.VoiceRegion]:
+    def region(self) -> Optional[VoiceRegion]:
         return self._region
 
     #
 
     @property
-    def session(self) -> aiohttp.ClientSession:
+    def spotify(self) -> Optional[SpotifyClient]:
+        return self._spotify
+
+    @property
+    def spotify_http(self) -> Optional[SpotifyHTTPClient]:
+        return self._spotify_http
+
+    #
+
+    @property
+    def session(self) -> ClientSession:
         return self._session
 
     @property
-    def websocket(self) -> Optional[aiohttp.ClientWebSocketResponse]:
+    def websocket(self) -> Optional[ClientWebSocketResponse]:
         return self._websocket
-
-    @property
-    def task(self) -> Optional[asyncio.Task]:
-        return self._task
 
     #
 
@@ -109,7 +133,7 @@ class BaseNode(abc.ABC, Generic[BotT]):
 
     @property
     @abc.abstractmethod
-    def players(self) -> ...:
+    def players(self) -> Any:
         raise NotImplementedError
 
     #
@@ -143,14 +167,14 @@ class BaseNode(abc.ABC, Generic[BotT]):
     async def destroy(self, *, force: bool = False) -> None:
         raise NotImplementedError
 
-    async def send(self, op, **data) -> None:
+    async def send(self, op: Any, **data) -> None:
 
         if not self.is_connected():
             raise NodeNotConnected(f'Node \'{self.identifier}\' is not connected.')
 
         payload = {'op': op.value, 'd': data}
 
-        data = self._dumps(data)
+        data = self._dumps(payload)
         if isinstance(data, bytes):
             data = data.decode('utf-8')
 
@@ -160,10 +184,33 @@ class BaseNode(abc.ABC, Generic[BotT]):
 
     #
 
+    async def _request(self, method: Literal['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], endpoint: str, **parameters: Any) -> dict[str, Any]:
+
+        backoff = ExponentialBackoff()
+        url = f'{self.http_url}{endpoint}'
+        headers = {'Authorization': self._password}
+
+        for _ in range(3):
+
+            async with self._session.request(method=method, url=url, headers=headers, params=parameters) as response:
+
+                if 200 <= response.status < 300:
+                    return await response.json(loads=self._loads)
+
+                delay = backoff.delay()
+                __log__.warning(f'NODE | \'{response.status}\' status code while requesting from \'{response.url}\', retrying in {round(delay)}s. ({ordinal(_ + 1)} retry)')
+
+                await asyncio.sleep(delay)
+
+        __log__.error(f'NODE | \'{response.status}\' status code while requesting from \'{response.url}\', 3 retries used.')
+        raise HTTPError(f'\'{response.status}\' status code while requesting from \'{response.url}\', 3 retries used.', response=response)
+
+    #
+
     @abc.abstractmethod
     async def _listen(self) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def _handle_payload(self, op, data: dict[str, Any]) -> None:
+    async def _handle_payload(self, op: Any, data: dict[str, Any]) -> None:
         raise NotImplementedError

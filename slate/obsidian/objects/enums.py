@@ -23,11 +23,10 @@ SOFTWARE.
 from enum import Enum
 
 
-__all__ = ['Op', 'EventType', 'EndReason', 'TrackSource']
+__all__ = ['Op']
 
 
 class Op(Enum):
-
     SUBMIT_VOICE_UPDATE = 0
     STATS = 1
 
@@ -45,33 +44,3 @@ class Op(Enum):
     PLAYER_SEEK = 10
     PLAYER_DESTROY = 11
     PLAYER_CONFIGURE = 12
-
-
-class EventType(Enum):
-    TRACK_START = 'TRACK_START'
-    TRACK_END = 'TRACK_END'
-    TRACK_STUCK = 'TRACK_STUCK'
-    TRACK_EXCEPTION = 'TRACK_EXCEPTION'
-    WEBSOCKET_OPEN = 'WEBSOCKET_OPEN'
-    WEBSOCKET_CLOSED = 'WEBSOCKET_CLOSED'
-
-
-class EndReason(Enum):
-    STOPPED = 'STOPPED'
-    REPLACED = 'REPLACED'
-    CLEANUP = 'CLEANUP'
-    LOAD_FAILED = 'LOAD_FAILED'
-    FINISHED = 'FINISHED'
-
-
-class TrackSource(Enum):
-    YOUTUBE = 'youtube'
-    YARN = 'yarn'
-    BANDCAMP = 'bandcamp'
-    TWITCH = 'twitch'
-    VIMEO = 'vimeo'
-    NICO = 'nico'
-    SOUNDCLOUD = 'soundcloud'
-    LOCAL = 'local'
-    HTTP = 'http'
-    SPOTIFY = 'spotify'

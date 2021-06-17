@@ -25,22 +25,27 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar, Union
 
-import aiohttp
-import discord
-from discord.ext import commands
+from aiohttp import WSMsgType, WSServerHandshakeError
+from discord import Client, VoiceRegion
+from discord.ext.commands import AutoShardedBot, Bot, Context
+from spotify import HTTPException, NotFound, Playlist
 
+from .exceptions import ObsidianSearchError
 from .objects.enums import Op
+from .objects.playlist import ObsidianPlaylist
 from .objects.stats import ObsidianStats
+from .objects.track import ObsidianTrack
 from .. import __version__
-from ..exceptions import NodeConnectionError
-from .exceptions import HTTPError, TrackLoadError
+from ..exceptions import NodeConnectionError, NoMatchesFound
 from ..node import BaseNode
+from ..objects.enums import LoadType, SearchType, Source
+from ..objects.search import SearchResult
 from ..pool import NodePool
 from ..utils.backoff import ExponentialBackoff
-from .objects.track import ObsidianTrack
-from .objects.playlist import ObsidianPlaylist
+
 
 if TYPE_CHECKING:
     from .player import ObsidianPlayer
@@ -50,13 +55,16 @@ __all__ = ['ObsidianNode']
 __log__: logging.Logger = logging.getLogger('slate.obsidian.node')
 
 
-BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
-ContextT = TypeVar('ContextT', bound=commands.Context)
+BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
+ContextT = TypeVar('ContextT', bound=Context)
+
+
+SPOTIFY_URL_REGEX = re.compile(r'http(s)?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)')
 
 
 class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
-    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[discord.VoiceRegion] = None, **kwargs) -> None:
+    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[VoiceRegion] = None, **kwargs) -> None:
         super().__init__(bot, host, port, password, identifier, region, **kwargs)
 
         self._players: dict[int, ObsidianPlayer[Any, Any]] = {}
@@ -101,7 +109,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
             message = f'\'{self._identifier}\' node failed to connect.'
 
-            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status == 4001:
+            if isinstance(error, WSServerHandshakeError) and error.status == 4001:
                 message = f'\'{self._identifier}\' node failed to connect due to invalid authorization.'
 
             __log__.error(f'NODE | {message}')
@@ -152,7 +160,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
             payload = await self._websocket.receive()
 
-            if payload.type is aiohttp.WSMsgType.CLOSED:
+            if payload.type is WSMsgType.CLOSED:
 
                 retry = backoff.delay()
                 __log__.warning(f'NODE | \'{self._identifier}\' nodes websocket is closed, attempting reconnection in {round(retry)} seconds.')
@@ -167,16 +175,15 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
                 data = payload.json()
 
                 try:
-                    op = Op(data.get('op', None))
+                    op = Op(data['op'])
                 except ValueError:
                     __log__.warning(f'NODE | \'{self._identifier}\' node received payload with invalid op code. | Payload: {data}')
                     continue
-
                 else:
-                    __log__.debug(f'NODE | \'{self._identifier}\' node received payload with op {op!r}. | Payload: {data}')
+                    __log__.debug(f'NODE | \'{self._identifier}\' node received payload with op \'{op!r}\'. | Payload: {data}')
                     asyncio.create_task(self._handle_payload(op, data['d']))
 
-    async def _handle_payload(self, op, data: dict[str, Any]) -> None:
+    async def _handle_payload(self, op: Op, data: dict[str, Any]) -> None:
 
         if op is Op.STATS:
             self._stats = ObsidianStats(data)
@@ -192,56 +199,99 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
     #
 
-    async def search(
-            self, query: str, *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
-    ) -> Optional[Union[ObsidianPlaylist[Any], list[ObsidianTrack[Any]], dict[str, Any]]]:
+    async def search(self, search: str, *, ctx: Optional[ContextT] = None, source: Optional[Source] = None) -> Optional[SearchResult[Any, Any]]:
 
-        backoff = ExponentialBackoff()
+        if (match := SPOTIFY_URL_REGEX.match(search)) and self.spotify is not None:
 
-        for _ in range(tries):
+            search_type = SearchType(match.group('type'))
+            spotify_id = match.group('id')
 
-            async with self._session.get(url=f'{self.http_url}/loadtracks', headers={'Authorization': self._password}, params={'identifier': query}) as response:
+            try:
+                if search_type is SearchType.ALBUM:
+                    result = await self.spotify.get_album(spotify_id)
+                    search_tracks = await result.get_all_tracks()
 
-                if response.status != 200:
+                elif search_type is SearchType.PLAYLIST:
+                    result = Playlist(self.spotify, await self.spotify_http.get_playlist(spotify_id))
+                    search_tracks = await result.get_all_tracks()
 
-                    if retry:
-                        time = backoff.delay()
-                        __log__.warning(f'LOADTRACKS | Non-200 status code while loading tracks. Retrying in {round(time)}s. | Status code: {response.status}')
-                        await asyncio.sleep(time)
-                        continue
+                elif search_type is SearchType.ARTIST:
+                    result = await self.spotify.get_artist(spotify_id)
+                    search_tracks = await result.top_tracks()
 
-                    __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. Not retrying. | Status code: {response.status}')
-                    raise HTTPError('Non-200 status code while loading tracks.', status_code=response.status)
+                else:
+                    result = await self.spotify.get_track(spotify_id)
+                    search_tracks = [result]
 
-                data = await response.json()
+                if not search_tracks:
+                    raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
 
-            if raw:
-                return data
+            except NotFound:
+                raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
 
-            load_type = data.get('load_type')
+            except HTTPException:
+                raise ObsidianSearchError({'message': 'Error while accessing spotify API.', 'severity': 'COMMON'})
 
-            if load_type == 'NO_MATCHES':
-                __log__.info(f'LOADTRACKS | NO_MATCHES for query: {query} | Data: {data}')
-                return None
+            tracks = [
+                ObsidianTrack(
+                        ctx=ctx, id='',
+                        info={
+                            'title':       track.name or 'UNKNOWN',
+                            'author':      ', '.join(artist.name for artist in track.artists) if track.artists else 'UNKNOWN',
+                            'uri':         track.url or search,
+                            'identifier':  track.id or 'UNKNOWN',
+                            'length':      track.duration or 0,
+                            'position':    0,
+                            'is_stream':   False,
+                            'is_seekable': False,
+                            'source_name': 'spotify',
+                            'thumbnail':   track.images[0].url if track.images else None
+                        }
+                ) for track in search_tracks
+            ]
 
-            if load_type == 'LOAD_FAILED':
-                __log__.warning(f'LOADTRACKS | LOAD_FAILED for query: {query} | Data: {data}')
-                raise TrackLoadError(data=data.get('exception'))
+            return SearchResult(source=Source.SPOTIFY, type=search_type, result=result, tracks=tracks)
 
-            if load_type == 'PLAYLIST_LOADED':
+        else:
 
-                playlist_info = data.get('playlist_info')
-                playlist_info['uri'] = query
+            if source is Source.YOUTUBE:
+                search = f'ytsearch:{search}'
+            elif source is Source.SOUNDCLOUD:
+                search = f'scsearch:{search}'
+            elif source is Source.YOUTUBE_MUSIC:
+                search = f'ytmsearch:{search}'
 
-                __log__.info(f'LOADTRACKS | PLAYLIST_LOADED for query: {query} | Data: {data}')
-                return ObsidianPlaylist(info=playlist_info, tracks=data.get('tracks'), ctx=ctx)
+            data = await self._request(method='GET', endpoint='/loadtracks', identifier=search)
 
-            if load_type in ['SEARCH_RESULT', 'TRACK_LOADED']:
-                __log__.info(f'LOADTRACKS | SEARCH_RESULT/TRACK_LOADED for query: {query} | Data: {data}')
-                return [ObsidianTrack(id=track.get('track'), info=track.get('info'), ctx=ctx) for track in data.get('tracks')]
+            load_type = LoadType(data['load_type'])
+            message = f'SEARCH | \'{load_type!r}\' for search: {search} | Data: {data}'
 
-        __log__.error(f'LOADTRACKS | Non-200 status code while loading tracks. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError(f'Non-200 status code while loading tracks. All {tries} retries used.', status_code=response.status)
+            if load_type is LoadType.LOAD_FAILED:
+                __log__.warning(message)
+                raise ObsidianSearchError(data['exception'])
+
+            if load_type is LoadType.NO_MATCHES or not data['tracks']:
+                __log__.info(message)
+                raise NoMatchesFound(search=search, search_type=SearchType.TRACK, source=source)
+
+            if load_type is LoadType.PLAYLIST_LOADED:
+
+                __log__.info(message)
+
+                info = data['playlist_info']
+                info['uri'] = search  # If a playlist is found, it should only ever be by direct link, so this should be fine.
+
+                playlist = ObsidianPlaylist(info=info, tracks=data['tracks'], ctx=ctx)
+                return SearchResult(source=playlist.source, type=SearchType.PLAYLIST, result=playlist, tracks=playlist.tracks)
+
+            if load_type in [LoadType.TRACK_LOADED, LoadType.SEARCH_RESULT]:
+
+                __log__.info(message)
+
+                tracks = [ObsidianTrack(id=track['track'], info=track['info'], ctx=ctx) for track in data['tracks']]
+                return SearchResult(source=tracks[0].source, type=SearchType.TRACK, result=tracks, tracks=tracks)
+
+    #
 
     async def decode_track(
             self, track_id: str, *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
@@ -262,7 +312,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
                         continue
 
                     __log__.error(f'DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}')
-                    raise HTTPError('Non-200 status code while decoding track.', status_code=response.status)
+                    raise ValueError('Non-200 status code while decoding track.')
 
                 data = await response.json()
 
@@ -272,7 +322,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
             return ObsidianTrack(id=track_id, info=data.get('info', None) or data, ctx=ctx)
 
         __log__.error(f'DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError(f'Non-200 status code while decoding track. All {tries} retries used.', status_code=response.status)
+        raise ValueError(f'Non-200 status code while decoding track. All {tries} retries used.')
 
     async def decode_tracks(
             self, track_ids: list[str], *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3,  raw: bool = False
@@ -293,7 +343,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
                         continue
 
                     __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}')
-                    raise HTTPError('Non-200 status code while decoding tracks.', status_code=response.status)
+                    raise ValueError('Non-200 status code while decoding tracks.')
 
                 data = await response.json()
 
@@ -303,4 +353,4 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
             return [ObsidianTrack(id=track.get('track'), info=track.get('info'), ctx=ctx) for track in data]
 
         __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. All {tries} retries used. | Status code: {response.status}')
-        raise HTTPError(f'Non-200 status code while decoding tracks. All {tries} retries used.', status_code=response.status)
+        raise ValueError(f'Non-200 status code while decoding tracks. All {tries} retries used.')

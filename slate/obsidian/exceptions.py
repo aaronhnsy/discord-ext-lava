@@ -23,45 +23,28 @@ SOFTWARE.
 from typing import Any, Optional
 
 from ..exceptions import SlateError
-from ..objects.enums import ExceptionSeverity
+from ..objects.enums import ErrorSeverity, Source, SearchType
 
 
-__all__ = ['ObsidianError', 'TrackLoadError', 'HTTPError']
+__all__ = ['ObsidianError', 'ObsidianSearchError']
 
 
 class ObsidianError(SlateError):
     pass
 
 
-class TrackLoadError(ObsidianError):
+class ObsidianSearchError(ObsidianError):
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__()
 
         self._message: Optional[str] = data.get('message')
-        self._severity: ExceptionSeverity = ExceptionSeverity(data.get('severity'))
+        self._severity: ErrorSeverity = ErrorSeverity(data.get('severity'))
 
     @property
     def message(self) -> Optional[str]:
         return self._message
 
     @property
-    def severity(self) -> ExceptionSeverity:
+    def severity(self) -> ErrorSeverity:
         return self._severity
-
-
-class HTTPError(ObsidianError):
-
-    def __init__(self, message: str, status_code: int) -> None:
-        super().__init__()
-
-        self._message = message
-        self._status_code = status_code
-
-    @property
-    def message(self) -> str:
-        return self._message
-
-    @property
-    def status_code(self) -> int:
-        return self._status_code

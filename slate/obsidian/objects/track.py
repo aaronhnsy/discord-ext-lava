@@ -22,18 +22,18 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Generic, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar
 
-import discord
-from discord.ext import commands
+from discord import Member
+from discord.ext.commands import Context
 
-from .enums import TrackSource
+from ...objects.enums import Source
 
 
 __all__ = ['ObsidianTrack']
 
 
-ContextType = TypeVar('ContextType', bound=commands.Context)
+ContextType = TypeVar('ContextType', bound=Context)
 
 
 class ObsidianTrack(Generic[ContextType]):
@@ -45,7 +45,7 @@ class ObsidianTrack(Generic[ContextType]):
         self._id: str = id
         self._ctx: Optional[ContextType] = ctx
 
-        self._requester: Optional[Union[discord.User, discord.Member]] = ctx.author if ctx else None
+        self._requester: Optional[Member] = ctx.author if ctx else None
 
         self._title: str = info['title']
         self._author: str = info['author']
@@ -55,7 +55,7 @@ class ObsidianTrack(Generic[ContextType]):
         self._position: int = info['position']
         self._is_stream: bool = info['is_stream']
         self._is_seekable: bool = info['is_seekable']
-        self._source: TrackSource = TrackSource(info['source_name'])
+        self._source: Source = Source(info['source_name'])
 
         self._thumbnail: Optional[str] = info.get('thumbnail')
 
@@ -107,7 +107,7 @@ class ObsidianTrack(Generic[ContextType]):
         return self._is_seekable
 
     @property
-    def source(self) -> TrackSource:
+    def source(self) -> Source:
         return self._source
 
     #
@@ -115,7 +115,7 @@ class ObsidianTrack(Generic[ContextType]):
     @property
     def thumbnail(self) -> str:
 
-        if self.source is TrackSource.YOUTUBE:
+        if self.source is Source.YOUTUBE:
             return f'https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg'
 
         if self._thumbnail:
@@ -124,5 +124,5 @@ class ObsidianTrack(Generic[ContextType]):
         return 'https://dummyimage.com/1920x1080/000/fff.png&text=+'
 
     @property
-    def requester(self) -> Optional[Union[discord.Member, discord.User]]:
+    def requester(self) -> Optional[Member]:
         return self._requester

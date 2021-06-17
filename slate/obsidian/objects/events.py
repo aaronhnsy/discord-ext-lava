@@ -24,8 +24,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .enums import EndReason, EventType
-from ...objects.enums import ExceptionSeverity
+from ...objects.enums import ErrorSeverity, EventType, TrackEndReason
 
 
 __all__ = ['ObsidianBaseEvent', 'ObsidianTrackStart', 'ObsidianTrackEnd', 'ObsidianTrackStuck', 'ObsidianTrackException', 'ObsidianWebsocketOpen', 'ObsidianWebsocketClosed']
@@ -84,7 +83,7 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
 
         self._track_id: str = data['track']
 
-        self._reason: EndReason = EndReason(data['reason'])
+        self._reason: TrackEndReason = TrackEndReason(data['reason'])
 
     def __repr__(self) -> str:
         return f'<slate.ObsidianTrackEnd guild_id=\'{self.guild_id}\' track_id=\'{self.track_id}\' reason={self.reason}>'
@@ -96,7 +95,7 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
         return self._track_id
 
     @property
-    def reason(self) -> EndReason:
+    def reason(self) -> TrackEndReason:
         return self._reason
 
 
@@ -137,7 +136,7 @@ class ObsidianTrackException(ObsidianBaseEvent):
         exception: dict[str, Any] = data['exception']
         self._message: str = exception['message']
         self._cause: str = exception['cause']
-        self._severity: ExceptionSeverity = ExceptionSeverity(data['severity'])
+        self._severity: ErrorSeverity = ErrorSeverity(data['severity'])
 
     def __repr__(self) -> str:
         return f'<slate.ObsidianTrackException guild_id=\'{self.guild_id}\' track_id=\'{self.track_id}\' severity=\'{self.severity}\' cause=\'{self.cause}\' message=\'{self.message}\'>'
@@ -157,7 +156,7 @@ class ObsidianTrackException(ObsidianBaseEvent):
         return self._cause
 
     @property
-    def severity(self) -> ExceptionSeverity:
+    def severity(self) -> ErrorSeverity:
         return self._severity
 
 

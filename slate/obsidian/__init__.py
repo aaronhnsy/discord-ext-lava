@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .node import ObsidianNode
-from .player import ObsidianPlayer
-from .objects import *
 from .exceptions import *
+from .node import ObsidianNode
+from .objects import *
+from .player import ObsidianPlayer

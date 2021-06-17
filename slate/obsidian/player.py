@@ -24,10 +24,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
-import discord
-from discord.ext import commands
+from discord import Client, VoiceChannel
+from discord.ext.commands import AutoShardedBot, Bot
 
 from .node import ObsidianNode
 from .objects import events
@@ -42,13 +42,13 @@ __all__ = ['ObsidianPlayer']
 __log__: logging.Logger = logging.getLogger('slate.obsidian.player')
 
 
-BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
+BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
 TrackT = TypeVar('TrackT', bound=ObsidianTrack[Any])
 
 
 class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
-    def __init__(self, client: BotT, channel: discord.VoiceChannel) -> None:
+    def __init__(self, client: BotT, channel: VoiceChannel) -> None:
         super().__init__(client, channel)
 
         self._node: ObsidianNode[Any, Any] = NodePool.get_node(node_cls=ObsidianNode)
@@ -140,7 +140,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
     #
 
-    async def connect(self, *, timeout: Optional[float] = None, reconnect: Optional[bool] = None) -> None:
+    async def connect(self, *, timeout: Optional[float] = None, reconnect: Optional[bool] = None, self_deaf: bool = False) -> None:
 
         await self._guild.change_voice_state(channel=self.channel)
         __log__.info(f'PLAYER | \'{self._guild.id}\' connected to voice channel \'{self.channel.id}\'.')
@@ -161,7 +161,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         __log__.info(f'PLAYER | \'{self.guild.id}\' was disconnected.')
 
-    async def move_to(self, channel: discord.VoiceChannel) -> None:
+    async def move_to(self, channel: VoiceChannel) -> None:
 
         await self.set_pause(True)
 
@@ -181,7 +181,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
     @property
     def position(self) -> float:
 
-        if not self._current:
+        if not self.is_playing():
             return 0
 
         if self._paused:
@@ -205,12 +205,6 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
     @property
     def current(self) -> Optional[TrackT]:
         return self._current
-
-    #
-
-    @property
-    def listeners(self) -> List[discord.Member]:
-        return [member for member in getattr(self.channel, 'members', []) if not member.bot and not member.voice.deaf or not member.voice.self_deaf]
 
     #
 

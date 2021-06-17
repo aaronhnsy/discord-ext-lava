@@ -22,31 +22,31 @@ SOFTWARE.
 
 from __future__ import annotations
 
-from typing import Any, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar
 
-import discord
-from discord.ext import commands
+from discord import Member
+from discord.ext.commands import Context
 
-from .enums import TrackSource
 from .track import ObsidianTrack
+from ...objects.enums import Source
 
 
 __all__ = ['ObsidianPlaylist']
 
 
-ContextType = TypeVar('ContextType', bound=commands.Context)
+ContextType = TypeVar('ContextType', bound=Context)
 
 
 class ObsidianPlaylist(Generic[ContextType]):
 
     __slots__ = '_tracks', '_ctx', '_requester', '_name', '_selected_track', '_uri'
 
-    def __init__(self, *, info: dict[str, Any], tracks: List[dict[str, Any]], ctx: Optional[ContextType] = None) -> None:
+    def __init__(self, *, info: dict[str, Any], tracks: list[dict[str, Any]], ctx: Optional[ContextType] = None) -> None:
 
-        self._tracks: List[ObsidianTrack[ContextType]] = [ObsidianTrack(id=track['track'], info=track['info'], ctx=ctx) for track in tracks]
+        self._tracks: list[ObsidianTrack[ContextType]] = [ObsidianTrack(id=track['track'], info=track['info'], ctx=ctx) for track in tracks]
         self._ctx: Optional[ContextType] = ctx
 
-        self._requester: Optional[Union[discord.User, discord.Member]] = ctx.author if ctx else None
+        self._requester: Optional[Member] = ctx.author if ctx else None
 
         self._name: str = info['name']
         self._selected_track: int = info['selected_track']
@@ -59,7 +59,7 @@ class ObsidianPlaylist(Generic[ContextType]):
     #
 
     @property
-    def tracks(self) -> List[ObsidianTrack[ContextType]]:
+    def tracks(self) -> list[ObsidianTrack[ContextType]]:
         return self._tracks
 
     @property
@@ -87,14 +87,14 @@ class ObsidianPlaylist(Generic[ContextType]):
     #
 
     @property
-    def requester(self) -> Optional[Union[discord.Member, discord.User]]:
+    def requester(self) -> Optional[Member]:
         return self._requester
 
     #
 
     @property
-    def source(self) -> TrackSource:
+    def source(self) -> Source:
         try:
             return self.tracks[0].source
         except KeyError:
-            return TrackSource.YOUTUBE  # Playlists *should* only be youtube sourced anyway.
+            return Source.YOUTUBE  # Playlists *should* only be youtube sourced anyway.

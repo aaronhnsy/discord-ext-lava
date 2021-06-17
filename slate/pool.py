@@ -26,8 +26,8 @@ import logging
 import uuid
 from typing import Generic, Optional, TYPE_CHECKING, Type, TypeVar, Union
 
-import discord
-from discord.ext import commands
+from discord import Client, VoiceRegion
+from discord.ext.commands import AutoShardedBot, Bot
 
 from .exceptions import NodeAlreadyExists, NodeNotFound, NodesNotFound
 
@@ -45,7 +45,7 @@ __all__ = ['NodePool']
 __log__: logging.Logger = logging.getLogger('slate.pool')
 
 
-BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
+BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
 NodeT = TypeVar('NodeT', bound=Union['ObsidianNode[Any, Any]', 'LavalinkNode[Any]', 'AndesiteNode[Any]'])
 
 
@@ -66,7 +66,7 @@ class NodePool(Generic[BotT, NodeT]):
 
     @classmethod
     async def create_node(
-            cls, *, type: Type[NodeT], bot: BotT, host: str, port: str, password: str, identifier: Optional[str] = None, region: Optional[discord.VoiceRegion] = None, **kwargs
+            cls, *, type: Type[NodeT], bot: BotT, host: str, port: str, password: str, identifier: Optional[str] = None, region: Optional[VoiceRegion] = None, **kwargs
     ) -> NodeT:
 
         identifier = identifier or str(uuid.uuid4())
