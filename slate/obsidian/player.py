@@ -142,7 +142,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
     async def connect(self, *, timeout: Optional[float] = None, reconnect: Optional[bool] = None, self_deaf: bool = False) -> None:
 
-        await self._guild.change_voice_state(channel=self.channel)
+        await self._guild.change_voice_state(channel=self.channel, self_deaf=self_deaf)
         __log__.info(f'PLAYER | \'{self._guild.id}\' connected to voice channel \'{self.channel.id}\'.')
 
     async def disconnect(self, *, force: bool = False) -> None:
