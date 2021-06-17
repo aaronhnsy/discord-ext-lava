@@ -100,7 +100,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
     #
 
-    async def connect(self, *, raise_on_failure: bool = False) -> None:
+    async def connect(self, *, raise_on_failure: bool = True) -> None:
 
         try:
             websocket = await self._session.ws_connect(self.ws_url, headers=self._headers)
