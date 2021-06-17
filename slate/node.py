@@ -188,7 +188,7 @@ class BaseNode(abc.ABC, Generic[BotT]):
 
         backoff = ExponentialBackoff()
         url = f'{self.http_url}{endpoint}'
-        headers = {'Authorization': self._password}
+        headers = {'Authorization': self._password, 'Client-Name': f'Slate/2021.05.26'}
 
         for _ in range(3):
 
