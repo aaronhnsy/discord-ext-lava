@@ -11,7 +11,7 @@ with open('requirements.txt') as file:
     INSTALL_REQUIRES = file.read().splitlines()
 
 with open(os.path.abspath(os.path.join(os.path.dirname(__file__), 'slate/__init__.py'))) as file:
-    VERSION = re.search(r'^__version__: [^=]* = f\'([^\']*)\'', file.read(), re.MULTILINE).group(1)
+    VERSION = re.search(r'^__version__: [^=]* = \'([^\']*)\'', file.read(), re.MULTILINE).group(1)
 
 
 CLASSIFIERS = [
