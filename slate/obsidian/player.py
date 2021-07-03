@@ -135,7 +135,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         current_track = data.get('current_track', {})
         self._current_track_id = current_track.get('track')
-        self._last_position = current_track.get('position', 0)
+        self._position = current_track.get('position', 0)
         self._paused = current_track.get('paused', False)
 
     #
