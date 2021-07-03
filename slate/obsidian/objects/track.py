@@ -98,11 +98,9 @@ class ObsidianTrack(Generic[ContextType]):
     def position(self) -> int:
         return self._position
 
-    @property
     def is_stream(self) -> bool:
         return self._is_stream
 
-    @property
     def is_seekable(self) -> bool:
         return self._is_seekable
 

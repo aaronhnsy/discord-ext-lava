@@ -101,7 +101,6 @@ class Queue(Generic[Item]):
 
     #
 
-    @property
     def is_empty(self) -> bool:
         return not self._queue
 
