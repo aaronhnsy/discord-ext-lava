@@ -28,6 +28,8 @@ __all__ = ['QueueLoopMode', 'Source', 'SearchType', 'ErrorSeverity', 'LoadType',
 
 class QueueLoopMode(Enum):
     OFF = 0
+    NONE = OFF
+
     CURRENT = 1
     QUEUE = 2
 
