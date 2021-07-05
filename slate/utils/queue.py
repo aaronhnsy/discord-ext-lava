@@ -21,7 +21,7 @@ SOFTWARE.
 """
 
 import random
-from collections import Iterator
+from collections.abc import Iterator
 from typing import Any, Generic, Optional, TypeVar, Union
 
 from ..objects.enums import QueueLoopMode
