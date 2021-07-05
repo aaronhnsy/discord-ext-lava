@@ -26,7 +26,7 @@ import abc
 from typing import Any, Optional
 
 
-__all__ = ['BaseFilter', 'Tremolo', 'Equalizer', 'Distortion', 'Timescale', 'Karaoke', 'ChannelMix', 'Vibrato', 'Rotation', 'LowPass', 'ObsidianFilter']
+__all__ = ['BaseFilter', 'Tremolo', 'Equalizer', 'Distortion', 'Timescale', 'Karaoke', 'ChannelMix', 'Vibrato', 'Rotation', 'LowPass', 'Filter']
 
 
 class BaseFilter(abc.ABC):
@@ -309,15 +309,15 @@ class LowPass(BaseFilter):
         return self.smoothing
 
 
-class ObsidianFilter:
+class Filter:
 
     def __init__(
-            self, filter: Optional[ObsidianFilter] = None, *, volume: Optional[float] = None, tremolo: Optional[Tremolo] = None, equalizer: Optional[Equalizer] = None,
+            self, filter: Optional[Filter] = None, *, volume: Optional[float] = None, tremolo: Optional[Tremolo] = None, equalizer: Optional[Equalizer] = None,
             distortion: Optional[Distortion] = None, timescale: Optional[Timescale] = None, karaoke: Optional[Karaoke] = None, channel_mix: Optional[ChannelMix] = None,
             vibrato: Optional[Vibrato] = None, rotation: Optional[Rotation] = None, low_pass: Optional[LowPass] = None
     ) -> None:
 
-        self.filter: Optional[ObsidianFilter] = filter
+        self.filter: Optional[Filter] = filter
 
         self.volume: Optional[float] = volume
         self.tremolo: Optional[Tremolo] = tremolo

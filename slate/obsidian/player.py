@@ -32,7 +32,7 @@ from discord.ext.commands import AutoShardedBot, Bot
 from .node import ObsidianNode
 from .objects import events
 from .objects.enums import Op
-from .objects.filters import ObsidianFilter
+from .objects.filters import Filter
 from .objects.track import ObsidianTrack
 from ..player import BasePlayer
 from ..pool import NodePool
@@ -67,7 +67,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
         self._position: float = 0
         self._paused: bool = False
 
-        self._filter: Optional[ObsidianFilter] = None
+        self._filter: Optional[Filter] = None
         self._current: Optional[TrackT] = None
 
     def __repr__(self) -> str:
@@ -199,7 +199,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
         return self._paused
 
     @property
-    def filter(self) -> Optional[ObsidianFilter]:
+    def filter(self) -> Optional[Filter]:
         return self._filter
 
     @property
@@ -254,7 +254,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         self._paused = pause
 
-    async def set_filter(self, filter: ObsidianFilter, *, seek: bool = False) -> None:
+    async def set_filter(self, filter: Filter, *, seek: bool = False) -> None:
 
         await self._node.send(op=Op.PLAYER_FILTERS, **{'guild_id': str(self._guild.id), 'filters': {**filter._payload}})
         __log__.info(f'Player \'{self._guild.id}\' applied filter {filter!r}')
