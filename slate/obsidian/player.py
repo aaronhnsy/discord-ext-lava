@@ -124,7 +124,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
     def _update_state(self, data: dict[str, Any]) -> None:
 
-        __log__.info(f'PLAYER | \'{self.guild.id}\' updating state. | State: {data}')
+        __log__.debug(f'PLAYER | \'{self.guild.id}\' updating state. | State: {data}')
 
         self._last_update = time.time() * 1000
 
