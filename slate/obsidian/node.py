@@ -59,7 +59,7 @@ BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
 ContextT = TypeVar('ContextT', bound=Context)
 
 
-SPOTIFY_URL_REGEX = re.compile(r'http(s)?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?')
+SPOTIFY_URL_REGEX = re.compile(r'(http(s)?://open.)?spotify(.com/)?(:)?(?P<type>album|playlist|track|artist)(/)?(:)?(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?')
 
 
 class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
