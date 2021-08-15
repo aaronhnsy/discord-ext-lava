@@ -36,7 +36,6 @@ from ..node import BaseNode
 __all__ = ['LavalinkNode']
 __log__: logging.Logger = logging.getLogger('slate.obsidian.node')
 
-
 BotT = TypeVar('BotT', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
 
 
@@ -74,8 +73,8 @@ class LavalinkNode(BaseNode, Generic[BotT]):
     def headers(self) -> dict[str, Any]:
         return {
             'Authorization': self._password,
-            'User-Id': str(self._bot.bot.user.id),
-            'Client-Name': 'Slate/0.1.0',
+            'User-Id':       str(self._bot.bot.user.id),
+            'Client-Name':   'Slate/0.1.0',
         }
 
     #

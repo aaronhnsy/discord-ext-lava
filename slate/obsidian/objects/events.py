@@ -1,25 +1,3 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -31,11 +9,9 @@ __all__ = ['ObsidianBaseEvent', 'ObsidianTrackStart', 'ObsidianTrackEnd', 'Obsid
 
 
 class ObsidianBaseEvent:
-
     __slots__ = ['_type', '_guild_id']
 
     def __init__(self, data: dict[str, Any]) -> None:
-
         self._type: EventType = EventType(data['type'])
         self._guild_id: int = int(data['guild_id'])
 
@@ -56,7 +32,6 @@ class ObsidianBaseEvent:
 
 
 class ObsidianTrackStart(ObsidianBaseEvent):
-
     __slots__ = ['_type', '_guild_id', '_track_id']
 
     def __init__(self, data: dict[str, Any]) -> None:
@@ -75,7 +50,6 @@ class ObsidianTrackStart(ObsidianBaseEvent):
 
 
 class ObsidianTrackEnd(ObsidianBaseEvent):
-
     __slots__ = ['_type', '_guild_id', '_track_id', '_reason']
 
     def __init__(self, data: dict[str, Any]) -> None:
@@ -100,7 +74,6 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
 
 
 class ObsidianTrackStuck(ObsidianBaseEvent):
-
     __slots__ = ['_type', '_guild_id', '_track_id', '_threshold_ms']
 
     def __init__(self, data: dict[str, Any]) -> None:
@@ -125,7 +98,6 @@ class ObsidianTrackStuck(ObsidianBaseEvent):
 
 
 class ObsidianTrackException(ObsidianBaseEvent):
-
     __slots__ = ['_type', '_guild_id', '_track_id', '_message', '_cause', '_severity']
 
     def __init__(self, data: dict[str, Any]) -> None:
@@ -161,7 +133,6 @@ class ObsidianTrackException(ObsidianBaseEvent):
 
 
 class ObsidianWebsocketOpen(ObsidianBaseEvent):
-
     __slots__ = ['_type', '_guild_id', '_target', '_ssrc']
 
     def __init__(self, data: dict[str, Any]) -> None:
@@ -185,7 +156,6 @@ class ObsidianWebsocketOpen(ObsidianBaseEvent):
 
 
 class ObsidianWebsocketClosed(ObsidianBaseEvent):
-
     __slots__ = ['_type', '_guild_id', '_code', '_reason', '_by_remote']
 
     def __init__(self, data: dict[str, Any]) -> None:

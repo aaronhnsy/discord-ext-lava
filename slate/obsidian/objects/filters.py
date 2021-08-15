@@ -1,25 +1,3 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 import abc
@@ -146,15 +124,15 @@ class Distortion(BaseFilter):
     def _payload(self) -> dict[str, float]:
         return {
             'sinOffset': self.sin_offset, 'sinScale': self.sin_scale, 'cosOffset': self.cos_offset, 'cosScale': self.cos_scale, 'tanOffset': self.tan_offset, 'tanScale': self.tan_scale,
-            'offset': self.offset, 'scale': self.scale
+            'offset':    self.offset, 'scale': self.scale
         }
 
 
 class Timescale(BaseFilter):
 
     def __init__(
-            self, *, pitch: float = 1.0, pitch_octaves: Optional[float] = None, pitch_semi_tones: Optional[float] = None, rate: float = 1.0, rate_change: Optional[float] = None, speed: float = 1.0,
-            speed_change: Optional[float] = None
+        self, *, pitch: float = 1.0, pitch_octaves: Optional[float] = None, pitch_semi_tones: Optional[float] = None, rate: float = 1.0, rate_change: Optional[float] = None, speed: float = 1.0,
+        speed_change: Optional[float] = None
     ) -> None:
         super().__init__()
 
@@ -188,7 +166,7 @@ class Timescale(BaseFilter):
     @property
     def _payload(self) -> dict[str, Optional[float]]:
         return {
-            'pitch': self.pitch, 'pitch_octaves': self.pitch_octaves, 'pitch_semi_tones': self.pitch_semi_tones, 'rate': self.rate, 'rate_change': self.rate_change, 'speed': self.speed,
+            'pitch':        self.pitch, 'pitch_octaves': self.pitch_octaves, 'pitch_semi_tones': self.pitch_semi_tones, 'rate': self.rate, 'rate_change': self.rate_change, 'speed': self.speed,
             'speed_change': self.speed_change
         }
 
@@ -198,7 +176,7 @@ class Karaoke(BaseFilter):
     def __init__(self, *, level: float = 1.0, mono_level: float = 1.0, filter_band: float = 220.0, filter_width: float = 100.0) -> None:
         super().__init__()
 
-        self.level: float= level
+        self.level: float = level
         self.mono_level: float = mono_level
         self.filter_band: float = filter_band
         self.filter_width: float = filter_width
@@ -312,9 +290,9 @@ class LowPass(BaseFilter):
 class Filter:
 
     def __init__(
-            self, filter: Optional[Filter] = None, *, volume: Optional[float] = None, tremolo: Optional[Tremolo] = None, equalizer: Optional[Equalizer] = None,
-            distortion: Optional[Distortion] = None, timescale: Optional[Timescale] = None, karaoke: Optional[Karaoke] = None, channel_mix: Optional[ChannelMix] = None,
-            vibrato: Optional[Vibrato] = None, rotation: Optional[Rotation] = None, low_pass: Optional[LowPass] = None
+        self, filter: Optional[Filter] = None, *, volume: Optional[float] = None, tremolo: Optional[Tremolo] = None, equalizer: Optional[Equalizer] = None,
+        distortion: Optional[Distortion] = None, timescale: Optional[Timescale] = None, karaoke: Optional[Karaoke] = None, channel_mix: Optional[ChannelMix] = None,
+        vibrato: Optional[Vibrato] = None, rotation: Optional[Rotation] = None, low_pass: Optional[LowPass] = None
     ) -> None:
 
         self.filter: Optional[Filter] = filter

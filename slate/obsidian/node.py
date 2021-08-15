@@ -1,25 +1,3 @@
-"""
-Copyright (c) 2020-present Axelancerr
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -39,7 +17,7 @@ from .objects.playlist import ObsidianPlaylist
 from .objects.stats import ObsidianStats
 from .objects.track import ObsidianTrack
 from .. import __version__
-from ..exceptions import NodeConnectionError, NoMatchesFound
+from ..exceptions import NoMatchesFound, NodeConnectionError
 from ..node import BaseNode
 from ..objects.enums import LoadType, SearchType, Source
 from ..objects.search import SearchResult
@@ -50,14 +28,11 @@ from ..utils.backoff import ExponentialBackoff
 if TYPE_CHECKING:
     from .player import ObsidianPlayer
 
-
 __all__ = ['ObsidianNode']
 __log__: logging.Logger = logging.getLogger('slate.obsidian.node')
 
-
 BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
 ContextT = TypeVar('ContextT', bound=Context)
-
 
 SPOTIFY_URL_REGEX = re.compile(r'(http(s)?://open.)?spotify(.com/)?(:)?(?P<type>album|playlist|track|artist)(/)?(:)?(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?')
 
@@ -234,19 +209,19 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
             tracks = [
                 ObsidianTrack(
-                        ctx=ctx, id='',
-                        info={
-                            'title':       track.name or 'UNKNOWN',
-                            'author':      ', '.join(artist.name for artist in track.artists) if track.artists else 'UNKNOWN',
-                            'uri':         track.url or search,
-                            'identifier':  track.id or 'UNKNOWN',
-                            'length':      track.duration or 0,
-                            'position':    0,
-                            'is_stream':   False,
-                            'is_seekable': False,
-                            'source_name': 'spotify',
-                            'thumbnail':   track.images[0].url if track.images else None
-                        }
+                    ctx=ctx, id='',
+                    info={
+                        'title':       track.name or 'UNKNOWN',
+                        'author':      ', '.join(artist.name for artist in track.artists) if track.artists else 'UNKNOWN',
+                        'uri':         track.url or search,
+                        'identifier':  track.id or 'UNKNOWN',
+                        'length':      track.duration or 0,
+                        'position':    0,
+                        'is_stream':   False,
+                        'is_seekable': False,
+                        'source_name': 'spotify',
+                        'thumbnail':   track.images[0].url if track.images else None
+                    }
                 ) for track in search_tracks
             ]
 
@@ -294,7 +269,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
     #
 
     async def decode_track(
-            self, track_id: str, *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
+        self, track_id: str, *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
     ) -> Optional[Union[ObsidianTrack[Any], dict[str, Any]]]:
 
         backoff = ExponentialBackoff()
@@ -325,7 +300,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
         raise ValueError(f'Non-200 status code while decoding track. All {tries} retries used.')
 
     async def decode_tracks(
-            self, track_ids: list[str], *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3,  raw: bool = False
+        self, track_ids: list[str], *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
     ) -> Optional[Union[list[ObsidianTrack[Any]], dict[str, Any]]]:
 
         backoff = ExponentialBackoff()

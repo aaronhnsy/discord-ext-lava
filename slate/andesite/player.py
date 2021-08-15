@@ -12,7 +12,6 @@ from discord.ext import commands
 if TYPE_CHECKING:
     from .node import ObsidianNode
 
-
 BotType = TypeVar('BotType', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
 TrackType = TypeVar('TrackType', bound='ObsidianTrack')
 
