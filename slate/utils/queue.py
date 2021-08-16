@@ -47,12 +47,12 @@ class Queue(Generic[Item]):
 
     def __setitem__(
         self,
-        index: int,
+        index: Any,
         value: Item
     ) -> None:
 
         if not isinstance(index, int):
-            raise ValueError(f"\"Queue\" indices must be integers, not \"{type(index)}\"")
+            raise ValueError(f"'Queue' indices must be integers, not '{type(index)}'")
 
         self._queue[index] = value
 
@@ -76,21 +76,21 @@ class Queue(Generic[Item]):
 
     def __add__(
         self,
-        other: list[Item]
+        other: Any
     ) -> None:
 
         if not isinstance(other, list):
-            raise TypeError(f"Queue addition not supported for type \"{type(other)}\".")
+            raise TypeError(f"Queue addition not supported for type '{type(other)}'.")
 
         self._queue.extend(other)
 
     def __sub__(
         self,
-        other: list[Item]
+        other: Any
     ) -> None:
 
         if not isinstance(other, list):
-            raise TypeError(f"Queue subtraction not supported for type \"{type(other)}\".")
+            raise TypeError(f"Queue subtraction not supported for type '{type(other)}'.")
 
         self._queue = [item for item in self._queue if item not in other]
 

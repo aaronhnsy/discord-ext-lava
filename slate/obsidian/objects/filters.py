@@ -25,7 +25,7 @@ class ObsidianBaseFilter(abc.ABC):
         self._name = "BaseFilter"
 
     def __repr__(self) -> str:
-        return f"slate.BaseFilter name=\"{self.name}\""
+        return f"slate.BaseFilter name='{self.name}'"
 
     def __str__(self) -> str:
         return self._name
@@ -96,7 +96,7 @@ class ObsidianEqualizer(ObsidianBaseFilter):
         self._name = name
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianEqualizer name=\"{self._name}\" gains={self._gains}>"
+        return f"<slate.ObsidianEqualizer name='{self._name}' gains={self._gains}>"
 
     #
 
@@ -176,11 +176,11 @@ class ObsidianTimescale(ObsidianBaseFilter):
         super().__init__()
 
         if (pitch_octaves and pitch) or (pitch_semi_tones and pitch) or (pitch_octaves and pitch_semi_tones):
-            raise ValueError("Only one of \"pitch\", \"pitch_octaves\" and \"pitch_semi_tones\" may be set.")
+            raise ValueError("Only one of 'pitch', 'pitch_octaves' and 'pitch_semi_tones' may be set.")
         if rate and rate_change:
-            raise ValueError("Only one of \"rate\" and \"rate_change\" may be set.")
+            raise ValueError("Only one of 'rate' and 'rate_change' may be set.")
         if speed and speed_change:
-            raise ValueError("Only one of \"speed\" and \"speed_change\" may be set.")
+            raise ValueError("Only one of 'speed' and 'speed_change' may be set.")
 
         self.pitch: float = pitch
         self.pitch_octaves: Optional[float] = pitch_octaves
