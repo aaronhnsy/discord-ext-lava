@@ -7,7 +7,7 @@ import re
 from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar, Union
 
 from aiohttp import WSMsgType, WSServerHandshakeError
-from discord import Client, VoiceRegion
+from discord import AutoShardedClient, Client, VoiceRegion
 from discord.ext.commands import AutoShardedBot, Bot, Context
 from spotify import HTTPException, NotFound, Playlist
 
@@ -28,30 +28,48 @@ from ..utils.backoff import ExponentialBackoff
 if TYPE_CHECKING:
     from .player import ObsidianPlayer
 
-__all__ = ['ObsidianNode']
-__log__: logging.Logger = logging.getLogger('slate.obsidian.node')
+__all__ = ["ObsidianNode"]
+__log__: logging.Logger = logging.getLogger("slate.obsidian.node")
 
-BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
-ContextT = TypeVar('ContextT', bound=Context)
+BotT = TypeVar("BotT", bound=Union[Client, AutoShardedClient, Bot, AutoShardedBot])
+ContextT = TypeVar("ContextT", bound=Context)
 
-SPOTIFY_URL_REGEX = re.compile(r'(http(s)?://open.)?spotify(.com/)?(:)?(?P<type>album|playlist|track|artist)(/)?(:)?(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?')
+SPOTIFY_URL_REGEX = re.compile(
+    r"(http(s)?://open.)?spotify(.com/)?(:)?(?P<type>album|playlist|track|artist)(/)?(:)?(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?"
+)
 
 
 class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
-    def __init__(self, bot: BotT, host: str, port: str, password: str, identifier: str, region: Optional[VoiceRegion] = None, **kwargs) -> None:
-        super().__init__(bot, host, port, password, identifier, region, **kwargs)
+    def __init__(
+        self,
+        bot: BotT,
+        host: str,
+        port: str,
+        password: str,
+        identifier: str,
+        **kwargs
+    ) -> None:
+
+        super().__init__(
+            bot,
+            host,
+            port,
+            password,
+            identifier,
+            **kwargs
+        )
 
         self._players: dict[int, ObsidianPlayer[Any, Any]] = {}
 
         self._headers: dict[str, Any] = {
-            'Authorization': self._password,
-            'User-Id':       str(self._bot.user.id),
-            'Client-Name':   f'Slate/{__version__}',
+            "Authorization": self._password,
+            "User-Id":       str(self._bot.user.id),
+            "Client-Name":   f"Slate/{__version__}",
         }
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianNode>'
+        return f"<slate.ObsidianNode>"
 
     #
 
@@ -63,11 +81,11 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
     @property
     def http_url(self) -> str:
-        return f'http://{self._host}:{self._port}/'
+        return f"http://{self._host}:{self._port}/"
 
     @property
     def ws_url(self) -> str:
-        return f'ws://{self._host}:{self._port}/magma'
+        return f"ws://{self._host}:{self._port}/magma"
 
     @property
     def headers(self) -> dict[str, Any]:
@@ -75,19 +93,23 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
     #
 
-    async def connect(self, *, raise_on_failure: bool = True) -> None:
+    async def connect(
+        self,
+        *,
+        raise_on_failure: bool = True
+    ) -> None:
 
         try:
             websocket = await self._session.ws_connect(self.ws_url, headers=self._headers)
 
         except Exception as error:  # TODO: Spicy up this error
 
-            message = f'\'{self._identifier}\' node failed to connect.'
+            message = f"'{self._identifier}' node failed to connect."
 
             if isinstance(error, WSServerHandshakeError) and error.status == 4001:
-                message = f'\'{self._identifier}\' node failed to connect due to invalid authorization.'
+                message = f"'{self._identifier}' node failed to connect due to invalid authorization."
 
-            __log__.error(f'NODE | {message}')
+            __log__.error(f"NODE | {message}")
             if raise_on_failure:
                 raise NodeConnectionError(message)
 
@@ -98,10 +120,14 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
             if not self._task:
                 self._task = asyncio.create_task(self._listen())
 
-            self._bot.dispatch('slate_node_ready', self)
-            __log__.info(f'NODE | \'{self._identifier}\' node connected successfully.')
+            self._bot.dispatch("slate_node_ready", self)
+            __log__.info(f"NODE | '{self._identifier}' node connected successfully.")
 
-    async def disconnect(self, *, force: bool = False) -> None:
+    async def disconnect(
+        self,
+        *,
+        force: bool = False
+    ) -> None:
 
         for player in self._players.copy().values():
             await player.disconnect(force=force)
@@ -116,14 +142,18 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
         self._task = None
 
-        __log__.info(f'NODE | \'{self._identifier}\' node has been disconnected.')
+        __log__.info(f"NODE | '{self._identifier}' node has been disconnected.")
 
-    async def destroy(self, *, force: bool = False) -> None:
+    async def destroy(
+        self,
+        *,
+        force: bool = False
+    ) -> None:
 
         await self.disconnect(force=force)
         del NodePool._nodes[self._identifier]
 
-        __log__.info(f'NODE | \'{self._identifier}\' node has been destroyed.')
+        __log__.info(f"NODE | '{self._identifier}' node has been destroyed.")
 
     #
 
@@ -138,7 +168,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
             if payload.type is WSMsgType.CLOSED:
 
                 retry = backoff.delay()
-                __log__.warning(f'NODE | \'{self._identifier}\' nodes websocket is closed, attempting reconnection in {round(retry)} seconds.')
+                __log__.warning(f"NODE | '{self._identifier}' nodes websocket is closed, attempting reconnection in {round(retry)} seconds.")
 
                 await asyncio.sleep(retry)
 
@@ -150,21 +180,25 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
                 data = payload.json()
 
                 try:
-                    op = Op(data['op'])
+                    op = Op(data["op"])
                 except ValueError:
-                    __log__.warning(f'NODE | \'{self._identifier}\' node received payload with invalid op code. | Payload: {data}')
+                    __log__.warning(f"NODE | '{self._identifier}' node received payload with invalid op code. | Payload: {data}")
                     continue
                 else:
-                    __log__.debug(f'NODE | \'{self._identifier}\' node received payload with op \'{op!r}\'. | Payload: {data}')
-                    asyncio.create_task(self._handle_payload(op, data['d']))
+                    __log__.debug(f"NODE | '{self._identifier}' node received payload with op '{op!r}'. | Payload: {data}")
+                    asyncio.create_task(self._handle_payload(op, data["d"]))
 
-    async def _handle_payload(self, op: Op, data: dict[str, Any]) -> None:
+    async def _handle_payload(
+        self,
+        op: Op,
+        data: dict[str, Any]
+    ) -> None:
 
         if op is Op.STATS:
             self._stats = ObsidianStats(data)
             return
 
-        if not (player := self._players.get(int(data['guild_id']))):
+        if not (player := self._players.get(int(data["guild_id"]))):
             return
 
         if op is Op.PLAYER_EVENT:
@@ -174,12 +208,18 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
     #
 
-    async def search(self, search: str, *, ctx: Optional[ContextT] = None, source: Optional[Source] = None) -> Optional[SearchResult[Any, Any]]:
+    async def search(
+        self,
+        search: str,
+        *,
+        ctx: Optional[ContextT] = None,
+        source: Optional[Source] = None
+    ) -> Optional[SearchResult[Any, Any]]:
 
         if (match := SPOTIFY_URL_REGEX.match(search)) and self.spotify is not None:
 
-            search_type = SearchType(match.group('type'))
-            spotify_id = match.group('id')
+            search_type = SearchType(match.group("type"))
+            spotify_id = match.group("id")
 
             try:
                 if search_type is SearchType.ALBUM:
@@ -205,22 +245,22 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
                 raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
 
             except HTTPException:
-                raise ObsidianSearchError({'message': 'Error while accessing spotify API.', 'severity': 'COMMON'})
+                raise ObsidianSearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
             tracks = [
                 ObsidianTrack(
-                    ctx=ctx, id='',
+                    ctx=ctx, id="",
                     info={
-                        'title':       track.name or 'UNKNOWN',
-                        'author':      ', '.join(artist.name for artist in track.artists) if track.artists else 'UNKNOWN',
-                        'uri':         track.url or search,
-                        'identifier':  track.id or 'UNKNOWN',
-                        'length':      track.duration or 0,
-                        'position':    0,
-                        'is_stream':   False,
-                        'is_seekable': False,
-                        'source_name': 'spotify',
-                        'thumbnail':   track.images[0].url if track.images else None
+                        "title":       track.name or "UNKNOWN",
+                        "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "UNKNOWN",
+                        "uri":         track.url or search,
+                        "identifier":  track.id or "UNKNOWN",
+                        "length":      track.duration or 0,
+                        "position":    0,
+                        "is_stream":   False,
+                        "is_seekable": False,
+                        "source_name": "spotify",
+                        "thumbnail":   track.images[0].url if track.images else None
                     }
                 ) for track in search_tracks
             ]
@@ -230,22 +270,22 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
         else:
 
             if source is Source.YOUTUBE:
-                search = f'ytsearch:{search}'
+                search = f"ytsearch:{search}"
             elif source is Source.SOUNDCLOUD:
-                search = f'scsearch:{search}'
+                search = f"scsearch:{search}"
             elif source is Source.YOUTUBE_MUSIC:
-                search = f'ytmsearch:{search}'
+                search = f"ytmsearch:{search}"
 
-            data = await self._request(method='GET', endpoint='/loadtracks', identifier=search)
+            data = await self._request(method="GET", endpoint="/loadtracks", identifier=search)
 
-            load_type = LoadType(data['load_type'])
-            message = f'SEARCH | \'{load_type!r}\' for search: {search} | Data: {data}'
+            load_type = LoadType(data["load_type"])
+            message = f"SEARCH | '{load_type!r}' for search: {search} | Data: {data}"
 
             if load_type is LoadType.LOAD_FAILED:
                 __log__.warning(message)
-                raise ObsidianSearchError(data['exception'])
+                raise ObsidianSearchError(data["exception"])
 
-            if load_type is LoadType.NO_MATCHES or not data['tracks']:
+            if load_type is LoadType.NO_MATCHES or not data["tracks"]:
                 __log__.info(message)
                 raise NoMatchesFound(search=search, search_type=SearchType.TRACK, source=source)
 
@@ -253,79 +293,103 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
                 __log__.info(message)
 
-                info = data['playlist_info']
-                info['uri'] = search  # If a playlist is found, it should only ever be by direct link, so this should be fine.
+                info = data["playlist_info"]
+                info["uri"] = search  # If a playlist is found, it should only ever be by direct link, so this should be fine.
 
-                playlist = ObsidianPlaylist(info=info, tracks=data['tracks'], ctx=ctx)
+                playlist = ObsidianPlaylist(info=info, tracks=data["tracks"], ctx=ctx)
                 return SearchResult(source=playlist.source, type=SearchType.PLAYLIST, result=playlist, tracks=playlist.tracks)
 
             if load_type in [LoadType.TRACK_LOADED, LoadType.SEARCH_RESULT]:
 
                 __log__.info(message)
 
-                tracks = [ObsidianTrack(id=track['track'], info=track['info'], ctx=ctx) for track in data['tracks']]
+                tracks = [ObsidianTrack(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
                 return SearchResult(source=tracks[0].source, type=SearchType.TRACK, result=tracks, tracks=tracks)
 
     #
 
     async def decode_track(
-        self, track_id: str, *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
+        self,
+        track_id: str,
+        *,
+        ctx: Optional[ContextT] = None,
+        retry: bool = True,
+        tries: int = 3,
+        raw: bool = False
     ) -> Optional[Union[ObsidianTrack[Any], dict[str, Any]]]:
 
         backoff = ExponentialBackoff()
 
         for _ in range(tries):
 
-            async with self.session.get(url=f'{self.http_url}/decodetrack', headers={'Authorization': self._password}, params={'track': track_id}) as response:
+            async with self.session.get(
+                    url=f"{self.http_url}/decodetrack",
+                    headers={"Authorization": self._password},
+                    params={"track": track_id}
+            ) as response:
 
                 if response.status != 200:
 
                     if retry:
                         time = backoff.delay()
-                        __log__.warning(f'DECODETRACK | Non-200 status code while decoding track. Retrying in {round(time)}s. | Status code: {response.status}')
+                        __log__.warning(
+                            f"DECODETRACK | Non-200 status code while decoding track. Retrying in {round(time)}s. | Status code: {response.status}"
+                        )
                         await asyncio.sleep(time)
                         continue
 
-                    __log__.error(f'DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}')
-                    raise ValueError('Non-200 status code while decoding track.')
+                    __log__.error(f"DECODETRACK | Non-200 status code while decoding track. Not retrying. | Status code: {response.status}")
+                    raise ValueError("Non-200 status code while decoding track.")
 
                 data = await response.json()
 
             if raw:
                 return data
 
-            return ObsidianTrack(id=track_id, info=data.get('info', None) or data, ctx=ctx)
+            return ObsidianTrack(id=track_id, info=data.get("info", None) or data, ctx=ctx)
 
-        __log__.error(f'DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}')
-        raise ValueError(f'Non-200 status code while decoding track. All {tries} retries used.')
+        __log__.error(f"DECODETRACK | Non-200 status code while decoding track. All {tries} retries used. | Status code: {response.status}")
+        raise ValueError(f"Non-200 status code while decoding track. All {tries} retries used.")
 
     async def decode_tracks(
-        self, track_ids: list[str], *, ctx: Optional[ContextT] = None, retry: bool = True, tries: int = 3, raw: bool = False
+        self,
+        track_ids: list[str],
+        *,
+        ctx: Optional[ContextT] = None,
+        retry: bool = True,
+        tries: int = 3,
+        raw: bool = False
     ) -> Optional[Union[list[ObsidianTrack[Any]], dict[str, Any]]]:
 
         backoff = ExponentialBackoff()
 
         for _ in range(tries):
 
-            async with self.session.post(url=f'{self.http_url}/decodetracks', headers={'Authorization': self._password}, data=json.dumps(track_ids)) as response:
+            async with self.session.post(
+                    url=f"{self.http_url}/decodetracks",
+                    headers={"Authorization": self._password},
+                    data=json.dumps(track_ids)
+            ) as response:
 
                 if response.status != 200:
 
                     if retry:
                         time = backoff.delay()
-                        __log__.warning(f'DECODETRACKS | Non-200 status code while decoding tracks. Retrying in {round(time)}s. | Status code: {response.status}')
+                        __log__.warning(
+                            f"DECODETRACKS | Non-200 status code while decoding tracks. Retrying in {round(time)}s. | Status code: {response.status}"
+                        )
                         await asyncio.sleep(time)
                         continue
 
-                    __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}')
-                    raise ValueError('Non-200 status code while decoding tracks.')
+                    __log__.error(f"DECODETRACKS | Non-200 status code while decoding tracks. Not retrying. | Status code: {response.status}")
+                    raise ValueError("Non-200 status code while decoding tracks.")
 
                 data = await response.json()
 
             if raw:
                 return data
 
-            return [ObsidianTrack(id=track.get('track'), info=track.get('info'), ctx=ctx) for track in data]
+            return [ObsidianTrack(id=track.get("track"), info=track.get("info"), ctx=ctx) for track in data]
 
-        __log__.error(f'DECODETRACKS | Non-200 status code while decoding tracks. All {tries} retries used. | Status code: {response.status}')
-        raise ValueError(f'Non-200 status code while decoding tracks. All {tries} retries used.')
+        __log__.error(f"DECODETRACKS | Non-200 status code while decoding tracks. All {tries} retries used. | Status code: {response.status}")
+        raise ValueError(f"Non-200 status code while decoding tracks. All {tries} retries used.")

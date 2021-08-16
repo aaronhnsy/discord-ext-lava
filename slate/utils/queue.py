@@ -5,17 +5,12 @@ from typing import Any, Generic, Optional, TypeVar, Union
 from ..objects.enums import QueueLoopMode
 
 
-__all__ = (
-    'Queue',
-)
+__all__ = ["Queue"]
 
-
-Item = TypeVar('Item')
+Item = TypeVar("Item")
 
 
 class Queue(Generic[Item]):
-
-    __slots__ = ['_queue', '_queue_history', '_loop_mode']
 
     def __init__(self) -> None:
 
@@ -25,7 +20,7 @@ class Queue(Generic[Item]):
         self._loop_mode: QueueLoopMode = QueueLoopMode.OFF
 
     def __repr__(self) -> str:
-        return f'<slate.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>'
+        return f"<slate.Queue length={len(list(self.queue))} history_length={len(list(self.history))}>"
 
     #
 
@@ -33,7 +28,10 @@ class Queue(Generic[Item]):
     def loop_mode(self) -> QueueLoopMode:
         return self._loop_mode
 
-    def set_loop_mode(self, mode: QueueLoopMode) -> None:
+    def set_loop_mode(
+        self,
+        mode: QueueLoopMode
+    ) -> None:
         self._loop_mode = mode
 
     #
@@ -41,17 +39,27 @@ class Queue(Generic[Item]):
     def __len__(self) -> int:
         return len(self._queue)
 
-    def __getitem__(self, key: int) -> Item:
+    def __getitem__(
+        self,
+        key: int
+    ) -> Item:
         return self._queue[key]
 
-    def __setitem__(self, index: int, value: Item) -> None:
+    def __setitem__(
+        self,
+        index: int,
+        value: Item
+    ) -> None:
 
         if not isinstance(index, int):
-            raise ValueError(f'\'Queue\' indices must be integers, not \'{type(index)}\'')
+            raise ValueError(f"\"Queue\" indices must be integers, not \"{type(index)}\"")
 
         self._queue[index] = value
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(
+        self,
+        index: int
+    ) -> None:
         self._queue.__delitem__(index)
 
     def __iter__(self) -> Iterator[Item]:
@@ -60,20 +68,29 @@ class Queue(Generic[Item]):
     def __reversed__(self) -> Iterator[Item]:
         return self._queue.__reversed__()
 
-    def __contains__(self, item: Item) -> bool:
+    def __contains__(
+        self,
+        item: Item
+    ) -> bool:
         return item in self._queue
 
-    def __add__(self, other: list[Item]) -> None:
+    def __add__(
+        self,
+        other: list[Item]
+    ) -> None:
 
         if not isinstance(other, list):
-            raise TypeError(f'Queue addition not supported for type \'{type(other)}\'.')
+            raise TypeError(f"Queue addition not supported for type \"{type(other)}\".")
 
         self._queue.extend(other)
 
-    def __sub__(self, other: list[Item]) -> None:
+    def __sub__(
+        self,
+        other: list[Item]
+    ) -> None:
 
         if not isinstance(other, list):
-            raise TypeError(f'Queue subtraction not supported for type \'{type(other)}\'.')
+            raise TypeError(f"Queue subtraction not supported for type \"{type(other)}\".")
 
         self._queue = [item for item in self._queue if item not in other]
 
@@ -95,7 +112,12 @@ class Queue(Generic[Item]):
     #
 
     @staticmethod
-    def _put(iterable: list[Any], *, items: Union[list[Item], Item], position: Optional[int] = None) -> None:
+    def _put(
+        iterable: list[Any],
+        *,
+        items: Union[list[Item], Item],
+        position: Optional[int] = None
+    ) -> None:
 
         if position is None:
             if isinstance(items, list):
@@ -111,7 +133,12 @@ class Queue(Generic[Item]):
 
     #
 
-    def get(self, position: int = 0, *, put_history: bool = True) -> Optional[Item]:
+    def get(
+        self,
+        position: int = 0,
+        *,
+        put_history: bool = True
+    ) -> Optional[Item]:
 
         try:
             item = self._queue.pop(position)
@@ -126,7 +153,12 @@ class Queue(Generic[Item]):
 
         return item
 
-    def put(self, items: Union[list[Item], Item], *, position: Optional[int] = None) -> None:
+    def put(
+        self,
+        items: Union[list[Item], Item],
+        *,
+        position: Optional[int] = None
+    ) -> None:
         self._put(self._queue, items=items, position=position)
 
     def shuffle(self) -> None:
@@ -140,7 +172,10 @@ class Queue(Generic[Item]):
 
     #
 
-    def get_history(self, position: int = 0) -> Optional[Item]:
+    def get_history(
+        self,
+        position: int = 0
+    ) -> Optional[Item]:
 
         try:
             item = list(reversed(self._queue_history))[position]
@@ -149,7 +184,12 @@ class Queue(Generic[Item]):
 
         return item
 
-    def put_history(self, items: Union[list[Item], Item], *, position: Optional[int] = None) -> None:
+    def put_history(
+        self,
+        items: Union[list[Item], Item],
+        *,
+        position: Optional[int] = None
+    ) -> None:
         self._put(self._queue_history, items=items, position=position)
 
     def shuffle_history(self) -> None:

@@ -5,18 +5,29 @@ from typing import Any
 from ...objects.enums import ErrorSeverity, EventType, TrackEndReason
 
 
-__all__ = ['ObsidianBaseEvent', 'ObsidianTrackStart', 'ObsidianTrackEnd', 'ObsidianTrackStuck', 'ObsidianTrackException', 'ObsidianWebsocketOpen', 'ObsidianWebsocketClosed']
+__all__ = [
+    "ObsidianBaseEvent",
+    "ObsidianTrackStart",
+    "ObsidianTrackEnd",
+    "ObsidianTrackStuck",
+    "ObsidianTrackException",
+    "ObsidianWebsocketOpen",
+    "ObsidianWebsocketClosed"
+]
 
 
 class ObsidianBaseEvent:
-    __slots__ = ['_type', '_guild_id']
 
-    def __init__(self, data: dict[str, Any]) -> None:
-        self._type: EventType = EventType(data['type'])
-        self._guild_id: int = int(data['guild_id'])
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
+        self._type: EventType = EventType(data["type"])
+        self._guild_id: int = int(data["guild_id"])
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianBaseEvent guild_id=\'{self.guild_id}\'>'
+        return f"<slate.ObsidianBaseEvent guild_id='{self.guild_id}'>"
 
     #
 
@@ -32,15 +43,18 @@ class ObsidianBaseEvent:
 
 
 class ObsidianTrackStart(ObsidianBaseEvent):
-    __slots__ = ['_type', '_guild_id', '_track_id']
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
         super().__init__(data)
 
-        self._track_id: str = data['track']
+        self._track_id: str = data["track"]
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianTrackStart guild_id=\'{self.guild_id}\' track_id=\'{self.track_id}\'>'
+        return f"<slate.ObsidianTrackStart guild_id='{self.guild_id}' track_id='{self.track_id}'>"
 
     #
 
@@ -50,17 +64,20 @@ class ObsidianTrackStart(ObsidianBaseEvent):
 
 
 class ObsidianTrackEnd(ObsidianBaseEvent):
-    __slots__ = ['_type', '_guild_id', '_track_id', '_reason']
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
         super().__init__(data)
 
-        self._track_id: str = data['track']
+        self._track_id: str = data["track"]
 
-        self._reason: TrackEndReason = TrackEndReason(data['reason'])
+        self._reason: TrackEndReason = TrackEndReason(data["reason"])
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianTrackEnd guild_id=\'{self.guild_id}\' track_id=\'{self.track_id}\' reason={self.reason}>'
+        return f"<slate.ObsidianTrackEnd guild_id='{self.guild_id}' track_id='{self.track_id}' reason={self.reason}>"
 
     #
 
@@ -74,17 +91,20 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
 
 
 class ObsidianTrackStuck(ObsidianBaseEvent):
-    __slots__ = ['_type', '_guild_id', '_track_id', '_threshold_ms']
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
         super().__init__(data)
 
-        self._track_id: str = data['track']
+        self._track_id: str = data["track"]
 
-        self._threshold_ms: int = data['threshold_ms']
+        self._threshold_ms: int = data["threshold_ms"]
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianTrackStuck guild_id=\'{self.guild_id}\' track_id=\'{self.track_id}\' threshold_ms={self.threshold_ms}>'
+        return f"<slate.ObsidianTrackStuck guild_id='{self.guild_id}' track_id='{self.track_id}' threshold_ms={self.threshold_ms}>"
 
     #
 
@@ -98,20 +118,24 @@ class ObsidianTrackStuck(ObsidianBaseEvent):
 
 
 class ObsidianTrackException(ObsidianBaseEvent):
-    __slots__ = ['_type', '_guild_id', '_track_id', '_message', '_cause', '_severity']
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
         super().__init__(data)
 
-        self._track_id: str = data['track']
+        self._track_id: str = data["track"]
 
-        exception: dict[str, Any] = data['exception']
-        self._message: str = exception['message']
-        self._cause: str = exception['cause']
-        self._severity: ErrorSeverity = ErrorSeverity(data['severity'])
+        exception: dict[str, Any] = data["exception"]
+        self._message: str = exception["message"]
+        self._cause: str = exception["cause"]
+        self._severity: ErrorSeverity = ErrorSeverity(data["severity"])
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianTrackException guild_id=\'{self.guild_id}\' track_id=\'{self.track_id}\' severity=\'{self.severity}\' cause=\'{self.cause}\' message=\'{self.message}\'>'
+        return f"<slate.ObsidianTrackException guild_id='{self.guild_id}' track_id='{self.track_id}' " \
+               f"severity='{self.severity}' cause='{self.cause}' message='{self.message}'>"
 
     #
 
@@ -133,16 +157,19 @@ class ObsidianTrackException(ObsidianBaseEvent):
 
 
 class ObsidianWebsocketOpen(ObsidianBaseEvent):
-    __slots__ = ['_type', '_guild_id', '_target', '_ssrc']
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
         super().__init__(data)
 
-        self._target: str = data['target']
-        self._ssrc: int = data['ssrc']
+        self._target: str = data["target"]
+        self._ssrc: int = data["ssrc"]
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianWebsocketOpen>'
+        return f"<slate.ObsidianWebsocketOpen>"
 
     #
 
@@ -156,17 +183,20 @@ class ObsidianWebsocketOpen(ObsidianBaseEvent):
 
 
 class ObsidianWebsocketClosed(ObsidianBaseEvent):
-    __slots__ = ['_type', '_guild_id', '_code', '_reason', '_by_remote']
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
         super().__init__(data)
 
-        self._code: int = data['code']
-        self._reason: str = data['reason']
-        self._by_remote: bool = data['by_remote']
+        self._code: int = data["code"]
+        self._reason: str = data["reason"]
+        self._by_remote: bool = data["by_remote"]
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianWebsocketOpen>'
+        return f"<slate.ObsidianWebsocketClosed>"
 
     #
 

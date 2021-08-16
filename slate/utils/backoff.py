@@ -2,14 +2,17 @@ import random
 import time
 
 
-__all__ = [
-    'ExponentialBackoff'
-]
+__all__ = ["ExponentialBackoff"]
 
 
 class ExponentialBackoff:
 
-    def __init__(self, base: int = 1, *, integral: bool = False) -> None:
+    def __init__(
+        self,
+        base: int = 1,
+        *,
+        integral: bool = False
+    ) -> None:
 
         self._base = base
 

@@ -8,35 +8,40 @@ from discord.ext.commands import Context
 from ...objects.enums import Source
 
 
-__all__ = ['ObsidianTrack']
+__all__ = ["ObsidianTrack"]
 
-ContextType = TypeVar('ContextType', bound=Context)
+ContextType = TypeVar("ContextType", bound=Context)
 
 
 class ObsidianTrack(Generic[ContextType]):
-    __slots__ = ['_id', '_ctx', '_requester', '_title', '_author', '_uri', '_identifier', '_length', '_position', '_is_stream', '_is_seekable', '_source', '_thumbnail']
 
-    def __init__(self, *, id: str, info: dict[str, Any], ctx: Optional[ContextType] = None) -> None:
+    def __init__(
+        self,
+        *,
+        id: str,
+        info: dict[str, Any],
+        ctx: Optional[ContextType] = None
+    ) -> None:
 
         self._id: str = id
         self._ctx: Optional[ContextType] = ctx
 
         self._requester: Optional[Member] = ctx.author if ctx else None
 
-        self._title: str = info['title']
-        self._author: str = info['author']
-        self._uri: str = info['uri']
-        self._identifier: str = info['identifier']
-        self._length: int = info['length']
-        self._position: int = info['position']
-        self._is_stream: bool = info['is_stream']
-        self._is_seekable: bool = info['is_seekable']
-        self._source: Source = Source(info['source_name'])
+        self._title: str = info["title"]
+        self._author: str = info["author"]
+        self._uri: str = info["uri"]
+        self._identifier: str = info["identifier"]
+        self._length: int = info["length"]
+        self._position: int = info["position"]
+        self._is_stream: bool = info["is_stream"]
+        self._is_seekable: bool = info["is_seekable"]
+        self._source: Source = Source(info["source_name"])
 
-        self._thumbnail: Optional[str] = info.get('thumbnail')
+        self._thumbnail: Optional[str] = info.get("thumbnail")
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianTrack title=\'{self._title}\' uri=\'<{self._uri}>\' source=\'{self.source}\' length={self._length}>'
+        return f"<slate.ObsidianTrack title='{self._title}' uri='<{self._uri}>' source='{self.source}' length={self._length}>"
 
     #
 
@@ -90,12 +95,12 @@ class ObsidianTrack(Generic[ContextType]):
     def thumbnail(self) -> str:
 
         if self.source is Source.YOUTUBE:
-            return f'https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg'
+            return f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"
 
         if self._thumbnail:
             return self._thumbnail
 
-        return 'https://dummyimage.com/1920x1080/000/fff.png&text=+'
+        return "https://dummyimage.com/1920x1080/000/fff.png&text=+"
 
     @property
     def requester(self) -> Optional[Member]:

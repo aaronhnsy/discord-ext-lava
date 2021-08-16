@@ -9,28 +9,33 @@ from .track import ObsidianTrack
 from ...objects.enums import Source
 
 
-__all__ = ['ObsidianPlaylist']
+__all__ = ["ObsidianPlaylist"]
 
-ContextType = TypeVar('ContextType', bound=Context)
+ContextType = TypeVar("ContextType", bound=Context)
 
 
 class ObsidianPlaylist(Generic[ContextType]):
-    __slots__ = '_tracks', '_ctx', '_requester', '_name', '_selected_track', '_uri'
 
-    def __init__(self, *, info: dict[str, Any], tracks: list[dict[str, Any]], ctx: Optional[ContextType] = None) -> None:
+    def __init__(
+        self,
+        *,
+        info: dict[str, Any],
+        tracks: list[dict[str, Any]],
+        ctx: Optional[ContextType] = None
+    ) -> None:
 
-        self._tracks: list[ObsidianTrack[ContextType]] = [ObsidianTrack(id=track['track'], info=track['info'], ctx=ctx) for track in tracks]
+        self._tracks: list[ObsidianTrack[ContextType]] = [ObsidianTrack(id=track["track"], info=track["info"], ctx=ctx) for track in tracks]
         self._ctx: Optional[ContextType] = ctx
 
         self._requester: Optional[Member] = ctx.author if ctx else None
 
-        self._name: str = info['name']
-        self._selected_track: int = info['selected_track']
+        self._name: str = info["name"]
+        self._selected_track: int = info["selected_track"]
 
-        self._uri: Optional[str] = info.get('uri')
+        self._uri: Optional[str] = info.get("uri")
 
     def __repr__(self) -> str:
-        return f'<slate.ObsidianPlaylist name=\'{self._name}\' selected_track={self.selected_track} track_count={len(self._tracks)}>'
+        return f"<slate.ObsidianPlaylist name='{self._name}' selected_track={self.selected_track} track_count={len(self._tracks)}>"
 
     #
 

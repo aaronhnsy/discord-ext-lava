@@ -4,13 +4,13 @@ import logging
 import time
 from typing import Any, Generic, Optional, TypeVar, Union
 
-from discord import Client, VoiceChannel
+from discord import AutoShardedClient, Client, VoiceChannel
 from discord.ext.commands import AutoShardedBot, Bot
 
 from .node import ObsidianNode
 from .objects import events
 from .objects.enums import Op
-from .objects.filters import Filter
+from .objects.filters import ObsidianFilter
 from .objects.track import ObsidianTrack
 from ..player import BasePlayer
 from ..pool import NodePool
@@ -19,16 +19,24 @@ from ..pool import NodePool
 __all__ = ['ObsidianPlayer']
 __log__: logging.Logger = logging.getLogger('slate.obsidian.player')
 
-BotT = TypeVar('BotT', bound=Union[Client, Bot, AutoShardedBot])
+BotT = TypeVar('BotT', bound=Union[Client, AutoShardedClient, Bot, AutoShardedBot])
 TrackT = TypeVar('TrackT', bound=ObsidianTrack[Any])
 
 
 class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
-    def __init__(self, client: BotT, channel: VoiceChannel) -> None:
-        super().__init__(client, channel)
+    def __init__(
+        self,
+        client: BotT,
+        channel: VoiceChannel
+    ) -> None:
 
-        self._node: ObsidianNode[Any, Any] = NodePool.get_node(node_cls=ObsidianNode)
+        super().__init__(
+            client,
+            channel
+        )
+
+        self._node: ObsidianNode[Any, Any] = NodePool.get_node(node_type=ObsidianNode)
         self._node.players[self.guild.id] = self
 
         self._voice_server_update_data: Optional[dict[str, Any]] = None
@@ -44,7 +52,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
         self._position: float = 0
         self._paused: bool = False
 
-        self._filter: Optional[Filter] = None
+        self._filter: Optional[ObsidianFilter] = None
         self._current: Optional[TrackT] = None
 
     def __repr__(self) -> str:
@@ -58,14 +66,20 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
     #
 
-    async def on_voice_server_update(self, data: dict[str, Any]) -> None:
+    async def on_voice_server_update(
+        self,
+        data: dict[str, Any]
+    ) -> None:
 
         __log__.debug(f'PLAYER | \'{self._guild.id}\' received VOICE_SERVER_UPDATE | Data: {data}')
 
         self._voice_server_update_data = data
         await self._dispatch_voice_update()
 
-    async def on_voice_state_update(self, data: dict[str, Any]) -> None:
+    async def on_voice_state_update(
+        self,
+        data: dict[str, Any]
+    ) -> None:
 
         __log__.debug(f'PLAYER | \'{self._guild.id}\' received VOICE_STATE_UPDATE | Data: {data}')
 
@@ -88,7 +102,10 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         await self._node.send(op=Op.SUBMIT_VOICE_UPDATE, **{'session_id': self._session_id, **self._voice_server_update_data})
 
-    def _dispatch_event(self, data: dict[str, Any]) -> None:
+    def _dispatch_event(
+        self,
+        data: dict[str, Any]
+    ) -> None:
 
         if not (event := getattr(events, f'Obsidian{"".join([word.title() for word in data.get("type").split("_")])}', None)):
             __log__.error(f'PLAYER | \'{self._guild.id}\' received unknown event type. | Data: {data} ')
@@ -99,7 +116,10 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
         __log__.info(f'PLAYER | \'{self._guild.id}\' dispatching {event.type!r} event. | Data: {data}')
         self._bot.dispatch(f'obsidian_{event.type.value.lower()}', self, event)
 
-    def _update_state(self, data: dict[str, Any]) -> None:
+    def _update_state(
+        self,
+        data: dict[str, Any]
+    ) -> None:
 
         __log__.debug(f'PLAYER | \'{self.guild.id}\' updating state. | State: {data}')
 
@@ -117,12 +137,22 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
     #
 
-    async def connect(self, *, timeout: Optional[float] = None, reconnect: Optional[bool] = None, self_deaf: bool = False) -> None:
+    async def connect(
+        self,
+        *,
+        timeout: Optional[float] = None,
+        reconnect: Optional[bool] = None,
+        self_deaf: bool = False
+    ) -> None:
 
         await self._guild.change_voice_state(channel=self.channel, self_deaf=self_deaf)
         __log__.info(f'PLAYER | \'{self._guild.id}\' connected to voice channel \'{self.channel.id}\'.')
 
-    async def disconnect(self, *, force: bool = False) -> None:
+    async def disconnect(
+        self,
+        *,
+        force: bool = False
+    ) -> None:
 
         if not self.is_connected() and not force:
             return
@@ -138,7 +168,10 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         __log__.info(f'PLAYER | \'{self.guild.id}\' was disconnected.')
 
-    async def move_to(self, channel: VoiceChannel) -> None:
+    async def move_to(
+        self,
+        channel: VoiceChannel
+    ) -> None:
 
         await self.set_pause(True)
 
@@ -176,7 +209,7 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
         return self._paused
 
     @property
-    def filter(self) -> Optional[Filter]:
+    def filter(self) -> Optional[ObsidianFilter]:
         return self._filter
 
     @property
@@ -193,7 +226,14 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
     #
 
-    async def play(self, track: TrackT, *, start_time: int = 0, end_time: int = 0, no_replace: bool = False) -> None:
+    async def play(
+        self,
+        track: TrackT,
+        *,
+        start_time: int = 0,
+        end_time: int = 0,
+        no_replace: bool = False
+    ) -> None:
 
         self._position = 0
         self._last_update = 0
@@ -214,7 +254,11 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         self._current = track
 
-    async def stop(self, *, force: bool = False) -> None:
+    async def stop(
+        self,
+        *,
+        force: bool = False
+    ) -> None:
 
         if not self._current and not force:
             return
@@ -224,14 +268,22 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         self._current = None
 
-    async def set_pause(self, pause: bool) -> None:
+    async def set_pause(
+        self,
+        pause: bool
+    ) -> None:
 
         await self._node.send(op=Op.PLAYER_PAUSE, **{'guild_id': str(self._guild.id), 'state': pause})
         __log__.info(f'Player \'{self._guild.id}\' set its paused state to \'{pause}\'.')
 
         self._paused = pause
 
-    async def set_filter(self, filter: Filter, *, seek: bool = False) -> None:
+    async def set_filter(
+        self,
+        filter: ObsidianFilter,
+        *,
+        seek: bool = False
+    ) -> None:
 
         await self._node.send(op=Op.PLAYER_FILTERS, **{'guild_id': str(self._guild.id), 'filters': {**filter._payload}})
         __log__.info(f'Player \'{self._guild.id}\' applied filter {filter!r}')
@@ -241,7 +293,10 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
 
         self._filter = filter
 
-    async def set_position(self, position: float) -> None:
+    async def set_position(
+        self,
+        position: float
+    ) -> None:
 
         if not self._current or 0 > position > self._current.length:
             return
@@ -260,5 +315,8 @@ class ObsidianPlayer(BasePlayer[Any], Generic[BotT, TrackT]):
     async def resume(self) -> None:
         return await self.set_pause(False)
 
-    async def seek(self, position: float) -> None:
+    async def seek(
+        self,
+        position: float
+    ) -> None:
         return await self.set_position(position)
