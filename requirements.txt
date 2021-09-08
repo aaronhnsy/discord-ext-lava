@@ -1,2 +1,3 @@
 discord.py>=1.7.3
 aiohttp>=3.7.4post0
+spotify.py>=0.10.2
