@@ -9,7 +9,7 @@ from typing import Any, Callable, Generic, Literal, Optional, TypeVar, Union
 from aiohttp import ClientSession, ClientWebSocketResponse
 from discord import Client, AutoShardedClient
 from discord.ext.commands import AutoShardedBot, Bot
-from spotify import Client as SpotifyClient, HTTPClient as SpotifyHTTPClient
+from aiospotify import Client as SpotifyClient
 
 from .exceptions import HTTPError, NodeNotConnected
 from .utils.backoff import ExponentialBackoff
@@ -46,18 +46,16 @@ class BaseNode(abc.ABC, Generic[BotT]):
         self._dumps: Callable[[dict[str, Any]], str] = kwargs.get("dumps") or json.dumps
         self._loads: Callable[[str], dict[str, Any]] = kwargs.get("loads") or json.loads
 
+        self._session: ClientSession = kwargs.get("session") or ClientSession()
+        self._websocket: Optional[ClientWebSocketResponse] = None
+
         self._spotify_client_id: Optional[str] = kwargs.get("spotify_client_id")
         self._spotify_client_secret: Optional[str] = kwargs.get("spotify_client_secret")
 
         self._spotify: Optional[SpotifyClient] = None
-        self._spotify_http: Optional[SpotifyHTTPClient] = None
 
         if self._spotify_client_id and self._spotify_client_secret:
-            self._spotify = SpotifyClient(self._spotify_client_id, self._spotify_client_secret)
-            self._spotify_http = SpotifyHTTPClient(self._spotify_client_id, self._spotify_client_secret)
-
-        self._session: ClientSession = kwargs.get("session") or ClientSession()
-        self._websocket: Optional[ClientWebSocketResponse] = None
+            self._spotify = SpotifyClient(client_id=self._spotify_client_id, client_secret=self._spotify_client_secret, session=self._session)
 
         self._task: Optional[asyncio.Task] = None
 
@@ -89,10 +87,6 @@ class BaseNode(abc.ABC, Generic[BotT]):
     @property
     def spotify(self) -> Optional[SpotifyClient]:
         return self._spotify
-
-    @property
-    def spotify_http(self) -> Optional[SpotifyHTTPClient]:
-        return self._spotify_http
 
     #
 

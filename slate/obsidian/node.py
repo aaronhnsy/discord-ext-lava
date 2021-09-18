@@ -7,9 +7,9 @@ import re
 from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar, Union
 
 from aiohttp import WSMsgType, WSServerHandshakeError
-from discord import AutoShardedClient, Client, VoiceRegion
+from discord import AutoShardedClient, Client
 from discord.ext.commands import AutoShardedBot, Bot, Context
-from spotify import HTTPException, NotFound, Playlist
+from aiospotify.exceptions import NotFound, SpotifyResponseError
 
 from .exceptions import ObsidianSearchError
 from .objects.enums import Op
@@ -223,16 +223,16 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
             try:
                 if search_type is SearchType.ALBUM:
-                    result = await self.spotify.get_album(spotify_id)
-                    search_tracks = await result.get_all_tracks()
+                    result = await self.spotify.get_full_album(spotify_id)
+                    search_tracks = result.tracks
 
                 elif search_type is SearchType.PLAYLIST:
-                    result = Playlist(self.spotify, await self.spotify_http.get_playlist(spotify_id))
-                    search_tracks = await result.get_all_tracks()
+                    result = await self.spotify.get_full_playlist(spotify_id)
+                    search_tracks = result.tracks
 
                 elif search_type is SearchType.ARTIST:
                     result = await self.spotify.get_artist(spotify_id)
-                    search_tracks = await result.top_tracks()
+                    search_tracks = await self.spotify.get_artist_top_tracks(spotify_id)
 
                 else:
                     result = await self.spotify.get_track(spotify_id)
@@ -243,8 +243,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
             except NotFound:
                 raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-
-            except HTTPException:
+            except SpotifyResponseError:
                 raise ObsidianSearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
             tracks = [
@@ -255,12 +254,12 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
                         "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "UNKNOWN",
                         "uri":         track.url or search,
                         "identifier":  track.id or "UNKNOWN",
-                        "length":      track.duration or 0,
+                        "length":      track.duration_ms or 0,
                         "position":    0,
                         "is_stream":   False,
                         "is_seekable": False,
                         "source_name": "spotify",
-                        "thumbnail":   track.images[0].url if track.images else None
+                        "thumbnail":   track.album.images[0].url if (track.album and track.album.images) else None
                     }
                 ) for track in search_tracks
             ]
