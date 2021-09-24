@@ -9,7 +9,7 @@ from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar, Union
 from aiohttp import WSMsgType, WSServerHandshakeError
 from discord import AutoShardedClient, Client
 from discord.ext.commands import AutoShardedBot, Bot, Context
-from aiospotify.exceptions import NotFound, SpotifyResponseError
+from aiospotify.exceptions import NotFound, SpotifyHTTPError
 
 from .exceptions import ObsidianSearchError
 from .objects.enums import Op
@@ -243,7 +243,7 @@ class ObsidianNode(BaseNode[Any], Generic[BotT, ContextT]):
 
             except NotFound:
                 raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-            except SpotifyResponseError:
+            except SpotifyHTTPError:
                 raise ObsidianSearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
             tracks = [
