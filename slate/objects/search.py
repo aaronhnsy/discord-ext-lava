@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Generic, TYPE_CHECKING, TypeVar, Union
 
-from spotify import Album, Artist, Playlist, Track
+from aiospotify import Album, Artist, Playlist, Track
 
 from .enums import SearchType, Source
 
