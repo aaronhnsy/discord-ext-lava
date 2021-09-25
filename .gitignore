@@ -1,8 +1,8 @@
 *.pyc
-*.ini
 *.log*
-py.typed
 
 .idea/
+.git/
 venv/
+
 docs/_build
