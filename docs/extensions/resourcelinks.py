@@ -2,13 +2,17 @@
 # Copyright 2007-2020 by the Sphinx team
 # Licensed under BSD.
 
+# Future
+from __future__ import annotations
+
+# Standard Library
 from typing import Any, Dict, List, Tuple
 
+# Packages
+import sphinx
 from docutils import nodes, utils
 from docutils.nodes import Node, system_message
 from docutils.parsers.rst.states import Inliner
-
-import sphinx
 from sphinx.application import Sphinx
 from sphinx.util.nodes import split_explicit_title
 from sphinx.util.typing import RoleFunction

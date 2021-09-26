@@ -20,16 +20,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+# Future
 from __future__ import annotations
 
+# Standard Library
 import asyncio
 import logging
 from typing import Any, Generic, Optional, TypeVar, Union
 
+# Packages
 import aiohttp
 import discord
 from discord.ext import commands
 
+# My stuff
 from ..node import BaseNode
 
 

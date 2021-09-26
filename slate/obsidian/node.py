@@ -1,31 +1,36 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import asyncio
 import json
 import logging
 import re
-from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar, Union
 
+# Packages
 from aiohttp import WSMsgType, WSServerHandshakeError
+from aiospotify.exceptions import NotFound, SpotifyHTTPError
 from discord import AutoShardedClient, Client
 from discord.ext.commands import AutoShardedBot, Bot, Context
-from aiospotify.exceptions import NotFound, SpotifyHTTPError
 
-from .exceptions import ObsidianSearchError
-from .objects.enums import Op
-from .objects.playlist import ObsidianPlaylist
-from .objects.stats import ObsidianStats
-from .objects.track import ObsidianTrack
+# My stuff
 from .. import __version__
-from ..exceptions import NoMatchesFound, NodeConnectionError
+from ..exceptions import NodeConnectionError, NoMatchesFound
 from ..node import BaseNode
 from ..objects.enums import LoadType, SearchType, Source
 from ..objects.search import SearchResult
 from ..pool import NodePool
 from ..utils.backoff import ExponentialBackoff
+from .exceptions import ObsidianSearchError
+from .objects.enums import Op
+from .objects.playlist import ObsidianPlaylist
+from .objects.stats import ObsidianStats
+from .objects.track import ObsidianTrack
 
 
 if TYPE_CHECKING:
+    # My stuff
     from .player import ObsidianPlayer
 
 __all__ = ["ObsidianNode"]

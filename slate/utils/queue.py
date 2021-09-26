@@ -1,7 +1,12 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 import random
 from collections.abc import Iterator
 from typing import Any, Generic, Optional, TypeVar, Union
 
+# My stuff
 from ..objects.enums import QueueLoopMode
 
 

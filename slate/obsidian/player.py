@@ -1,19 +1,23 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import logging
 import time
 from typing import Any, Generic, Optional, TypeVar, Union
 
+# Packages
 from discord import AutoShardedClient, Client, VoiceChannel
 from discord.ext.commands import AutoShardedBot, Bot
 
+# My stuff
+from ..player import BasePlayer
+from ..pool import NodePool
 from .node import ObsidianNode
 from .objects import events
 from .objects.enums import Op
 from .objects.filters import ObsidianFilter
 from .objects.track import ObsidianTrack
-from ..player import BasePlayer
-from ..pool import NodePool
 
 
 __all__ = ['ObsidianPlayer']

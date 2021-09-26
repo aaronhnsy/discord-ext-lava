@@ -1,7 +1,13 @@
+# Future
+from __future__ import annotations
+
+# Standard Library
 from typing import Optional
 
+# Packages
 from aiohttp import ClientResponse
 
+# My stuff
 from .objects.enums import SearchType, Source
 
 

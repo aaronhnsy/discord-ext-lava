@@ -1,12 +1,16 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 from typing import Any, Generic, Optional, TypeVar
 
+# Packages
 from discord import Member
 from discord.ext.commands import Context
 
-from .track import ObsidianTrack
+# My stuff
 from ...objects.enums import Source
+from .track import ObsidianTrack
 
 
 __all__ = ["ObsidianPlaylist"]

@@ -1,16 +1,22 @@
+# Future
 from __future__ import annotations
 
-from typing import Generic, TYPE_CHECKING, TypeVar, Union
+# Standard Library
+from typing import TYPE_CHECKING, Generic, TypeVar, Union
 
+# Packages
 from aiospotify import Album, Artist, Playlist, Track
 
+# My stuff
 from .enums import SearchType, Source
 
 
 if TYPE_CHECKING:
 
+    # Standard Library
     from typing import Any
 
+    # My stuff
     from ..obsidian.objects.playlist import ObsidianPlaylist
     from ..obsidian.objects.track import ObsidianTrack
 

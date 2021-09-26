@@ -1,9 +1,12 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import abc
 import logging
 from typing import Any, Generic, Optional, TypeVar, Union
 
+# Packages
 from discord import AutoShardedClient, Client, Guild, Member, VoiceChannel, VoiceProtocol
 from discord.ext.commands import AutoShardedBot, Bot
 

@@ -1,10 +1,14 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 from typing import Any, Generic, Optional, TypeVar
 
+# Packages
 from discord import Member
 from discord.ext.commands import Context
 
+# My stuff
 from ...objects.enums import Source
 
 

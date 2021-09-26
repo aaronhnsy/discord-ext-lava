@@ -1,7 +1,10 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 from typing import Any
 
+# My stuff
 from ...objects.enums import ErrorSeverity, EventType, TrackEndReason
 
 

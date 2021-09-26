@@ -1,15 +1,19 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import logging
 import time
-from typing import Any, Generic, List, Optional, TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, List, Optional, TypeVar, Union
 
+# Packages
 import discord
 from discord import VoiceProtocol
 from discord.ext import commands
 
 
 if TYPE_CHECKING:
+    # My stuff
     from .node import ObsidianNode
 
 BotType = TypeVar('BotType', bound=Union[discord.Client, commands.Bot, commands.AutoShardedBot])
