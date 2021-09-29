@@ -175,8 +175,6 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
 
     def _update_state(self, data: dict[str, Any]) -> None:
 
-        __log__.debug(f"Player '{self.channel.guild.id}' updating state.\nData: {data}")
-
         self._last_update = time.time() * 1000
 
         frames = data.get("frames", {})
