@@ -2,35 +2,38 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 # Packages
-from discord import Member
-from discord.ext.commands import Context
+import discord
+from discord.ext import commands
 
 # My stuff
-from ...objects.enums import Source
+from slate.objects.enums import Source
 
 
-__all__ = ["ObsidianTrack"]
+__all__ = (
+    "ObsidianTrack",
+)
 
-ContextType = TypeVar("ContextType", bound=Context)
+
+ContextT = TypeVar("ContextT", bound=commands.Context)
 
 
-class ObsidianTrack(Generic[ContextType]):
+class ObsidianTrack(Generic[ContextT]):
 
     def __init__(
         self,
         *,
         id: str,
         info: dict[str, Any],
-        ctx: Optional[ContextType] = None
+        ctx: ContextT | None = None
     ) -> None:
 
         self._id: str = id
-        self._ctx: Optional[ContextType] = ctx
+        self._ctx: ContextT | None = ctx
 
-        self._requester: Optional[Member] = ctx.author if ctx else None
+        self._requester: discord.Member | discord.User | None = ctx.author if (ctx and ctx.author) else None
 
         self._title: str = info["title"]
         self._author: str = info["author"]
@@ -42,10 +45,10 @@ class ObsidianTrack(Generic[ContextType]):
         self._is_seekable: bool = info["is_seekable"]
         self._source: Source = Source(info["source_name"])
 
-        self._thumbnail: Optional[str] = info.get("thumbnail")
+        self._thumbnail: str | None = info.get("thumbnail")
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrack title='{self._title}' uri='<{self._uri}>' source='{self.source}' length={self._length}>"
+        return f"<slate.ObsidianTrack title='{self._title}', uri='<{self._uri}>', source='{self.source}', length={self._length}>"
 
     #
 
@@ -54,7 +57,7 @@ class ObsidianTrack(Generic[ContextType]):
         return self._id
 
     @property
-    def ctx(self) -> Optional[ContextType]:
+    def ctx(self) -> ContextT | None:
         return self._ctx
 
     #
@@ -107,5 +110,5 @@ class ObsidianTrack(Generic[ContextType]):
         return "https://dummyimage.com/1920x1080/000/fff.png&text=+"
 
     @property
-    def requester(self) -> Optional[Member]:
+    def requester(self) -> discord.Member | discord.User | None:
         return self._requester

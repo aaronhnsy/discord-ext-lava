@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Optional
+from typing import Any
 
 # My stuff
-from ..exceptions import SlateError
-from ..objects.enums import ErrorSeverity
+from slate.exceptions import SlateError
+from slate.objects import ErrorSeverity
 
 
 __all__ = ["ObsidianError", "ObsidianSearchError"]
@@ -21,11 +21,11 @@ class ObsidianSearchError(ObsidianError):
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__()
 
-        self._message: Optional[str] = data.get("message")
+        self._message: str | None = data.get("message")
         self._severity: ErrorSeverity = ErrorSeverity(data.get("severity"))
 
     @property
-    def message(self) -> Optional[str]:
+    def message(self) -> str | None:
         return self._message
 
     @property

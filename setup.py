@@ -58,7 +58,7 @@ setuptools.setup(
     include_package_data=True,
     license="MIT",
     name="slate",
-    packages=["slate", "slate.andesite", "slate.lavalink", "slate.obsidian", "slate.objects", "slate.utils", "slate.obsidian.objects"],
+    packages=["slate", "slate.objects", "slate.obsidian", "slate.obsidian.objects", "slate.typings"],
     project_urls=PROJECT_URLS,
     python_requires=">=3.9.0",
     url="https://github.com/Axelancerr/slate",

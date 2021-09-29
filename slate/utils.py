@@ -3,10 +3,26 @@ from __future__ import annotations
 
 # Standard Library
 import random
+import re
 import time
+from typing import Any, Literal
 
 
-__all__ = ["ExponentialBackoff"]
+__all__ = (
+    "SPOTIFY_URL_REGEX",
+)
+
+
+class _MissingSentinel:
+
+    def __eq__(self, other: Any) -> Literal[False]:
+        return False
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+    def __repr__(self) -> str:
+        return "..."
 
 
 class ExponentialBackoff:
@@ -41,3 +57,10 @@ class ExponentialBackoff:
 
         self._exp = min(self._exp + 1, self._max)
         return self._randfunc(0, self._base * 2 ** self._exp)
+
+
+MISSING: Any = _MissingSentinel()
+
+SPOTIFY_URL_REGEX: re.Pattern = re.compile(
+    r"(http(s)?://open.)?spotify(.com/)?(:)?(?P<type>album|playlist|track|artist)(/)?(:)?(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?"
+)

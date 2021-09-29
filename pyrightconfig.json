@@ -4,7 +4,9 @@
   ],
   "exclude": [
     "**/node_modules",
-    "**/__pycache__"
+    "**/__pycache__",
+    "**/andesite",
+    "**/lavalink"
   ],
   "ignore": [],
   "strict": [],
@@ -18,7 +20,7 @@
 
   "executionEnvironments": [
     {
-      "root": "aiospotify"
+      "root": "slate"
     }
   ],
   "typeCheckingMode": "basic",

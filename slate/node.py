@@ -1,28 +1,30 @@
+# Future
 from __future__ import annotations
 
+# Standard Library
 import abc
 import asyncio
 import json
 import logging
-from typing import Any, Callable, Generic, Literal, Optional, TypeVar, Union
+from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
-from aiohttp import ClientSession, ClientWebSocketResponse
-from discord import Client, AutoShardedClient
-from discord.ext.commands import AutoShardedBot, Bot
-from aiospotify import Client as SpotifyClient
+# Packages
+import aiohttp
+import aiospotify
+import discord
+from discord.ext import commands
 
-from .exceptions import HTTPError, NodeNotConnected
-from .utils.backoff import ExponentialBackoff
+# My stuff
+from slate import exceptions
 
 
-__all__ = ["BaseNode"]
+__all__ = (
+    "BaseNode",
+)
 __log__: logging.Logger = logging.getLogger("slate.node")
 
-BotT = TypeVar("BotT", bound=Union[Client, AutoShardedClient, Bot, AutoShardedBot])
 
-
-def ordinal(number: int) -> str:
-    return f'{number}{"tsnrhtdd"[(number // 10 % 10 != 1) * (number % 10 < 4) * number % 10::4]}'
+BotT = TypeVar("BotT", bound=Union[discord.Client, discord.AutoShardedClient, commands.Bot, commands.AutoShardedBot])
 
 
 class BaseNode(abc.ABC, Generic[BotT]):
@@ -30,107 +32,128 @@ class BaseNode(abc.ABC, Generic[BotT]):
     def __init__(
         self,
         bot: BotT,
+        identifier: str,
         host: str,
         port: str,
         password: str,
-        identifier: str,
-        **kwargs
+        session: aiohttp.ClientSession | None = None,
+        json_dumps: Callable[..., str] | None = None,
+        json_loads: Callable[..., dict[str, Any]] | None = None,
+        spotify_client_id: str | None = None,
+        spotify_client_secret: str | None = None,
     ) -> None:
 
         self._bot: BotT = bot
+        self._identifier: str = identifier
+
         self._host: str = host
         self._port: str = port
         self._password: str = password
-        self._identifier: str = identifier
 
-        self._dumps: Callable[[dict[str, Any]], str] = kwargs.get("dumps") or json.dumps
-        self._loads: Callable[[str], dict[str, Any]] = kwargs.get("loads") or json.loads
+        self._session: aiohttp.ClientSession = session or aiohttp.ClientSession()
 
-        self._session: ClientSession = kwargs.get("session") or ClientSession()
-        self._websocket: Optional[ClientWebSocketResponse] = None
+        self._json_dumps: Callable[..., str] = json_dumps or json.dumps
+        self._json_loads: Callable[..., dict[str, Any]] = json_loads or json.loads
 
-        self._spotify_client_id: Optional[str] = kwargs.get("spotify_client_id")
-        self._spotify_client_secret: Optional[str] = kwargs.get("spotify_client_secret")
+        self._spotify: aiospotify.Client | None = None
+        if spotify_client_id and spotify_client_secret:
+            self._spotify = aiospotify.Client(client_id=spotify_client_id, client_secret=spotify_client_secret, session=self._session)
 
-        self._spotify: Optional[SpotifyClient] = None
-
-        if self._spotify_client_id and self._spotify_client_secret:
-            self._spotify = SpotifyClient(client_id=self._spotify_client_id, client_secret=self._spotify_client_secret, session=self._session)
-
-        self._task: Optional[asyncio.Task] = None
-
-    def __repr__(self) -> str:
-        return f"<slate.BaseNode>"
-
-    @property
-    def bot(self) -> BotT:
-        return self._bot
-
-    @property
-    def host(self) -> str:
-        return self._host
-
-    @property
-    def post(self) -> str:
-        return self._port
-
-    @property
-    def password(self) -> str:
-        return self._password
-
-    @property
-    def identifier(self) -> str:
-        return self._identifier
+        self._websocket: aiohttp.ClientWebSocketResponse | None = None
+        self._task: asyncio.Task | None = None
 
     #
 
-    @property
-    def spotify(self) -> Optional[SpotifyClient]:
-        return self._spotify
+    async def request(
+        self,
+        method: Literal["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        /,
+        *,
+        endpoint: str,
+        parameters: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
 
-    #
+        url = f"{self._http_url}{endpoint}"
+        headers = {
+            "Authorization": self._password,
+            "Client-Name":   "Slate"
+        }
 
-    @property
-    def session(self) -> ClientSession:
-        return self._session
+        for tries in range(5):
 
-    @property
-    def websocket(self) -> Optional[ClientWebSocketResponse]:
-        return self._websocket
+            try:
 
-    #
+                async with self._session.request(
+                        method=method,
+                        url=url,
+                        headers=headers,
+                        params=parameters,
+                        data=data
+                ) as response:
+
+                    if 200 <= response.status < 300:
+
+                        response_data = await response.json(loads=self._json_loads)
+
+                        __log__.debug(f"'{method}' @ '{response.url}' success.\nPayload: {response_data}")
+                        return response_data
+
+                    delay = 1 + tries * 2
+
+                    __log__.debug(f"'{method}' @ '{response.url}' received '{response.status}' status code, retrying in {delay}s.")
+                    await asyncio.sleep(delay)
+
+            except OSError as error:
+                if tries < 4 and error.errno in (54, 10054):
+
+                    delay = 1 + tries * 2
+
+                    __log__.debug(f"'{method}' @ '{response.url}' raised OSError, retrying in {delay}s.")
+                    await asyncio.sleep(delay)
+
+                    continue
+                raise
+
+        if response:
+            __log__.debug(f"'{method}' @ '{response.url}' received '{response.status}' status code, all 5 retries used.")
+            raise exceptions.HTTPError(response, message=f"A {response.status} status code was received, 5 retries used.")
+
+        raise RuntimeError("This shouldn't happen.")
 
     def is_connected(self) -> bool:
-        return self._websocket is not None and not self._websocket.closed
+        return self._websocket is not None and self._websocket.closed is False
 
     #
+
+    @property
+    @abc.abstractmethod
+    def _http_url(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def _ws_url(self) -> str:
+        raise NotImplementedError
 
     @property
     @abc.abstractmethod
     def players(self) -> Any:
         raise NotImplementedError
 
-    #
-
     @property
     @abc.abstractmethod
-    def http_url(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def ws_url(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def headers(self) -> dict[str, Any]:
+    def stats(self) -> Any:
         raise NotImplementedError
 
     #
 
     @abc.abstractmethod
-    async def connect(self) -> None:
+    async def connect(
+        self,
+        *,
+        raise_on_fail: bool = True
+    ) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -149,65 +172,26 @@ class BaseNode(abc.ABC, Generic[BotT]):
     ) -> None:
         raise NotImplementedError
 
-    async def send(
-        self,
-        op: Any,
-        **data
-    ) -> None:
-
-        if not self.is_connected():
-            raise NodeNotConnected(f"Node '{self.identifier}' is not connected.")
-
-        payload = {"op": op.value, "d": data}
-
-        data = self._dumps(payload)
-        if isinstance(data, bytes):
-            data = data.decode("utf-8")
-
-        await self._websocket.send_str(data)
-
-        __log__.debug(f"NODE | '{self.identifier}' node sent a {op!r} payload. | Payload: {payload}")
-
-    #
-
-    async def _request(
-        self,
-        method: Literal["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        endpoint: str,
-        **parameters: Any
-    ) -> dict[str, Any]:
-
-        backoff = ExponentialBackoff()
-        url = f"{self.http_url}{endpoint}"
-        headers = {"Authorization": self._password, "Client-Name": f"Slate/2021.05.26"}
-
-        for _ in range(3):
-
-            async with self._session.request(method=method, url=url, headers=headers, params=parameters) as response:
-
-                if 200 <= response.status < 300:
-                    return await response.json(loads=self._loads)
-
-                delay = backoff.delay()
-                __log__.warning(
-                    f"NODE | '{response.status}' status code while requesting from '{response.url}', retrying in {round(delay)}s. ({ordinal(_ + 1)} retry)"
-                )
-
-                await asyncio.sleep(delay)
-
-        __log__.error(f"NODE | '{response.status}' status code while requesting from '{response.url}', 3 retries used.")
-        raise HTTPError(f"'{response.status}' status code while requesting from '{response.url}', 3 retries used.", response=response)
-
-    #
-
     @abc.abstractmethod
-    async def _listen(self) -> None:
+    async def _listen(
+        self
+    ) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
     async def _handle_payload(
         self,
+        payload: dict[str, Any],
+        /
+    ) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def _send_payload(
+        self,
         op: Any,
-        data: dict[str, Any]
+        /,
+        *,
+        payload: dict[str, Any]
     ) -> None:
         raise NotImplementedError

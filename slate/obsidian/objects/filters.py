@@ -3,10 +3,10 @@ from __future__ import annotations
 
 # Standard Library
 import abc
-from typing import Any, Optional
+from typing import Any
 
 
-__all__ = [
+__all__ = (
     "ObsidianBaseFilter",
     "ObsidianTremolo",
     "ObsidianEqualizer",
@@ -17,17 +17,17 @@ __all__ = [
     "ObsidianVibrato",
     "ObsidianRotation",
     "ObsidianLowPass",
-    "ObsidianFilter"
-]
+    "ObsidianFilter",
+)
 
 
 class ObsidianBaseFilter(abc.ABC):
 
-    def __init__(self) -> None:
-        self._name = "BaseFilter"
+    def __init__(self, *, name: str = "BaseFilter") -> None:
+        self._name: str = name
 
     def __repr__(self) -> str:
-        return f"slate.BaseFilter name='{self.name}'"
+        return f"<slate.BaseFilter name='{self.name}'>"
 
     def __str__(self) -> str:
         return self._name
@@ -53,7 +53,7 @@ class ObsidianTremolo(ObsidianBaseFilter):
         depth: float = 0.5
     ) -> None:
 
-        super().__init__()
+        super().__init__(name="Tremolo")
 
         if frequency < 0:
             raise ValueError("Frequency must be more than 0.0")
@@ -63,10 +63,8 @@ class ObsidianTremolo(ObsidianBaseFilter):
         self.frequency: float = frequency
         self.depth: float = depth
 
-        self._name = "Tremolo"
-
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTremolo frequency={self.frequency} depth={self.depth}>"
+        return f"<slate.ObsidianTremolo frequency={self.frequency}, depth={self.depth}>"
 
     #
 
@@ -87,7 +85,7 @@ class ObsidianEqualizer(ObsidianBaseFilter):
         name: str = "Equalizer"
     ) -> None:
 
-        super().__init__()
+        super().__init__(name=name)
 
         for gain in gains:
             if gain < -0.25 or gain > 1.0:
@@ -95,10 +93,8 @@ class ObsidianEqualizer(ObsidianBaseFilter):
 
         self._gains = gains
 
-        self._name = name
-
     def __repr__(self) -> str:
-        return f"<slate.ObsidianEqualizer name='{self._name}' gains={self._gains}>"
+        return f"<slate.ObsidianEqualizer name='{self._name}', gains={self._gains}>"
 
     #
 
@@ -119,31 +115,30 @@ class ObsidianDistortion(ObsidianBaseFilter):
     def __init__(
         self,
         *,
-        sin_offset: int = 0,
-        sin_scale: int = 1,
-        cos_offset: int = 0,
-        cos_scale: int = 1,
-        tan_offset: int = 0,
-        tan_scale: int = 1,
-        offset: int = 0,
-        scale: int = 1
+        sin_offset: float = 0,
+        sin_scale: float = 1,
+        cos_offset: float = 0,
+        cos_scale: float = 1,
+        tan_offset: float = 0,
+        tan_scale: float = 1,
+        offset: float = 0,
+        scale: float = 1
     ) -> None:
-        super().__init__()
 
-        self.sin_offset: int = sin_offset
-        self.sin_scale: int = sin_scale
-        self.cos_offset: int = cos_offset
-        self.cos_scale: int = cos_scale
-        self.tan_offset: int = tan_offset
-        self.tan_scale: int = tan_scale
-        self.offset: int = offset
-        self.scale: int = scale
+        super().__init__(name="Distortion")
 
-        self._name = "Distortion"
+        self.sin_offset: float = sin_offset
+        self.sin_scale: float = sin_scale
+        self.cos_offset: float = cos_offset
+        self.cos_scale: float = cos_scale
+        self.tan_offset: float = tan_offset
+        self.tan_scale: float = tan_scale
+        self.offset: float = offset
+        self.scale: float = scale
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianDistortion sin_offset={self.sin_offset} sin_scale={self.sin_scale} cos_offset={self.cos_offset} cos_scale={self.cos_scale} " \
-               f"tan_offset={self.tan_offset} tan_scale={self.tan_scale} offset={self.offset} scale={self.scale}>"
+        return f"<slate.ObsidianDistortion sin_offset={self.sin_offset}, sin_scale={self.sin_scale}, cos_offset={self.cos_offset}, " \
+               f"cos_scale={self.cos_scale}, tan_offset={self.tan_offset}, tan_scale={self.tan_scale}, offset={self.offset}, scale={self.scale}>"
 
     #
 
@@ -167,15 +162,15 @@ class ObsidianTimescale(ObsidianBaseFilter):
         self,
         *,
         pitch: float = 1.0,
-        pitch_octaves: Optional[float] = None,
-        pitch_semi_tones: Optional[float] = None,
+        pitch_octaves: float | None = None,
+        pitch_semi_tones: float | None = None,
         rate: float = 1.0,
-        rate_change: Optional[float] = None,
+        rate_change: float | None = None,
         speed: float = 1.0,
-        speed_change: Optional[float] = None
+        speed_change: float | None = None
     ) -> None:
 
-        super().__init__()
+        super().__init__(name="Timescale")
 
         if (pitch_octaves and pitch) or (pitch_semi_tones and pitch) or (pitch_octaves and pitch_semi_tones):
             raise ValueError("Only one of 'pitch', 'pitch_octaves' and 'pitch_semi_tones' may be set.")
@@ -185,25 +180,23 @@ class ObsidianTimescale(ObsidianBaseFilter):
             raise ValueError("Only one of 'speed' and 'speed_change' may be set.")
 
         self.pitch: float = pitch
-        self.pitch_octaves: Optional[float] = pitch_octaves
-        self.pitch_semi_tones: Optional[float] = pitch_semi_tones
+        self.pitch_octaves: float | None = pitch_octaves
+        self.pitch_semi_tones: float | None = pitch_semi_tones
 
         self.rate: float = rate
-        self.rate_change: Optional[float] = rate_change
+        self.rate_change: float | None = rate_change
 
         self.speed: float = speed
-        self.speed_change: Optional[float] = speed_change
-
-        self._name = "Timescale"
+        self.speed_change: float | None = speed_change
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTimescale pitch={self.pitch} pitch_octaves={self.pitch_octaves} pitch_semi_tones={self.pitch_semi_tones} rate={self.rate} " \
-               f"rate_change={self.rate_change} speed={self.speed} speed_change={self.speed_change}>"
+        return f"<slate.ObsidianTimescale pitch={self.pitch}, pitch_octaves={self.pitch_octaves}, pitch_semi_tones={self.pitch_semi_tones}, " \
+               f"rate={self.rate}, rate_change={self.rate_change}, speed={self.speed}, speed_change={self.speed_change}>"
 
     #
 
     @property
-    def _payload(self) -> dict[str, Optional[float]]:
+    def _payload(self) -> dict[str, float | None]:
         return {
             "pitch":            self.pitch,
             "pitch_octaves":    self.pitch_octaves,
@@ -225,17 +218,15 @@ class ObsidianKaraoke(ObsidianBaseFilter):
         filter_band: float = 220.0,
         filter_width: float = 100.0
     ) -> None:
-        super().__init__()
+        super().__init__(name="Karaoke")
 
         self.level: float = level
         self.mono_level: float = mono_level
         self.filter_band: float = filter_band
         self.filter_width: float = filter_width
 
-        self._name = "Karaoke"
-
     def __repr__(self) -> str:
-        return f"<slate.ObsidianKaraoke level={self.level} mono_level={self.mono_level} filter_band={self.filter_band} filter_width={self.filter_width}>"
+        return f"<slate.ObsidianKaraoke level={self.level}, mono_level={self.mono_level}, filter_band={self.filter_band}, filter_width={self.filter_width}>"
 
     #
 
@@ -260,7 +251,7 @@ class ObsidianChannelMix(ObsidianBaseFilter):
         right_to_left: float = 0
     ) -> None:
 
-        super().__init__()
+        super().__init__(name="Channel Mix")
 
         if 0 > left_to_left > 1:
             raise ValueError("'left_to_left' value must be more than or equal to 0 or less than or equal to 1.")
@@ -276,10 +267,8 @@ class ObsidianChannelMix(ObsidianBaseFilter):
         self.left_to_right: float = left_to_right
         self.right_to_left: float = right_to_left
 
-        self._name = "Channel Mix"
-
     def __repr__(self) -> str:
-        return f"<slate.ObsidianChannelMix left_to_left={self.left_to_left} right_to_right{self.right_to_right} left_to_right={self.left_to_right} " \
+        return f"<slate.ObsidianChannelMix left_to_left={self.left_to_left}, right_to_right{self.right_to_right}, left_to_right={self.left_to_right}, " \
                f"right_to_left={self.right_to_left}>"
 
     #
@@ -303,7 +292,7 @@ class ObsidianVibrato(ObsidianBaseFilter):
         depth: float = 0.5
     ) -> None:
 
-        super().__init__()
+        super().__init__(name="Vibrato")
 
         if not 0 < frequency <= 14:
             raise ValueError("Frequency must be more than 0.0 and less than or equal to 14.0")
@@ -313,10 +302,8 @@ class ObsidianVibrato(ObsidianBaseFilter):
         self.frequency: float = frequency
         self.depth: float = depth
 
-        self._name = "Vibrato"
-
     def __repr__(self) -> str:
-        return f"<slate.ObsidianVibrato frequency={self.frequency} depth={self.depth}>"
+        return f"<slate.ObsidianVibrato frequency={self.frequency}, depth={self.depth}>"
 
     #
 
@@ -335,11 +322,9 @@ class ObsidianRotation(ObsidianBaseFilter):
         *,
         rotation_hertz: float = 5
     ) -> None:
-        super().__init__()
+        super().__init__(name="Rotation")
 
         self.rotation_hertz: float = rotation_hertz
-
-        self._name = "Rotation"
 
     def __repr__(self) -> str:
         return f"<slate.ObsidianRotation rotation_hertz={self.rotation_hertz}>"
@@ -358,11 +343,9 @@ class ObsidianLowPass(ObsidianBaseFilter):
         *,
         smoothing: float = 20
     ) -> None:
-        super().__init__()
+        super().__init__(name="Low Pass")
 
         self.smoothing: float = smoothing
-
-        self._name = "Low Pass"
 
     def __repr__(self) -> str:
         return f"<slate.ObsidianLowPass smoothing={self.smoothing}>"
@@ -378,32 +361,32 @@ class ObsidianFilter:
 
     def __init__(
         self,
-        filter: Optional[ObsidianFilter] = None,
+        filter: ObsidianFilter | None = None,
         *,
-        volume: Optional[float] = None,
-        tremolo: Optional[ObsidianTremolo] = None,
-        equalizer: Optional[ObsidianEqualizer] = None,
-        distortion: Optional[ObsidianDistortion] = None,
-        timescale: Optional[ObsidianTimescale] = None,
-        karaoke: Optional[ObsidianKaraoke] = None,
-        channel_mix: Optional[ObsidianChannelMix] = None,
-        vibrato: Optional[ObsidianVibrato] = None,
-        rotation: Optional[ObsidianRotation] = None,
-        low_pass: Optional[ObsidianLowPass] = None
+        volume: float | None = None,
+        tremolo: ObsidianTremolo | None = None,
+        equalizer: ObsidianEqualizer | None = None,
+        distortion: ObsidianDistortion | None = None,
+        timescale: ObsidianTimescale | None = None,
+        karaoke: ObsidianKaraoke | None = None,
+        channel_mix: ObsidianChannelMix | None = None,
+        vibrato: ObsidianVibrato | None = None,
+        rotation: ObsidianRotation | None = None,
+        low_pass: ObsidianLowPass | None = None
     ) -> None:
 
-        self.filter: Optional[ObsidianFilter] = filter
+        self.filter: ObsidianFilter | None = filter
 
-        self.volume: Optional[float] = volume
-        self.tremolo: Optional[ObsidianTremolo] = tremolo
-        self.equalizer: Optional[ObsidianEqualizer] = equalizer
-        self.distortion: Optional[ObsidianDistortion] = distortion
-        self.timescale: Optional[ObsidianTimescale] = timescale
-        self.karaoke: Optional[ObsidianKaraoke] = karaoke
-        self.channel_mix: Optional[ObsidianChannelMix] = channel_mix
-        self.vibrato: Optional[ObsidianVibrato] = vibrato
-        self.rotation: Optional[ObsidianRotation] = rotation
-        self.low_pass: Optional[ObsidianLowPass] = low_pass
+        self.volume: float | None = volume
+        self.tremolo: ObsidianTremolo | None = tremolo
+        self.equalizer: ObsidianEqualizer | None = equalizer
+        self.distortion: ObsidianDistortion | None = distortion
+        self.timescale: ObsidianTimescale | None = timescale
+        self.karaoke: ObsidianKaraoke | None = karaoke
+        self.channel_mix: ObsidianChannelMix | None = channel_mix
+        self.vibrato: ObsidianVibrato | None = vibrato
+        self.rotation: ObsidianRotation | None = rotation
+        self.low_pass: ObsidianLowPass | None = low_pass
 
     def __repr__(self) -> str:
         return f"<slate.ObsidianFilter>"
@@ -411,7 +394,7 @@ class ObsidianFilter:
     #
 
     @property
-    def _payload(self):
+    def _payload(self) -> dict[str, Any]:
 
         payload = self.filter._payload.copy() if self.filter else {}
 

@@ -5,26 +5,23 @@ from __future__ import annotations
 from typing import Any
 
 # My stuff
-from ...objects.enums import ErrorSeverity, EventType, TrackEndReason
+from slate.objects.enums import ErrorSeverity, EventType, TrackEndReason
 
 
-__all__ = [
+__all__ = (
     "ObsidianBaseEvent",
+    "ObsidianWebsocketOpen",
+    "ObsidianWebsocketClosed",
     "ObsidianTrackStart",
     "ObsidianTrackEnd",
     "ObsidianTrackStuck",
     "ObsidianTrackException",
-    "ObsidianWebsocketOpen",
-    "ObsidianWebsocketClosed"
-]
+)
 
 
 class ObsidianBaseEvent:
 
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
 
         self._type: EventType = EventType(data["type"])
         self._guild_id: int = int(data["guild_id"])
@@ -42,22 +39,67 @@ class ObsidianBaseEvent:
     def guild_id(self) -> int:
         return self._guild_id
 
+
+class ObsidianWebsocketOpen(ObsidianBaseEvent):
+
+    def __init__(self, data: dict[str, Any]) -> None:
+        super().__init__(data)
+
+        self._target: str = data["target"]
+        self._ssrc: int = data["ssrc"]
+
+    def __repr__(self) -> str:
+        return f"<slate.ObsidianWebsocketOpen guild_id='{self.guild_id}'>"
+
     #
+
+    @property
+    def target(self) -> str:
+        return self._target
+
+    @property
+    def ssrc(self) -> int:
+        return self._ssrc
+
+
+class ObsidianWebsocketClosed(ObsidianBaseEvent):
+
+    def __init__(self, data: dict[str, Any]) -> None:
+
+        super().__init__(data)
+
+        self._reason: str | None = data["reason"]
+        self._code: int = data["code"]
+        self._by_remote: bool = data["by_remote"]
+
+    def __repr__(self) -> str:
+        return f"<slate.ObsidianWebsocketClosed guild_id='{self.guild_id}'>"
+
+    #
+
+    @property
+    def reason(self) -> str | None:
+        return self._reason
+
+    @property
+    def code(self) -> int:
+        return self._code
+
+    @property
+    def by_remote(self) -> bool:
+        return self._by_remote
 
 
 class ObsidianTrackStart(ObsidianBaseEvent):
 
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
 
         super().__init__(data)
 
         self._track_id: str = data["track"]
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackStart guild_id='{self.guild_id}' track_id='{self.track_id}'>"
+        return f"<slate.ObsidianTrackStart guild_id='{self.guild_id}', track_id='{self.track_id}'>"
 
     #
 
@@ -68,10 +110,7 @@ class ObsidianTrackStart(ObsidianBaseEvent):
 
 class ObsidianTrackEnd(ObsidianBaseEvent):
 
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
 
         super().__init__(data)
 
@@ -80,7 +119,7 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
         self._reason: TrackEndReason = TrackEndReason(data["reason"])
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackEnd guild_id='{self.guild_id}' track_id='{self.track_id}' reason={self.reason}>"
+        return f"<slate.ObsidianTrackEnd guild_id='{self.guild_id}', track_id='{self.track_id}', reason={self.reason}>"
 
     #
 
@@ -95,10 +134,7 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
 
 class ObsidianTrackStuck(ObsidianBaseEvent):
 
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
 
         super().__init__(data)
 
@@ -107,7 +143,7 @@ class ObsidianTrackStuck(ObsidianBaseEvent):
         self._threshold_ms: int = data["threshold_ms"]
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackStuck guild_id='{self.guild_id}' track_id='{self.track_id}' threshold_ms={self.threshold_ms}>"
+        return f"<slate.ObsidianTrackStuck guild_id='{self.guild_id}', track_id='{self.track_id}', threshold_ms={self.threshold_ms}>"
 
     #
 
@@ -122,10 +158,7 @@ class ObsidianTrackStuck(ObsidianBaseEvent):
 
 class ObsidianTrackException(ObsidianBaseEvent):
 
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
 
         super().__init__(data)
 
@@ -137,8 +170,8 @@ class ObsidianTrackException(ObsidianBaseEvent):
         self._severity: ErrorSeverity = ErrorSeverity(data["severity"])
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackException guild_id='{self.guild_id}' track_id='{self.track_id}' " \
-               f"severity='{self.severity}' cause='{self.cause}' message='{self.message}'>"
+        return f"<slate.ObsidianTrackException guild_id='{self.guild_id}', track_id='{self.track_id}', severity='{self.severity}', cause='{self.cause}', " \
+               f"message='{self.message}'>"
 
     #
 
@@ -157,60 +190,3 @@ class ObsidianTrackException(ObsidianBaseEvent):
     @property
     def severity(self) -> ErrorSeverity:
         return self._severity
-
-
-class ObsidianWebsocketOpen(ObsidianBaseEvent):
-
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
-
-        super().__init__(data)
-
-        self._target: str = data["target"]
-        self._ssrc: int = data["ssrc"]
-
-    def __repr__(self) -> str:
-        return f"<slate.ObsidianWebsocketOpen>"
-
-    #
-
-    @property
-    def target(self) -> str:
-        return self._target
-
-    @property
-    def ssrc(self) -> int:
-        return self._ssrc
-
-
-class ObsidianWebsocketClosed(ObsidianBaseEvent):
-
-    def __init__(
-        self,
-        data: dict[str, Any]
-    ) -> None:
-
-        super().__init__(data)
-
-        self._code: int = data["code"]
-        self._reason: str = data["reason"]
-        self._by_remote: bool = data["by_remote"]
-
-    def __repr__(self) -> str:
-        return f"<slate.ObsidianWebsocketClosed>"
-
-    #
-
-    @property
-    def code(self) -> int:
-        return self._code
-
-    @property
-    def reason(self) -> str:
-        return self._reason
-
-    @property
-    def by_remote(self) -> bool:
-        return self._by_remote

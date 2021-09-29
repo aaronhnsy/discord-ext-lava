@@ -5,7 +5,9 @@ from __future__ import annotations
 from enum import Enum
 
 
-__all__ = ["Op"]
+__all__ = (
+    "Op",
+)
 
 
 class Op(Enum):
