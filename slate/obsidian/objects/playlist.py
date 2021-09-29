@@ -9,19 +9,19 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from slate.objects import Source
-from slate.obsidian.objects.track import ObsidianTrack
+from slate.objects.enums import Source
+from slate.obsidian.objects.track import Track
 
 
 __all__ = (
-    "ObsidianPlaylist",
+    "Playlist",
 )
 
 
 ContextT = TypeVar("ContextT", bound=commands.Context)
 
 
-class ObsidianPlaylist(Generic[ContextT]):
+class Playlist(Generic[ContextT]):
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class ObsidianPlaylist(Generic[ContextT]):
         ctx: ContextT | None = None
     ) -> None:
 
-        self._tracks: list[ObsidianTrack[ContextT]] = [ObsidianTrack(id=track["track"], info=track["info"], ctx=ctx) for track in tracks]
+        self._tracks: list[Track[ContextT]] = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in tracks]
         self._ctx: ContextT | None = ctx
 
         self._requester: discord.Member | discord.User | None = ctx.author if (ctx and ctx.author) else None
@@ -42,12 +42,12 @@ class ObsidianPlaylist(Generic[ContextT]):
         self._uri: str | None = info.get("uri")
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianPlaylist name='{self._name}' selected_track={self.selected_track} track_count={len(self._tracks)}>"
+        return f"<slate.obsidian.Playlist>"
 
     #
 
     @property
-    def tracks(self) -> list[ObsidianTrack[ContextT]]:
+    def tracks(self) -> list[Track[ContextT]]:
         return self._tracks
 
     @property
@@ -61,7 +61,7 @@ class ObsidianPlaylist(Generic[ContextT]):
         return self._name
 
     @property
-    def selected_track(self) -> ObsidianTrack[ContextT] | None:
+    def selected_track(self) -> Track[ContextT] | None:
 
         try:
             return self._tracks[self._selected_track]

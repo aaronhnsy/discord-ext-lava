@@ -13,14 +13,14 @@ from slate.objects.enums import Source
 
 
 __all__ = (
-    "ObsidianTrack",
+    "Track",
 )
 
 
 ContextT = TypeVar("ContextT", bound=commands.Context)
 
 
-class ObsidianTrack(Generic[ContextT]):
+class Track(Generic[ContextT]):
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class ObsidianTrack(Generic[ContextT]):
         self._thumbnail: str | None = info.get("thumbnail")
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrack title='{self._title}', uri='<{self._uri}>', source='{self.source}', length={self._length}>"
+        return f"<slate.obsidian.Track>"
 
     #
 

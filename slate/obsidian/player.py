@@ -13,17 +13,17 @@ from discord.ext import commands
 
 # My stuff
 from slate.obsidian.node import NodePool
-from slate.obsidian.objects import (
-    ObsidianFilter,
-    ObsidianTrack,
-    ObsidianTrackEnd,
-    ObsidianTrackException,
-    ObsidianTrackStart,
-    ObsidianTrackStuck,
-    ObsidianWebsocketClosed,
-    ObsidianWebsocketOpen,
-    Op,
+from slate.obsidian.objects.enums import Op
+from slate.obsidian.objects.events import (
+    TrackEnd,
+    TrackException,
+    TrackStart,
+    TrackStuck,
+    WebsocketClosed,
+    WebsocketOpen,
 )
+from slate.obsidian.objects.filters import Filter
+from slate.obsidian.objects.track import Track
 from slate.player import BasePlayer
 
 
@@ -66,8 +66,8 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         self._frames_sent: int = 0
         self._frame_data_usable: bool = True
 
-        self._filter: ObsidianFilter | None = None
-        self._current: ObsidianTrack[ContextT] | None = None
+        self._filter: Filter | None = None
+        self._current: Track[ContextT] | None = None
 
         self._current_track_id: str | None = None
         self._position: float = 0
@@ -79,7 +79,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         self._node.players[self.channel.guild.id] = self
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianPlayer>"
+        return f"<slate.obsidian.Player>"
 
     #
 
@@ -92,11 +92,11 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
     # Properties
 
     @property
-    def filter(self) -> ObsidianFilter | None:
+    def filter(self) -> Filter | None:
         return self._filter
 
     @property
-    def current(self) -> ObsidianTrack[ContextT] | None:
+    def current(self) -> Track[ContextT] | None:
         return self._current
 
     @property
@@ -155,17 +155,17 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         event_type = data["type"]
 
         if event_type == "WEBSOCKET_OPEN":
-            event = ObsidianWebsocketOpen(data)
+            event = WebsocketOpen(data)
         elif event_type == "WEBSOCKET_CLOSED":
-            event = ObsidianWebsocketClosed(data)
+            event = WebsocketClosed(data)
         elif event_type == "TRACK_START":
-            event = ObsidianTrackStart(data)
+            event = TrackStart(data)
         elif event_type == "TRACK_END":
-            event = ObsidianTrackEnd(data)
+            event = TrackEnd(data)
         elif event_type == "TRACK_STUCK":
-            event = ObsidianTrackStuck(data)
+            event = TrackStuck(data)
         elif event_type == "TRACK_EXCEPTION":
-            event = ObsidianTrackException(data)
+            event = TrackException(data)
         else:
             __log__.error(f"Player '{self.channel.guild.id}' received unknown event type.\nData: {data} ")
             return
@@ -237,7 +237,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
 
     async def play(
         self,
-        track: ObsidianTrack[ContextT],
+        track: Track[ContextT],
         /,
         *,
         start_time: int = 0,
@@ -290,7 +290,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
 
     async def set_filter(
         self,
-        filter: ObsidianFilter,
+        filter: Filter,
         /,
         *,
         seek: bool = True

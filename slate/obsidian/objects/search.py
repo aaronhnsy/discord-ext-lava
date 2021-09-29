@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Generic, TypeVar
 
 # Packages
-from aiospotify import Album, Artist, Playlist, Track
+import aiospotify
 from discord.ext import commands
 
 # My stuff
 from slate.objects.enums import SearchType, Source
-from slate.obsidian.objects.playlist import ObsidianPlaylist
-from slate.obsidian.objects.track import ObsidianTrack
+from slate.obsidian.objects.playlist import Playlist
+from slate.obsidian.objects.track import Track
 
 
 __all__ = (
@@ -28,16 +28,17 @@ class SearchResult(Generic[ContextT]):
         self,
         source: Source,
         type: SearchType,
-        result: Playlist | Album | Artist | Track | list[ObsidianTrack[ContextT]] | ObsidianPlaylist[ContextT],
-        tracks: list[ObsidianTrack[ContextT]]
+        result: aiospotify.Playlist | aiospotify.Album | aiospotify.Artist | aiospotify.Track | list[Track[ContextT]] | Playlist[ContextT],
+        tracks: list[Track[ContextT]]
     ) -> None:
+
         self._source: Source = source
         self._type: SearchType = type
         self._result = result
         self._tracks = tracks
 
     def __repr__(self) -> str:
-        return f"<slate.SearchResult, source={self.source!r}, type={self.type!r}, result={self.result!r}>"
+        return f"<slate.obsidian.SearchResult>"
 
     #
 
@@ -50,9 +51,9 @@ class SearchResult(Generic[ContextT]):
         return self._type
 
     @property
-    def result(self) -> Playlist | Album | Artist | Track | list[ObsidianTrack[ContextT]] | ObsidianPlaylist[ContextT]:
+    def result(self) -> aiospotify.Playlist | aiospotify.Album | aiospotify.Artist | aiospotify.Track | list[Track[ContextT]] | Playlist[ContextT]:
         return self._result
 
     @property
-    def tracks(self) -> list[ObsidianTrack[ContextT]]:
+    def tracks(self) -> list[Track[ContextT]]:
         return self._tracks

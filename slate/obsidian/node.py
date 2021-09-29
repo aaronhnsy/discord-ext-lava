@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, Union
 
 # Packages
 import aiohttp
+import aiospotify
 import discord
-from aiospotify.exceptions import NotFound, SpotifyHTTPError
 from discord.ext import commands
 
 # My stuff
@@ -23,9 +23,13 @@ from slate.exceptions import (
     NoMatchesFound,
 )
 from slate.node import BaseNode
-from slate.objects import LoadType, SearchType, Source
-from slate.obsidian.exceptions import ObsidianSearchError
-from slate.obsidian.objects import ObsidianPlaylist, ObsidianStats, ObsidianTrack, Op, SearchResult
+from slate.objects.enums import LoadType, SearchType, Source
+from slate.obsidian.exceptions import SearchError
+from slate.obsidian.objects.enums import Op
+from slate.obsidian.objects.playlist import Playlist
+from slate.obsidian.objects.search import SearchResult
+from slate.obsidian.objects.stats import Stats
+from slate.obsidian.objects.track import Track
 from slate.utils import ExponentialBackoff
 
 
@@ -52,7 +56,7 @@ class NodePool(Generic[BotT, ContextT, PlayerT]):
     nodes: dict[str, Node[BotT, ContextT, PlayerT]] = {}
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.NodePool nodes={len(self.nodes)}>"
+        return f"<slate.obsidian.NodePool>"
 
     #
 
@@ -142,7 +146,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         )
 
         self._players: dict[int, PlayerT[BotT, ContextT, PlayerT]] = {}
-        self._stats: ObsidianStats | None = None
+        self._stats: Stats | None = None
 
     def __repr__(self) -> str:
         return f"<slate.obsidian.Node>"
@@ -162,7 +166,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         return self._players
 
     @property
-    def stats(self) -> ObsidianStats | None:
+    def stats(self) -> Stats | None:
         return self._stats
 
     #
@@ -275,7 +279,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         data = payload["d"]
 
         if op is Op.STATS:
-            self._stats = ObsidianStats(data)
+            self._stats = Stats(data)
             return
 
         if not (player := self._players.get(int(data["guild_id"]))):
@@ -345,13 +349,13 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                 if not search_tracks:
                     raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
 
-            except NotFound:
+            except aiospotify.NotFound:
                 raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-            except SpotifyHTTPError:
-                raise ObsidianSearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
+            except aiospotify.SpotifyHTTPError:
+                raise SearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
             tracks = [
-                ObsidianTrack(
+                Track(
                     ctx=ctx, id="",
                     info={
                         "title":       track.name or "UNKNOWN",
@@ -386,7 +390,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
 
             if load_type is LoadType.LOAD_FAILED:
                 __log__.warning(message)
-                raise ObsidianSearchError(data["exception"])
+                raise SearchError(data["exception"])
 
             if load_type is LoadType.NO_MATCHES or not data["tracks"]:
                 __log__.info(message)
@@ -399,12 +403,12 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                 info = data["playlist_info"]
                 info["uri"] = search
 
-                playlist = ObsidianPlaylist(info=info, tracks=data["tracks"], ctx=ctx)
+                playlist = Playlist(info=info, tracks=data["tracks"], ctx=ctx)
                 return SearchResult(source=playlist.source, type=SearchType.PLAYLIST, result=playlist, tracks=playlist.tracks)
 
             if load_type in [LoadType.TRACK_LOADED, LoadType.SEARCH_RESULT]:
 
                 __log__.info(message)
 
-                tracks = [ObsidianTrack(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
+                tracks = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
                 return SearchResult(source=tracks[0].source, type=SearchType.TRACK, result=tracks, tracks=tracks)

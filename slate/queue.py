@@ -27,7 +27,7 @@ class Queue(Generic[Item]):
         self._loop_mode: QueueLoopMode = QueueLoopMode.OFF
 
     def __repr__(self) -> str:
-        return f"<slate.Queue length={len(list(self.queue))}, history_length={len(list(self.history))}>"
+        return f"<slate.Queue>"
 
     def __len__(self) -> int:
         return self._queue.__len__()

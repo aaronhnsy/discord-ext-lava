@@ -1,8 +1,9 @@
 *.pyc
 *.log*
 
-.idea/
 .git/
+.idea/
 venv/
-
-docs/_build
+docs/_build/
+build/
+slate.egg-info/

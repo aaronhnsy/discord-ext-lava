@@ -6,11 +6,11 @@ from typing import Any
 
 
 __all__ = (
-    "ObsidianStats",
+    "Stats",
 )
 
 
-class ObsidianStats:
+class Stats:
 
     def __init__(
         self,
@@ -49,4 +49,4 @@ class ObsidianStats:
         self.players_total = players.get("total")
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianStats total_players={self.players_total}, playing_active={self.players_active}>"
+        return f"<slate.obsidian.Stats>"

@@ -7,27 +7,31 @@ from typing import Any
 
 
 __all__ = (
-    "ObsidianBaseFilter",
-    "ObsidianTremolo",
-    "ObsidianEqualizer",
-    "ObsidianDistortion",
-    "ObsidianTimescale",
-    "ObsidianKaraoke",
-    "ObsidianChannelMix",
-    "ObsidianVibrato",
-    "ObsidianRotation",
-    "ObsidianLowPass",
-    "ObsidianFilter",
+    "BaseFilter",
+    "Tremolo",
+    "Equalizer",
+    "Distortion",
+    "Timescale",
+    "Karaoke",
+    "ChannelMix",
+    "Vibrato",
+    "Rotation",
+    "LowPass",
+    "Filter",
 )
 
 
-class ObsidianBaseFilter(abc.ABC):
+class BaseFilter(abc.ABC):
 
-    def __init__(self, *, name: str = "BaseFilter") -> None:
+    def __init__(
+        self,
+        *,
+        name: str = "BaseFilter"
+    ) -> None:
         self._name: str = name
 
     def __repr__(self) -> str:
-        return f"<slate.BaseFilter name='{self.name}'>"
+        return f"<slate.obsidian.BaseFilter name='{self.name}'>"
 
     def __str__(self) -> str:
         return self._name
@@ -44,7 +48,7 @@ class ObsidianBaseFilter(abc.ABC):
         raise NotImplementedError
 
 
-class ObsidianTremolo(ObsidianBaseFilter):
+class Tremolo(BaseFilter):
 
     def __init__(
         self,
@@ -64,7 +68,7 @@ class ObsidianTremolo(ObsidianBaseFilter):
         self.depth: float = depth
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTremolo frequency={self.frequency}, depth={self.depth}>"
+        return f"<slate.obsidian.Tremolo frequency={self.frequency}, depth={self.depth}>"
 
     #
 
@@ -76,7 +80,7 @@ class ObsidianTremolo(ObsidianBaseFilter):
         }
 
 
-class ObsidianEqualizer(ObsidianBaseFilter):
+class Equalizer(BaseFilter):
 
     def __init__(
         self,
@@ -94,7 +98,7 @@ class ObsidianEqualizer(ObsidianBaseFilter):
         self._gains = gains
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianEqualizer name='{self._name}', gains={self._gains}>"
+        return f"<slate.obsidian.Equalizer name='{self._name}', gains={self._gains}>"
 
     #
 
@@ -105,12 +109,12 @@ class ObsidianEqualizer(ObsidianBaseFilter):
     #
 
     @classmethod
-    def default(cls) -> ObsidianEqualizer:
+    def default(cls) -> Equalizer:
         gains = [0.0] * 15
         return cls(gains=gains, name="Default equalizer")
 
 
-class ObsidianDistortion(ObsidianBaseFilter):
+class Distortion(BaseFilter):
 
     def __init__(
         self,
@@ -137,7 +141,7 @@ class ObsidianDistortion(ObsidianBaseFilter):
         self.scale: float = scale
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianDistortion sin_offset={self.sin_offset}, sin_scale={self.sin_scale}, cos_offset={self.cos_offset}, " \
+        return f"<slate.obsidian.Distortion sin_offset={self.sin_offset}, sin_scale={self.sin_scale}, cos_offset={self.cos_offset}, " \
                f"cos_scale={self.cos_scale}, tan_offset={self.tan_offset}, tan_scale={self.tan_scale}, offset={self.offset}, scale={self.scale}>"
 
     #
@@ -156,7 +160,7 @@ class ObsidianDistortion(ObsidianBaseFilter):
         }
 
 
-class ObsidianTimescale(ObsidianBaseFilter):
+class Timescale(BaseFilter):
 
     def __init__(
         self,
@@ -190,7 +194,7 @@ class ObsidianTimescale(ObsidianBaseFilter):
         self.speed_change: float | None = speed_change
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTimescale pitch={self.pitch}, pitch_octaves={self.pitch_octaves}, pitch_semi_tones={self.pitch_semi_tones}, " \
+        return f"<slate.obsidian.Timescale pitch={self.pitch}, pitch_octaves={self.pitch_octaves}, pitch_semi_tones={self.pitch_semi_tones}, " \
                f"rate={self.rate}, rate_change={self.rate_change}, speed={self.speed}, speed_change={self.speed_change}>"
 
     #
@@ -208,7 +212,7 @@ class ObsidianTimescale(ObsidianBaseFilter):
         }
 
 
-class ObsidianKaraoke(ObsidianBaseFilter):
+class Karaoke(BaseFilter):
 
     def __init__(
         self,
@@ -226,7 +230,7 @@ class ObsidianKaraoke(ObsidianBaseFilter):
         self.filter_width: float = filter_width
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianKaraoke level={self.level}, mono_level={self.mono_level}, filter_band={self.filter_band}, filter_width={self.filter_width}>"
+        return f"<slate.obsidian.Karaoke level={self.level}, mono_level={self.mono_level}, filter_band={self.filter_band}, filter_width={self.filter_width}>"
 
     #
 
@@ -240,7 +244,7 @@ class ObsidianKaraoke(ObsidianBaseFilter):
         }
 
 
-class ObsidianChannelMix(ObsidianBaseFilter):
+class ChannelMix(BaseFilter):
 
     def __init__(
         self,
@@ -268,7 +272,7 @@ class ObsidianChannelMix(ObsidianBaseFilter):
         self.right_to_left: float = right_to_left
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianChannelMix left_to_left={self.left_to_left}, right_to_right{self.right_to_right}, left_to_right={self.left_to_right}, " \
+        return f"<slate.obsidian.ChannelMix left_to_left={self.left_to_left}, right_to_right{self.right_to_right}, left_to_right={self.left_to_right}, " \
                f"right_to_left={self.right_to_left}>"
 
     #
@@ -283,7 +287,7 @@ class ObsidianChannelMix(ObsidianBaseFilter):
         }
 
 
-class ObsidianVibrato(ObsidianBaseFilter):
+class Vibrato(BaseFilter):
 
     def __init__(
         self,
@@ -303,7 +307,7 @@ class ObsidianVibrato(ObsidianBaseFilter):
         self.depth: float = depth
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianVibrato frequency={self.frequency}, depth={self.depth}>"
+        return f"<slate.obsidian.Vibrato frequency={self.frequency}, depth={self.depth}>"
 
     #
 
@@ -315,7 +319,7 @@ class ObsidianVibrato(ObsidianBaseFilter):
         }
 
 
-class ObsidianRotation(ObsidianBaseFilter):
+class Rotation(BaseFilter):
 
     def __init__(
         self,
@@ -327,7 +331,7 @@ class ObsidianRotation(ObsidianBaseFilter):
         self.rotation_hertz: float = rotation_hertz
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianRotation rotation_hertz={self.rotation_hertz}>"
+        return f"<slate.obsidian.Rotation rotation_hertz={self.rotation_hertz}>"
 
     #
 
@@ -336,7 +340,7 @@ class ObsidianRotation(ObsidianBaseFilter):
         return self.rotation_hertz
 
 
-class ObsidianLowPass(ObsidianBaseFilter):
+class LowPass(BaseFilter):
 
     def __init__(
         self,
@@ -348,7 +352,7 @@ class ObsidianLowPass(ObsidianBaseFilter):
         self.smoothing: float = smoothing
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianLowPass smoothing={self.smoothing}>"
+        return f"<slate.obsidian.LowPass smoothing={self.smoothing}>"
 
     #
 
@@ -357,46 +361,47 @@ class ObsidianLowPass(ObsidianBaseFilter):
         return self.smoothing
 
 
-class ObsidianFilter:
+class Filter:
 
     def __init__(
         self,
-        filter: ObsidianFilter | None = None,
+        _filter: Filter | None = None,
+        /,
         *,
         volume: float | None = None,
-        tremolo: ObsidianTremolo | None = None,
-        equalizer: ObsidianEqualizer | None = None,
-        distortion: ObsidianDistortion | None = None,
-        timescale: ObsidianTimescale | None = None,
-        karaoke: ObsidianKaraoke | None = None,
-        channel_mix: ObsidianChannelMix | None = None,
-        vibrato: ObsidianVibrato | None = None,
-        rotation: ObsidianRotation | None = None,
-        low_pass: ObsidianLowPass | None = None
+        tremolo: Tremolo | None = None,
+        equalizer: Equalizer | None = None,
+        distortion: Distortion | None = None,
+        timescale: Timescale | None = None,
+        karaoke: Karaoke | None = None,
+        channel_mix: ChannelMix | None = None,
+        vibrato: Vibrato | None = None,
+        rotation: Rotation | None = None,
+        low_pass: LowPass | None = None
     ) -> None:
 
-        self.filter: ObsidianFilter | None = filter
+        self._filter: Filter | None = _filter
 
         self.volume: float | None = volume
-        self.tremolo: ObsidianTremolo | None = tremolo
-        self.equalizer: ObsidianEqualizer | None = equalizer
-        self.distortion: ObsidianDistortion | None = distortion
-        self.timescale: ObsidianTimescale | None = timescale
-        self.karaoke: ObsidianKaraoke | None = karaoke
-        self.channel_mix: ObsidianChannelMix | None = channel_mix
-        self.vibrato: ObsidianVibrato | None = vibrato
-        self.rotation: ObsidianRotation | None = rotation
-        self.low_pass: ObsidianLowPass | None = low_pass
+        self.tremolo: Tremolo | None = tremolo
+        self.equalizer: Equalizer | None = equalizer
+        self.distortion: Distortion | None = distortion
+        self.timescale: Timescale | None = timescale
+        self.karaoke: Karaoke | None = karaoke
+        self.channel_mix: ChannelMix | None = channel_mix
+        self.vibrato: Vibrato | None = vibrato
+        self.rotation: Rotation | None = rotation
+        self.low_pass: LowPass | None = low_pass
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianFilter>"
+        return f"<slate.obsidian.Filter>"
 
     #
 
     @property
     def _payload(self) -> dict[str, Any]:
 
-        payload = self.filter._payload.copy() if self.filter else {}
+        payload = self._filter._payload.copy() if self._filter else {}
 
         if self.volume:
             payload["volume"] = self.volume

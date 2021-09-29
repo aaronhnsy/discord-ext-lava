@@ -9,17 +9,17 @@ from slate.objects.enums import ErrorSeverity, EventType, TrackEndReason
 
 
 __all__ = (
-    "ObsidianBaseEvent",
-    "ObsidianWebsocketOpen",
-    "ObsidianWebsocketClosed",
-    "ObsidianTrackStart",
-    "ObsidianTrackEnd",
-    "ObsidianTrackStuck",
-    "ObsidianTrackException",
+    "BaseEvent",
+    "WebsocketOpen",
+    "WebsocketClosed",
+    "TrackStart",
+    "TrackEnd",
+    "TrackStuck",
+    "TrackException",
 )
 
 
-class ObsidianBaseEvent:
+class BaseEvent:
 
     def __init__(self, data: dict[str, Any]) -> None:
 
@@ -27,7 +27,7 @@ class ObsidianBaseEvent:
         self._guild_id: int = int(data["guild_id"])
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianBaseEvent guild_id='{self.guild_id}'>"
+        return f"<slate.obsidian.BaseEvent guild_id={self.guild_id}>"
 
     #
 
@@ -40,7 +40,7 @@ class ObsidianBaseEvent:
         return self._guild_id
 
 
-class ObsidianWebsocketOpen(ObsidianBaseEvent):
+class WebsocketOpen(BaseEvent):
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)
@@ -49,7 +49,7 @@ class ObsidianWebsocketOpen(ObsidianBaseEvent):
         self._ssrc: int = data["ssrc"]
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianWebsocketOpen guild_id='{self.guild_id}'>"
+        return f"<slate.obsidian.WebsocketOpen guild_id={self.guild_id}>"
 
     #
 
@@ -62,7 +62,7 @@ class ObsidianWebsocketOpen(ObsidianBaseEvent):
         return self._ssrc
 
 
-class ObsidianWebsocketClosed(ObsidianBaseEvent):
+class WebsocketClosed(BaseEvent):
 
     def __init__(self, data: dict[str, Any]) -> None:
 
@@ -73,7 +73,7 @@ class ObsidianWebsocketClosed(ObsidianBaseEvent):
         self._by_remote: bool = data["by_remote"]
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianWebsocketClosed guild_id='{self.guild_id}'>"
+        return f"<slate.obsidian.WebsocketClosed guild_id={self.guild_id}>"
 
     #
 
@@ -90,7 +90,7 @@ class ObsidianWebsocketClosed(ObsidianBaseEvent):
         return self._by_remote
 
 
-class ObsidianTrackStart(ObsidianBaseEvent):
+class TrackStart(BaseEvent):
 
     def __init__(self, data: dict[str, Any]) -> None:
 
@@ -99,7 +99,7 @@ class ObsidianTrackStart(ObsidianBaseEvent):
         self._track_id: str = data["track"]
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackStart guild_id='{self.guild_id}', track_id='{self.track_id}'>"
+        return f"<slate.obsidian.TrackStart guild_id={self.guild_id}, track_id='{self.track_id}'>"
 
     #
 
@@ -108,7 +108,7 @@ class ObsidianTrackStart(ObsidianBaseEvent):
         return self._track_id
 
 
-class ObsidianTrackEnd(ObsidianBaseEvent):
+class TrackEnd(BaseEvent):
 
     def __init__(self, data: dict[str, Any]) -> None:
 
@@ -119,7 +119,7 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
         self._reason: TrackEndReason = TrackEndReason(data["reason"])
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackEnd guild_id='{self.guild_id}', track_id='{self.track_id}', reason={self.reason}>"
+        return f"<slate.obsidian.TrackEnd guild_id={self.guild_id}, track_id='{self.track_id}', reason='{self.reason}'>"
 
     #
 
@@ -132,7 +132,7 @@ class ObsidianTrackEnd(ObsidianBaseEvent):
         return self._reason
 
 
-class ObsidianTrackStuck(ObsidianBaseEvent):
+class TrackStuck(BaseEvent):
 
     def __init__(self, data: dict[str, Any]) -> None:
 
@@ -143,7 +143,7 @@ class ObsidianTrackStuck(ObsidianBaseEvent):
         self._threshold_ms: int = data["threshold_ms"]
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackStuck guild_id='{self.guild_id}', track_id='{self.track_id}', threshold_ms={self.threshold_ms}>"
+        return f"<slate.obsidian.TrackStuck guild_id={self.guild_id}, track_id='{self.track_id}', threshold_ms={self.threshold_ms}>"
 
     #
 
@@ -156,7 +156,7 @@ class ObsidianTrackStuck(ObsidianBaseEvent):
         return self._threshold_ms
 
 
-class ObsidianTrackException(ObsidianBaseEvent):
+class TrackException(BaseEvent):
 
     def __init__(self, data: dict[str, Any]) -> None:
 
@@ -170,7 +170,7 @@ class ObsidianTrackException(ObsidianBaseEvent):
         self._severity: ErrorSeverity = ErrorSeverity(data["severity"])
 
     def __repr__(self) -> str:
-        return f"<slate.ObsidianTrackException guild_id='{self.guild_id}', track_id='{self.track_id}', severity='{self.severity}', cause='{self.cause}', " \
+        return f"<slate.obsidian.TrackException guild_id={self.guild_id}, track_id='{self.track_id}', severity='{self.severity}', cause='{self.cause}', " \
                f"message='{self.message}'>"
 
     #

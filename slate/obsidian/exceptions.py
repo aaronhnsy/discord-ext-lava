@@ -6,17 +6,20 @@ from typing import Any
 
 # My stuff
 from slate.exceptions import SlateError
-from slate.objects import ErrorSeverity
+from slate.objects.enums import ErrorSeverity
 
 
-__all__ = ["ObsidianError", "ObsidianSearchError"]
+__all__ = (
+    "ObsidianError",
+    "SearchError",
+)
 
 
 class ObsidianError(SlateError):
     pass
 
 
-class ObsidianSearchError(ObsidianError):
+class SearchError(ObsidianError):
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__()
