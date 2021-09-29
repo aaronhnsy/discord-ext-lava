@@ -105,7 +105,7 @@ class Queue(Generic[Item]):
     @overload
     def get(
         self,
-        position: Literal[0] | None,
+        position: Literal[0] = 0,
         /,
         *,
         put_history: bool = True
@@ -115,7 +115,7 @@ class Queue(Generic[Item]):
     @overload
     def get(
         self,
-        position: int | None,
+        position: int = 0,
         /,
         *,
         put_history: bool = True
