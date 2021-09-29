@@ -97,6 +97,9 @@ class Queue(Generic[Item]):
         else:
             iterable.insert(position, items)
 
+    def is_empty(self) -> bool:
+        return len(self._queue) == 0
+ 
     #
 
     def get(
