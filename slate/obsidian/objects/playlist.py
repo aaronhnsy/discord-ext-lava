@@ -85,4 +85,4 @@ class Playlist(Generic[ContextT]):
         try:
             return self.tracks[0].source
         except KeyError:
-            return Source.YOUTUBE  # Playlists *should* only be youtube sourced anyway.
+            return Source.YOUTUBE  # Playlists *should* only be YouTube sourced anyway.
