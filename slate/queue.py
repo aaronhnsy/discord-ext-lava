@@ -4,7 +4,7 @@ from __future__ import annotations
 # Standard Library
 import random
 from collections.abc import Iterator
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Literal, TypeVar, overload
 
 # My stuff
 from slate.objects.enums import QueueLoopMode
@@ -101,6 +101,26 @@ class Queue(Generic[Item]):
         return len(self._queue) == 0
 
     #
+
+    @overload
+    def get(
+        self,
+        position: Literal[0] | None,
+        /,
+        *,
+        put_history: bool = True
+    ) -> Item:
+        ...
+
+    @overload
+    def get(
+        self,
+        position: int | None,
+        /,
+        *,
+        put_history: bool = True
+    ) -> Item | None:
+        ...
 
     def get(
         self,
