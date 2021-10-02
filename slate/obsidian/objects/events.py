@@ -167,7 +167,7 @@ class TrackException(BaseEvent):
         exception: dict[str, Any] = data["exception"]
         self._message: str = exception["message"]
         self._cause: str = exception["cause"]
-        self._severity: ErrorSeverity = ErrorSeverity(data["severity"])
+        self._severity: ErrorSeverity = ErrorSeverity(exception["severity"])
 
     def __repr__(self) -> str:
         return f"<slate.obsidian.TrackException guild_id={self.guild_id}, track_id='{self.track_id}', severity='{self.severity}', cause='{self.cause}', " \
