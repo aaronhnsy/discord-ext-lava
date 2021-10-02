@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 
 __all__ = (
+    "MISSING",
     "SPOTIFY_URL_REGEX",
 )
 
@@ -62,5 +63,5 @@ class ExponentialBackoff:
 MISSING: Any = _MissingSentinel()
 
 SPOTIFY_URL_REGEX: re.Pattern = re.compile(
-    r"(http(s)?://open.)?spotify(.com/)?(:)?(?P<type>album|playlist|track|artist)(/)?(:)?(?P<id>[a-zA-Z0-9]+)(?P<si>\?si=[a-zA-Z0-9]+)?"
+    r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z0-9]+)(\?si=[a-zA-Z0-9]+)?(&dl_branch=[0-9]+)?"
 )

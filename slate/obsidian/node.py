@@ -21,10 +21,10 @@ from slate.exceptions import (
     NodeNotFound,
     NodesNotFound,
     NoMatchesFound,
+    SearchError,
 )
 from slate.node import BaseNode
 from slate.objects.enums import LoadType, SearchType, Source
-from slate.obsidian.exceptions import SearchError
 from slate.obsidian.objects.enums import Op
 from slate.obsidian.objects.playlist import Playlist
 from slate.obsidian.objects.search import SearchResult
@@ -313,18 +313,18 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         await self._websocket.send_str(json)
         __log__.debug(f"Node '{self._identifier}' dispatched payload with {op!r}.\nPayload: {payload}")
 
-    # Searching
+    #
 
     async def search(
         self,
         search: str,
         /,
         *,
-        source: Source = Source.YOUTUBE,
+        source: Source = Source.NONE,
         ctx: ContextT | None = None,
     ) -> SearchResult[ContextT]:
 
-        if (match := utils.SPOTIFY_URL_REGEX.match(search)) and self._spotify is not None:
+        if self._spotify and (match := utils.SPOTIFY_URL_REGEX.match(search)):
 
             search_type = SearchType(match.group("type"))
             spotify_id = match.group("id")
@@ -346,17 +346,15 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                     result = await self._spotify.get_track(spotify_id)
                     search_tracks = [result]
 
-                if not search_tracks:
-                    raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-
             except aiospotify.NotFound:
                 raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-            except aiospotify.SpotifyHTTPError:
+
+            except aiospotify.SpotifyException:
                 raise SearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
             tracks = [
                 Track(
-                    ctx=ctx, id="",
+                    id="",
                     info={
                         "title":       track.name or "UNKNOWN",
                         "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "UNKNOWN",
@@ -367,8 +365,11 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                         "is_stream":   False,
                         "is_seekable": False,
                         "source_name": "spotify",
-                        "thumbnail":   track.album.images[0].url if (track.album and track.album.images) else None
-                    }
+                        "thumbnail":   (result.images[0].url if result.images else None)
+                                       if isinstance(result, aiospotify.Album)
+                                       else (track.album.images[0].url if track.album.images else None)
+                    },
+                    ctx=ctx
                 ) for track in search_tracks
             ]
 
@@ -378,27 +379,22 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
 
             if source is Source.YOUTUBE:
                 search = f"ytsearch:{search}"
-            elif source is Source.SOUNDCLOUD:
-                search = f"scsearch:{search}"
             elif source is Source.YOUTUBE_MUSIC:
                 search = f"ytmsearch:{search}"
+            elif source is Source.SOUNDCLOUD:
+                search = f"scsearch:{search}"
 
             data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": search})
 
             load_type = LoadType(data["load_type"])
-            message = f"Node '{self._identifier}' received {load_type!r}' for search: {search}.\nData: {data}"
 
             if load_type is LoadType.LOAD_FAILED:
-                __log__.warning(message)
                 raise SearchError(data["exception"])
 
             if load_type is LoadType.NO_MATCHES or not data["tracks"]:
-                __log__.info(message)
                 raise NoMatchesFound(search=search, search_type=SearchType.TRACK, source=source)
 
             if load_type is LoadType.PLAYLIST_LOADED:
-
-                __log__.info(message)
 
                 info = data["playlist_info"]
                 info["uri"] = search
@@ -407,8 +403,6 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                 return SearchResult(source=playlist.source, type=SearchType.PLAYLIST, result=playlist, tracks=playlist.tracks)
 
             if load_type in [LoadType.TRACK_LOADED, LoadType.SEARCH_RESULT]:
-
-                __log__.info(message)
 
                 tracks = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
                 return SearchResult(source=tracks[0].source, type=SearchType.TRACK, result=tracks, tracks=tracks)

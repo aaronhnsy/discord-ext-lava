@@ -1,11 +1,14 @@
 # Future
 from __future__ import annotations
 
+# Standard Library
+from typing import Any
+
 # Packages
 import aiohttp
 
 # My stuff
-from slate.objects.enums import SearchType, Source
+from slate.objects.enums import ErrorSeverity, SearchType, Source
 
 
 __all__ = (
@@ -49,12 +52,14 @@ class NoMatchesFound(SlateError):
 
     def __init__(
         self,
+        *,
         search: str,
         search_type: SearchType,
         source: Source | None = None
     ) -> None:
+
         self._search: str = search
-        self._search_type = search_type
+        self._search_type: SearchType = search_type
         self._source: Source | None = source
 
     @property
@@ -68,6 +73,23 @@ class NoMatchesFound(SlateError):
     @property
     def source(self) -> Source | None:
         return self._source
+
+
+class SearchError(SlateError):
+
+    def __init__(self, data: dict[str, Any]) -> None:
+        super().__init__()
+
+        self._message: str = data["message"]
+        self._severity: ErrorSeverity = ErrorSeverity(data["severity"])
+
+    @property
+    def message(self) -> str:
+        return self._message
+
+    @property
+    def severity(self) -> ErrorSeverity:
+        return self._severity
 
 
 class NodeError(SlateError):

@@ -36,6 +36,7 @@ class Source(Enum):
     LOCAL = "local"
     HTTP = "http"
     SPOTIFY = "spotify"
+    NONE = ""
 
 
 class SearchType(Enum):
