@@ -322,7 +322,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         *,
         source: Source = Source.YOUTUBE,
         ctx: ContextT | None = None,
-    ) -> SearchResult[ContextT] | None:
+    ) -> SearchResult[ContextT]:
 
         if (match := utils.SPOTIFY_URL_REGEX.match(search)) and self._spotify is not None:
 
