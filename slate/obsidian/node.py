@@ -348,8 +348,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
 
             except aiospotify.NotFound:
                 raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-
-            except aiospotify.SpotifyException:
+            except aiospotify.HTTPError:
                 raise SearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
             tracks = [

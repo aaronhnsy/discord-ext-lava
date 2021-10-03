@@ -15,6 +15,7 @@ __all__ = (
     "SlateError",
     "HTTPError",
     "NoMatchesFound",
+    "SearchError",
     "NodeError",
     "NodesNotFound",
     "NodeNotFound",
