@@ -115,6 +115,17 @@ class NodePool(Generic[BotT, ContextT, PlayerT]):
 
         return list(cls.nodes.values())[0]
 
+    #
+
+    @property
+    def players(self) -> dict[int, PlayerT]:
+
+        players = []
+        for node in self.nodes.values():
+            players.extend(node.players.values())
+
+        return {player.channel.guild.id: player for player in players if player.channel is not None}
+
 
 class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
 
