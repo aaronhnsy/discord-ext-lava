@@ -1,9 +1,13 @@
 *.pyc
 *.log*
 
-.git/
-.idea/
-venv/
-docs/_build/
-build/
 slate.egg-info/
+node_modules/
+resources/
+static/
+venv/
+build/
+.idea/
+
+test.py
+
