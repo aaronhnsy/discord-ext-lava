@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from slate.objects.enums import Source
+from slate.obsidian.objects.enums import Source
 
 
 __all__ = (
@@ -48,7 +48,7 @@ class Track(Generic[ContextT]):
         self._thumbnail: str | None = info.get("thumbnail")
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.Track>"
+        return "<slate.obsidian.Track>"
 
     #
 

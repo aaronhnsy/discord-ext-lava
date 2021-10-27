@@ -394,7 +394,7 @@ class Filter:
         self.low_pass: LowPass | None = low_pass
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.Filter>"
+        return "<slate.obsidian.Filter>"
 
     #
 

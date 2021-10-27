@@ -79,7 +79,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         self._node.players[self.channel.guild.id] = self
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.Player>"
+        return "<slate.obsidian.Player>"
 
     #
 
@@ -208,7 +208,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         force: bool = False
     ) -> None:
 
-        if self.is_connected() is False and force is False:
+        if self.is_connected() is False and not force:
             return
 
         await self.channel.guild.change_voice_state(channel=None)
@@ -269,7 +269,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         force: bool = False
     ) -> None:
 
-        if self._current is None and force is False:
+        if self._current is None and not force:
             return
 
         await self._node._send_payload(Op.STOP_TRACK, data={"guild_id": str(self.channel.guild.id)})
@@ -312,7 +312,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         force: bool = False
     ) -> None:
 
-        if (self._current is None or 0 > position > self._current.length) and force is False:
+        if (self._current is None or 0 > position > self._current.length) and not force:
             return
 
         await self._node._send_payload(Op.PLAYER_SEEK, data={"guild_id": str(self.channel.guild.id), "position": round(position)})

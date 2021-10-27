@@ -8,7 +8,7 @@ from typing import Any
 import aiohttp
 
 # My stuff
-from slate.objects.enums import ErrorSeverity, SearchType, Source
+from slate.obsidian.objects.enums import ErrorSeverity, SearchType, Source
 
 
 __all__ = (

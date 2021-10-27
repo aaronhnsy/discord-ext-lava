@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 # My stuff
-from slate.objects.enums import ErrorSeverity, EventType, TrackEndReason
+from slate.obsidian.objects.enums import ErrorSeverity, EventType, TrackEndReason
 
 
 __all__ = (

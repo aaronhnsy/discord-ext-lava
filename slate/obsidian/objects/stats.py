@@ -49,4 +49,4 @@ class Stats:
         self.players_total = players.get("total")
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.Stats>"
+        return "<slate.obsidian.Stats>"
