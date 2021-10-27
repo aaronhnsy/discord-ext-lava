@@ -8,14 +8,14 @@ from typing import Any
 import aiohttp
 
 # My stuff
-from slate.obsidian.objects.enums import ErrorSeverity, SearchType, Source
+from slate.objects.enums import ErrorSeverity, SearchType, Source
 
 
 __all__ = (
     "SlateError",
     "HTTPError",
-    "NoMatchesFound",
-    "SearchError",
+    "NoResultsFound",
+    "SearchFailed",
     "NodeError",
     "NodesNotFound",
     "NodeNotFound",
@@ -49,34 +49,34 @@ class HTTPError(SlateError):
         return self._message
 
 
-class NoMatchesFound(SlateError):
+class NoResultsFound(SlateError):
 
     def __init__(
         self,
         *,
         search: str,
-        search_type: SearchType,
-        source: Source | None = None
+        search_source: Source,
+        search_type: SearchType
     ) -> None:
 
         self._search: str = search
+        self._search_source: Source = search_source
         self._search_type: SearchType = search_type
-        self._source: Source | None = source
 
     @property
     def search(self) -> str:
         return self._search
 
     @property
+    def search_source(self) -> Source:
+        return self._search_source
+
+    @property
     def search_type(self) -> SearchType:
         return self._search_type
 
-    @property
-    def source(self) -> Source | None:
-        return self._source
 
-
-class SearchError(SlateError):
+class SearchFailed(SlateError):
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__()

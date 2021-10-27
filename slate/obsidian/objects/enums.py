@@ -8,10 +8,6 @@ from enum import Enum
 __all__ = (
     "Op",
     "LoadType",
-    "QueueLoopMode",
-    "Source",
-    "SearchType",
-    "ErrorSeverity",
     "EventType",
     "TrackEndReason",
 )
@@ -42,34 +38,6 @@ class LoadType(Enum):
     NONE = "NONE"
     TRACK = "TRACK"
     TRACK_COLLECTION = "TRACK_COLLECTION"
-
-
-class Source(Enum):
-    YOUTUBE = "youtube"
-    YOUTUBE_MUSIC = "youtube_music"
-    YARN = "yarn"
-    BANDCAMP = "bandcamp"
-    TWITCH = "twitch"
-    VIMEO = "vimeo"
-    NICO = "nico"
-    SOUNDCLOUD = "soundcloud"
-    LOCAL = "local"
-    HTTP = "http"
-    SPOTIFY = "spotify"
-    NONE = ""
-
-
-class SearchType(Enum):
-    TRACK = "track"
-    PLAYLIST = "playlist"
-    ALBUM = "album"
-    ARTIST = "artist"
-
-
-class ErrorSeverity(Enum):
-    COMMON = "COMMON"
-    SUSPICIOUS = "SUSPICIOUS"
-    FAULT = "FAULT"
 
 
 class EventType(Enum):

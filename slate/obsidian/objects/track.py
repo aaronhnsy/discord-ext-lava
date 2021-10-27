@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from slate.obsidian.objects.enums import Source
+from slate.objects.enums import Source
 
 
 __all__ = (

@@ -20,14 +20,14 @@ from slate.exceptions import (
     NodeNotConnected,
     NodeNotFound,
     NodesNotFound,
-    NoMatchesFound,
-    SearchError,
+    NoResultsFound,
+    SearchFailed,
 )
 from slate.node import BaseNode
-from slate.objects.enums import LoadType, SearchType, Source
-from slate.obsidian.objects.enums import Op
-from slate.obsidian.objects.playlist import Playlist
-from slate.obsidian.objects.search import SearchResult
+from slate.objects.enums import SearchType, Source
+from slate.obsidian.objects.collection import Collection
+from slate.obsidian.objects.enums import LoadType, Op
+from slate.obsidian.objects.result import Result
 from slate.obsidian.objects.stats import Stats
 from slate.obsidian.objects.track import Track
 from slate.utils import ExponentialBackoff
@@ -56,7 +56,7 @@ class NodePool(Generic[BotT, ContextT, PlayerT]):
     nodes: dict[str, Node[BotT, ContextT, PlayerT]] = {}
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.NodePool>"
+        return "<slate.obsidian.NodePool>"
 
     #
 
@@ -160,13 +160,13 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         self._stats: Stats | None = None
 
     def __repr__(self) -> str:
-        return f"<slate.obsidian.Node>"
+        return "<slate.obsidian.Node>"
 
     #
 
     @property
     def _http_url(self) -> str:
-        return f"http://{self._host}:{self._port}/"
+        return f"http://{self._host}:{self._port}"
 
     @property
     def _ws_url(self) -> str:
@@ -267,7 +267,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
 
                 await asyncio.sleep(retry)
 
-                if not (self._websocket and not self._websocket.closed):
+                if not self._websocket or self._websocket.closed:
                     await self.connect()
 
             else:
@@ -309,7 +309,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         data: dict[str, Any]
     ) -> None:
 
-        if not (self._websocket and not self._websocket.closed):
+        if not self._websocket or self._websocket.closed:
             raise NodeNotConnected(f"Node '{self._identifier}' is not connected.")
 
         payload = {
@@ -326,6 +326,101 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
 
     #
 
+    async def _search_spotify(
+        self,
+        id: str,
+        /,
+        *,
+        type: SearchType,
+        ctx: ContextT | None = None,
+    ) -> Result[ContextT] | None:
+
+        try:
+            if type is SearchType.ALBUM:
+                result = await self._spotify.get_full_album(id)
+                tracks = result.tracks
+
+            elif type is SearchType.PLAYLIST:
+                result = await self._spotify.get_full_playlist(id)
+                tracks = result.tracks
+
+            elif type is SearchType.ARTIST:
+                result = await self._spotify.get_artist(id)
+                tracks = await self._spotify.get_artist_top_tracks(id)
+
+            else:
+                result = await self._spotify.get_track(id)
+                tracks = [result]
+
+        except aiospotify.NotFound:
+            raise NoResultsFound(search=id, search_source=Source.SPOTIFY, search_type=type)
+        except aiospotify.HTTPError:
+            raise SearchFailed({"message": "Error while accessing spotify API.", "severity": "COMMON"})
+
+        converted_tracks = [
+            Track(
+                id="",
+                info={
+                    "title":       track.name or "UNKNOWN",
+                    "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "UNKNOWN",
+                    "uri":         track.url or "UNKNOWN",
+                    "identifier":  track.id or "UNKNOWN",
+                    "length":      track.duration_ms or 0,
+                    "position":    0,
+                    "is_stream":   False,
+                    "is_seekable": False,
+                    "source_name": "spotify",
+                    "thumbnail":   (result.images[0].url if result.images else None)
+                                   if isinstance(result, aiospotify.Album)
+                                   else (track.album.images[0].url if track.album.images else None)
+                },
+                ctx=ctx
+            ) for track in tracks
+        ]
+
+        return Result(search_source=Source.SPOTIFY, search_type=type, search_result=result, tracks=converted_tracks)
+
+    async def _search_other(
+        self,
+        search: str,
+        /,
+        *,
+        source: Source = Source.NONE,
+        ctx: ContextT | None = None,
+    ) -> Result[ContextT]:
+
+        if source is Source.YOUTUBE:
+            identifier = f"ytsearch:{search}"
+        elif source is Source.YOUTUBE_MUSIC:
+            identifier = f"ytmsearch:{search}"
+        elif source is Source.SOUNDCLOUD:
+            identifier = f"scsearch:{search}"
+        else:
+            identifier = search
+
+        data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": identifier})
+
+        load_type = LoadType(data["load_type"])
+
+        if load_type is LoadType.FAILED:
+            raise SearchFailed(data["exception"])
+
+        elif load_type is LoadType.NONE:
+            raise NoResultsFound(search=search, search_source=source, search_type=SearchType.TRACK)
+
+        elif load_type is LoadType.TRACK:
+
+            track = Track(id=data["tracks"][0]["track"], info=data["tracks"][0]["info"], ctx=ctx)
+            return Result(search_source=track.source, search_type=SearchType.TRACK, search_result=track, tracks=[track])
+
+        elif load_type is LoadType.TRACK_COLLECTION:
+
+            collection = Collection(info=data["collection_info"], tracks=data["tracks"], ctx=ctx)
+            return Result(search_source=collection.source, search_type=collection.search_type, search_result=collection, tracks=collection.tracks)
+
+        else:
+            raise SearchFailed({"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
+
     async def search(
         self,
         search: str,
@@ -333,86 +428,9 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
         *,
         source: Source = Source.NONE,
         ctx: ContextT | None = None,
-    ) -> SearchResult[ContextT]:
+    ) -> Result[ContextT]:
 
         if self._spotify and (match := utils.SPOTIFY_URL_REGEX.match(search)):
+            return await self._search_spotify(match.group("id"), type=SearchType(match.group("type")), ctx=ctx)
 
-            search_type = SearchType(match.group("type"))
-            spotify_id = match.group("id")
-
-            try:
-                if search_type is SearchType.ALBUM:
-                    result = await self._spotify.get_full_album(spotify_id)
-                    search_tracks = result.tracks
-
-                elif search_type is SearchType.PLAYLIST:
-                    result = await self._spotify.get_full_playlist(spotify_id)
-                    search_tracks = result.tracks
-
-                elif search_type is SearchType.ARTIST:
-                    result = await self._spotify.get_artist(spotify_id)
-                    search_tracks = await self._spotify.get_artist_top_tracks(spotify_id)
-
-                else:
-                    result = await self._spotify.get_track(spotify_id)
-                    search_tracks = [result]
-
-            except aiospotify.NotFound:
-                raise NoMatchesFound(search=search, search_type=search_type, source=Source.SPOTIFY)
-            except aiospotify.HTTPError:
-                raise SearchError({"message": "Error while accessing spotify API.", "severity": "COMMON"})
-
-            tracks = [
-                Track(
-                    id="",
-                    info={
-                        "title":       track.name or "UNKNOWN",
-                        "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "UNKNOWN",
-                        "uri":         track.url or search,
-                        "identifier":  track.id or "UNKNOWN",
-                        "length":      track.duration_ms or 0,
-                        "position":    0,
-                        "is_stream":   False,
-                        "is_seekable": False,
-                        "source_name": "spotify",
-                        "thumbnail":   (result.images[0].url if result.images else None)
-                                       if isinstance(result, aiospotify.Album)
-                                       else (track.album.images[0].url if track.album.images else None)
-                    },
-                    ctx=ctx
-                ) for track in search_tracks
-            ]
-
-            return SearchResult(source=Source.SPOTIFY, type=search_type, result=result, tracks=tracks)
-
-        else:
-
-            if source is Source.YOUTUBE:
-                search = f"ytsearch:{search}"
-            elif source is Source.YOUTUBE_MUSIC:
-                search = f"ytmsearch:{search}"
-            elif source is Source.SOUNDCLOUD:
-                search = f"scsearch:{search}"
-
-            data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": search})
-
-            load_type = LoadType(data["load_type"])
-
-            if load_type is LoadType.LOAD_FAILED:
-                raise SearchError(data["exception"])
-
-            if load_type is LoadType.NO_MATCHES or not data["tracks"]:
-                raise NoMatchesFound(search=search, search_type=SearchType.TRACK, source=source)
-
-            if load_type is LoadType.PLAYLIST_LOADED:
-
-                info = data["playlist_info"]
-                info["uri"] = search
-
-                playlist = Playlist(info=info, tracks=data["tracks"], ctx=ctx)
-                return SearchResult(source=playlist.source, type=SearchType.PLAYLIST, result=playlist, tracks=playlist.tracks)
-
-            if load_type in [LoadType.TRACK_LOADED, LoadType.SEARCH_RESULT]:
-
-                tracks = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
-                return SearchResult(source=tracks[0].source, type=SearchType.TRACK, result=tracks, tracks=tracks)
+        return await self._search_other(search, source=source, ctx=ctx)
