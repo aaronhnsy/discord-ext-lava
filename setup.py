@@ -45,9 +45,10 @@ EXTRAS_REQUIRE = {
     "docs": [
         "sphinx",
         "sphinxcontrib_trio",
-        "furo",
         "sphinx_copybutton",
         "sphinxext.opengraph",
+        "furo",
+        "discord.py @ git+https://github.com/Rapptz/discord.py.git@master#egg=discord.py"
     ],
 }
 
