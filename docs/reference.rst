@@ -1,6 +1,6 @@
 .. py:currentmodule:: slate
 
-API Reference
+Reference
 =============
 
 
