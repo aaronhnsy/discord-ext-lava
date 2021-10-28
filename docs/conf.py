@@ -27,6 +27,8 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinxcontrib_trio",
     "resourcelinks",
+    "sphinx_copybutton",
+    "sphinxext.opengraph",
 ]
 
 needs_sphinx = "3.5.2"

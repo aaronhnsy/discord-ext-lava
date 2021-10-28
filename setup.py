@@ -46,6 +46,8 @@ EXTRAS_REQUIRE = {
         "sphinx",
         "sphinxcontrib_trio",
         "furo",
+        "sphinx_copybutton",
+        "sphinxext.opengraph",
     ],
 }
 

@@ -1,3 +1,5 @@
+.. py:currentmodule:: slate
+
 Welcome to slate
 ====================================
 
@@ -27,5 +29,4 @@ Contents:
 .. toctree::
     :maxdepth: 5
 
-    index
-    reference
+    reference/index
