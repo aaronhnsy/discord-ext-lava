@@ -7,7 +7,9 @@ from typing import Final, Literal, NamedTuple
 
 # My stuff
 from slate.exceptions import *
+from slate.node import *
 from slate.objects import *
+from slate.player import *
 from slate.queue import *
 from slate.utils import *
 

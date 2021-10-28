@@ -9,8 +9,9 @@ from typing import Any, Literal
 
 
 __all__ = (
+    "ExponentialBackoff",
     "MISSING",
-    "SPOTIFY_URL_REGEX",
+    "SPOTIFY_URL_REGEX"
 )
 
 
