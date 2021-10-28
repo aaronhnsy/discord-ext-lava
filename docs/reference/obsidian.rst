@@ -1,8 +1,15 @@
 .. py:currentmodule:: slate.obsidian
 
 **********************
-Obsidian
+obsidian
 **********************
+
+NodePool
+========
+.. autoclass:: NodePool
+    :members:
+    :inherited-members:
+    :undoc-members:
 
 
 Node
@@ -21,7 +28,7 @@ Player
     :undoc-members:
 
 
-Objects
+objects
 =======
 
 Collection
@@ -56,7 +63,7 @@ Stats
     :undoc-members:
 
 
-Enums
+enums
 =====
 
 Op
@@ -90,7 +97,7 @@ TrackEndReason
     :inherited-members:
     :undoc-members:
 
-Events
+events
 ======
 
 WebsocketOpen
@@ -141,7 +148,7 @@ TrackException
     :undoc-members:
 
 
-Filters
+filters
 =======
 
 Tremolo
