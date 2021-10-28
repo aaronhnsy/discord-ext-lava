@@ -45,14 +45,14 @@ EXTRAS_REQUIRE = {
     "docs": [
         "sphinx",
         "sphinxcontrib_trio",
-        "faculty-sphinx-theme",
+        "furo",
     ],
 }
 
 setuptools.setup(
     author="Axelancerr",
     classifiers=CLASSIFIERS,
-    description='A lavalink, andesite and obsidian websocket/api wrapper.',
+    description="A discord.py compatible wrapper for the lavalink/obsidian websocket and rest api.",
     extras_require=EXTRAS_REQUIRE,
     install_requires=INSTALL_REQUIRES,
     include_package_data=True,
