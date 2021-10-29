@@ -15,7 +15,7 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from slate import exceptions
+from slate.exceptions import HTTPError
 
 
 __all__ = (
@@ -117,7 +117,7 @@ class BaseNode(abc.ABC, Generic[BotT]):
 
         if response:
             __log__.debug(f"'{method}' @ '{response.url}' received '{response.status}' status code, all 5 retries used.")
-            raise exceptions.HTTPError(response, message=f"A {response.status} status code was received, 5 retries used.")
+            raise HTTPError(response, message=f"A {response.status} status code was received, 5 retries used.")
 
         raise RuntimeError("This shouldn't happen.")
 

@@ -10,6 +10,9 @@ __all__ = (
     "LoadType",
     "EventType",
     "TrackEndReason",
+    "ErrorSeverity",
+    "SearchType",
+    "Source"
 )
 
 
@@ -31,6 +34,37 @@ class Op(Enum):
     PLAYER_SEEK = 10
     PLAYER_DESTROY = 11
     PLAYER_CONFIGURE = 12
+
+
+class Source(Enum):
+
+    # Obsidian sources
+    BANDCAMP = "bandcamp"
+    YARN = "getyarn.io"
+    HTTP = "http"
+    LOCAL = "local"
+    NICO = "niconico"
+    SOUNDCLOUD = "soundcloud"
+    TWITCH = "twitch"
+    VIMEO = "vimeo"
+    YOUTUBE = "youtube"
+
+    # Custom sources
+    YOUTUBE_MUSIC = "youtube_music"
+    SPOTIFY = "spotify"
+    NONE = ""
+
+
+class SearchType(Enum):
+
+    # Obsidian types
+    SEARCH_RESULT = "searchresult"
+    PLAYLIST = "playlist"
+    ALBUM = "album"
+
+    # Custom types
+    TRACK = "track"
+    ARTIST = "artist"
 
 
 class LoadType(Enum):
@@ -55,3 +89,9 @@ class TrackEndReason(Enum):
     CLEANUP = "CLEANUP"
     LOAD_FAILED = "LOAD_FAILED"
     FINISHED = "FINISHED"
+
+
+class ErrorSeverity(Enum):
+    COMMON = "COMMON"
+    SUSPICIOUS = "SUSPICIOUS"
+    FAULT = "FAULT"

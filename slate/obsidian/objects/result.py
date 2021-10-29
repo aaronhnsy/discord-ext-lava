@@ -9,8 +9,8 @@ import aiospotify
 from discord.ext import commands
 
 # My stuff
-from slate.objects.enums import SearchType, Source
 from slate.obsidian.objects.collection import Collection
+from slate.obsidian.objects.enums import SearchType, Source
 from slate.obsidian.objects.track import Track
 
 

@@ -14,19 +14,18 @@ from discord.ext import commands
 
 # My stuff
 from slate import utils
-from slate.exceptions import (
+from slate.node import BaseNode
+from slate.obsidian.exceptions import (
     NodeAlreadyExists,
     NodeConnectionError,
     NodeNotConnected,
     NodeNotFound,
-    NodesNotFound,
+    NoNodesFound,
     NoResultsFound,
     SearchFailed,
 )
-from slate.node import BaseNode
-from slate.objects.enums import SearchType, Source
 from slate.obsidian.objects.collection import Collection
-from slate.obsidian.objects.enums import LoadType, Op
+from slate.obsidian.objects.enums import LoadType, Op, SearchType, Source
 from slate.obsidian.objects.result import Result
 from slate.obsidian.objects.stats import Stats
 from slate.obsidian.objects.track import Track
@@ -104,7 +103,7 @@ class NodePool(Generic[BotT, ContextT, PlayerT]):
     ) -> Node[BotT, ContextT, PlayerT]:
 
         if not cls.nodes:
-            raise NodesNotFound("There are no nodes connected.")
+            raise NoNodesFound("There are no nodes connected.")
 
         if identifier:
 
