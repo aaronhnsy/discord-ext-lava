@@ -56,27 +56,3 @@ QueueLoopMode
     :members:
     :inherited-members:
     :undoc-members:
-
-
-ErrorSeverity
--------------
-.. autoclass:: ErrorSeverity
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-
-SearchType
-----------
-.. autoclass:: SearchType
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-
-Source
-------
-.. autoclass:: Source
-    :members:
-    :inherited-members:
-    :undoc-members:

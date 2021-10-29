@@ -15,18 +15,6 @@ __all__ = (
 )
 
 
-class _MissingSentinel:
-
-    def __eq__(self, other: Any) -> Literal[False]:
-        return False
-
-    def __bool__(self) -> Literal[False]:
-        return False
-
-    def __repr__(self) -> str:
-        return "..."
-
-
 class ExponentialBackoff:
 
     def __init__(
@@ -59,6 +47,18 @@ class ExponentialBackoff:
 
         self._exp = min(self._exp + 1, self._max)
         return self._randfunc(0, self._base * 2 ** self._exp)
+
+
+class _MissingSentinel:
+
+    def __eq__(self, other: Any) -> Literal[False]:
+        return False
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+    def __repr__(self) -> str:
+        return "..."
 
 
 MISSING: Any = _MissingSentinel()
