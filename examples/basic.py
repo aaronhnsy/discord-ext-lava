@@ -80,14 +80,14 @@ class Music(commands.Cog):
         # a search with your query.
         url = yarl.URL(search)
         if url.scheme and url.host:
-            source = slate.Source.NONE
+            source = slate.obsidian.Source.NONE
         else:
-            source = slate.Source.YOUTUBE
+            source = slate.obsidian.Source.YOUTUBE
 
         # Searches can raise errors, so catch them and display a relevant error message.
         try:
             result = await ctx.voice_client._node.search(search, source=source, ctx=ctx)
-        except slate.NoResultsFound:
+        except slate.obsidian.NoResultsFound:
             raise commands.CommandError("No results were found for your search.")
         except slate.HTTPError:
             raise commands.CommandError("There was an error while searching for results.")
