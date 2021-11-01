@@ -37,8 +37,8 @@ CLASSIFIERS = [
 
 PROJECT_URLS = {
     "Documentation": "https://slate.readthedocs.io/en/latest/",
-    "Issue Tracker": "https://github.com/Axelancerr/slate/issues",
-    "Source":        "https://github.com/Axelancerr/slate",
+    "Issue Tracker": "https://github.com/Axelware/slate/issues",
+    "Source":        "https://github.com/Axelware/slate",
 }
 
 EXTRAS_REQUIRE = {
@@ -61,10 +61,10 @@ setuptools.setup(
     include_package_data=True,
     license="MIT",
     name="slate",
-    packages=["slate", "slate.objects", "slate.obsidian", "slate.obsidian.objects", "slate.typings"],
+    packages=["slate", "slate.objects", "slate.obsidian", "slate.obsidian.objects"],
     project_urls=PROJECT_URLS,
     python_requires=">=3.9.0",
-    url="https://github.com/Axelancerr/slate",
+    url="https://github.com/Axelware/slate",
     version=VERSION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
