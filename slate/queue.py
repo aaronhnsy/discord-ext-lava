@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 # Standard Library
+import asyncio
 import random
+from collections import deque
 from collections.abc import Iterator
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Any, Generic, TypeVar
 
 # My stuff
 from slate.objects.enums import QueueLoopMode
@@ -22,12 +24,20 @@ class Queue(Generic[Item]):
     def __init__(self) -> None:
 
         self._queue: list[Item] = []
-        self._queue_history: list[Item] = []
+        self._history: list[Item] = []
 
         self._loop_mode: QueueLoopMode = QueueLoopMode.OFF
 
+        self._waiters: deque[Any] = deque()
+
+        self._finished: asyncio.Event = asyncio.Event()
+        self._finished.set()
+
     def __repr__(self) -> str:
         return "<slate.Queue>"
+
+    def __str__(self) -> str:
+        return str([track.__str__() for track in self._queue])
 
     def __len__(self) -> int:
         return self._queue.__len__()
@@ -50,83 +60,28 @@ class Queue(Generic[Item]):
     def __contains__(self, item: Item) -> bool:
         return self._queue.__contains__(item)
 
-    #
+    # Properties
+
+    @property
+    def length(self) -> int:
+        return self._queue.__len__()
+
+    def is_empty(self) -> bool:
+        return len(self._queue) == 0
 
     @property
     def loop_mode(self) -> QueueLoopMode:
         return self._loop_mode
 
-    def set_loop_mode(
-        self,
-        mode: QueueLoopMode,
-        /
-    ) -> None:
-
+    def set_loop_mode(self, mode: QueueLoopMode, /) -> None:
         self._loop_mode = mode
 
-    #
-
-    @property
-    def queue(self) -> Iterator[Item]:
-        yield from self._queue
-
-    @property
-    def history(self) -> Iterator[Item]:
-        yield from self._queue_history[1:]
-
-    #
-
-    @staticmethod
-    def _put(
-        iterable: list[Any],
-        /,
-        *,
-        items: list[Item] | Item,
-        position: int | None = None
-    ) -> None:
-
-        if position is None:
-            if isinstance(items, list):
-                iterable.extend(items)
-            else:
-                iterable.append(items)
-
-        elif isinstance(items, list):
-            for index, track, in enumerate(items):
-                iterable.insert(position + index, track)
-        else:
-            iterable.insert(position, items)
-
-    def is_empty(self) -> bool:
-        return len(self._queue) == 0
-
-    #
-
-    @overload
-    def get(
-        self,
-        position: Literal[0] = 0,
-        /,
-        *,
-        put_history: bool = True
-    ) -> Item:
-        ...
-
-    @overload
-    def get(
-        self,
-        position: int = 0,
-        /,
-        *,
-        put_history: bool = True
-    ) -> Item | None:
-        ...
+    # Normal methods
 
     def get(
         self,
         position: int = 0,
-        /,
-        *,
+        /, *,
         put_history: bool = True
     ) -> Item | None:
 
@@ -136,7 +91,7 @@ class Queue(Generic[Item]):
             return None
 
         if put_history:
-            self.put_history(item, position=position)
+            self.put_history(item)
 
         if self._loop_mode is not QueueLoopMode.OFF:
             self.put(item, position=0 if self._loop_mode is QueueLoopMode.CURRENT else None)
@@ -145,13 +100,112 @@ class Queue(Generic[Item]):
 
     def put(
         self,
-        items: list[Item] | Item,
-        /,
-        *,
+        item: Item,
+        /, *,
         position: int | None = None
     ) -> None:
 
-        self._put(self._queue, items=items, position=position)
+        if position is None:
+            self._queue.append(item)
+        else:
+            self._queue.insert(position, item)
+
+        self._wakeup_next()
+
+    def extend(
+        self,
+        items: list[Item],
+        /, *,
+        position: int | None = None
+    ) -> None:
+
+        if position is None:
+            self._queue.extend(items)
+        else:
+            for index, track, in enumerate(items):
+                self._queue.insert(position + index, track)
+
+        self._wakeup_next()
+
+    # Wait methods
+
+    def _wakeup_next(self) -> None:
+
+        while self._waiters:
+
+            if not (waiter := self._waiters.popleft()).done():
+                waiter.set_result(None)
+                break
+
+    async def get_wait(self) -> Item:
+
+        while self.is_empty():
+
+            loop = asyncio.get_event_loop()
+            waiter = loop.create_future()
+
+            self._waiters.append(waiter)
+
+            try:
+                await waiter
+
+            except Exception:
+
+                waiter.cancel()
+
+                try:
+                    self._waiters.remove(waiter)
+                except ValueError:
+                    pass
+
+                if not self.is_empty() and not waiter.cancelled():
+                    self._wakeup_next()
+
+                raise
+
+        return self.get()  # type: ignore
+
+    # History
+
+    def get_history(
+        self,
+        position: int = 0,
+        /,
+    ) -> Item | None:
+
+        try:
+            item = list(reversed(self._history))[position]
+        except IndexError:
+            return None
+
+        return item
+
+    def put_history(
+        self,
+        item: Item,
+        /, *,
+        position: int | None = None
+    ) -> None:
+
+        if position is None:
+            self._history.append(item)
+        else:
+            self._history.insert(position, item)
+
+    def extend_history(
+        self,
+        items: list[Item],
+        /, *,
+        position: int | None = None
+    ) -> None:
+
+        if position is None:
+            self._history.extend(items)
+        else:
+            for index, track, in enumerate(items):
+                self._history.insert(position + index, track)
+
+    # Misc
 
     def shuffle(self) -> None:
         random.shuffle(self._queue)
@@ -161,37 +215,13 @@ class Queue(Generic[Item]):
 
     def clear(self) -> None:
         self._queue.clear()
+        self._history.clear()
 
-    #
+    def reset(self) -> None:
 
-    def get_history(
-        self,
-        position: int = 0,
-        /,
-    ) -> Item | None:
+        self.clear()
 
-        try:
-            item = list(reversed(self._queue_history))[position]
-        except IndexError:
-            return None
+        for waiter in self._waiters:
+            waiter.cancel()
 
-        return item
-
-    def put_history(
-        self,
-        items: list[Item] | Item,
-        /,
-        *,
-        position: int | None = None
-    ) -> None:
-
-        self._put(self._queue_history, items=items, position=position)
-
-    def shuffle_history(self) -> None:
-        random.shuffle(self._queue_history)
-
-    def reverse_history(self) -> None:
-        self._queue_history.reverse()
-
-    def clear_history(self) -> None:
-        self._queue_history.clear()
+        self._waiters.clear()
