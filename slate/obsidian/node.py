@@ -374,7 +374,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                     "is_stream":   False,
                     "is_seekable": False,
                     "source_name": "spotify",
-                    "thumbnail":   (result.images[0].url if result.images else None)
+                    "artwork_url": (result.images[0].url if result.images else None)
                                    if isinstance(result, spotipy.Album)
                                    else (track.album.images[0].url if track.album.images else None)
                 },

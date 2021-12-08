@@ -44,8 +44,7 @@ class Track(Generic[ContextT]):
         self._is_stream: bool = info["is_stream"]
         self._is_seekable: bool = info["is_seekable"]
         self._source: Source = Source(info["source_name"])
-
-        self._thumbnail: str | None = info.get("thumbnail")
+        self._artwork_url: str | None = info["artwork_url"]
 
     def __repr__(self) -> str:
         return "<slate.obsidian.Track>"
@@ -96,18 +95,11 @@ class Track(Generic[ContextT]):
     def source(self) -> Source:
         return self._source
 
-    #
-
     @property
-    def thumbnail(self) -> str:
+    def artwork_url(self) -> str | None:
+        return self._artwork_url
 
-        if self.source is Source.YOUTUBE:
-            return f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"
-
-        if self._thumbnail:
-            return self._thumbnail
-
-        return "https://dummyimage.com/1920x1080/000/fff.png&text=+"
+    #
 
     @property
     def requester(self) -> discord.Member | discord.User | None:
