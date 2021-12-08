@@ -10,8 +10,8 @@ from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
 # Packages
 import aiohttp
-import aiospotify
 import discord
+import spotipy
 from discord.ext import commands
 
 # My stuff
@@ -55,9 +55,9 @@ class BaseNode(abc.ABC, Generic[BotT]):
         self._json_dumps: Callable[..., str] = json_dumps or json.dumps
         self._json_loads: Callable[..., dict[str, Any]] = json_loads or json.loads
 
-        self._spotify: aiospotify.Client | None = None
+        self._spotify: spotipy.Client | None = None
         if spotify_client_id and spotify_client_secret:
-            self._spotify = aiospotify.Client(client_id=spotify_client_id, client_secret=spotify_client_secret, session=self._session)
+            self._spotify = spotipy.Client(client_id=spotify_client_id, client_secret=spotify_client_secret, session=self._session)
 
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task | None = None

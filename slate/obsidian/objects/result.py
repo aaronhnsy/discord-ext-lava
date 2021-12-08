@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Generic, TypeVar
 
 # Packages
-import aiospotify
+import spotipy
 from discord.ext import commands
 
 # My stuff
@@ -29,13 +29,13 @@ class Result(Generic[ContextT]):
         *,
         search_source: Source,
         search_type: SearchType,
-        search_result: aiospotify.Playlist | aiospotify.Album | aiospotify.Artist | aiospotify.Track | list[Track[ContextT]] | Collection[ContextT],
+        search_result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | list[Track[ContextT]] | Collection[ContextT],
         tracks: list[Track[ContextT]]
     ) -> None:
 
         self._search_source: Source = search_source
         self._search_type: SearchType = search_type
-        self._search_result: aiospotify.Playlist | aiospotify.Album | aiospotify.Artist | aiospotify.Track | list[Track[ContextT]] | Collection[ContextT] = search_result
+        self._search_result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | list[Track[ContextT]] | Collection[ContextT] = search_result
         self._tracks: list[Track[ContextT]] = tracks
 
     def __repr__(self) -> str:
@@ -52,7 +52,7 @@ class Result(Generic[ContextT]):
         return self._search_type
 
     @property
-    def result(self) -> aiospotify.Playlist | aiospotify.Album | aiospotify.Artist | aiospotify.Track | list[Track[ContextT]] | Collection[ContextT]:
+    def result(self) -> spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | list[Track[ContextT]] | Collection[ContextT]:
         return self._search_result
 
     @property

@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, Union
 
 # Packages
 import aiohttp
-import aiospotify
 import discord
+import spotipy
 from discord.ext import commands
 
 # My stuff
@@ -351,9 +351,9 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                 result = await self._spotify.get_track(id)
                 tracks = [result]
 
-        except aiospotify.NotFound:
+        except spotipy.NotFound:
             raise NoResultsFound(search=id, search_source=Source.SPOTIFY, search_type=type)
-        except aiospotify.HTTPError:
+        except spotipy.HTTPError:
             raise SearchFailed({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
         converted_tracks = [
@@ -375,7 +375,7 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                     "is_seekable": False,
                     "source_name": "spotify",
                     "thumbnail":   (result.images[0].url if result.images else None)
-                                   if isinstance(result, aiospotify.Album)
+                                   if isinstance(result, spotipy.Album)
                                    else (track.album.images[0].url if track.album.images else None)
                 },
                 ctx=ctx
