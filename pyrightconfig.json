@@ -4,9 +4,7 @@
   ],
   "exclude": [
     "**/node_modules",
-    "**/__pycache__",
-    "**/andesite",
-    "**/lavalink"
+    "**/__pycache__"
   ],
   "ignore": [],
   "strict": [],

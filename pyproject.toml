@@ -1,3 +1,67 @@
+[tool.poetry]
+name = "slate"
+version = "0.0.0"
+description = "A discord.py compatible wrapper for the lavalink/obsidian websocket and rest API."
+authors = ["Axel <axelancerr@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+homepage = "https://github.com/Axelware/slate"
+repository = "https://github.com/Axelware/slate"
+documentation = "https://slate-py.readthedocs.io/en/latest/"
+
+keywords = ["obsidian", "lavalink", "api", "wrapper", "async"]
+classifiers = [
+    "Framework :: AsyncIO",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Operating System :: OS Independent",
+    "Environment :: Other Environment",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Typing :: Typed"
+]
+
+packages = [
+    { include = "slate" },
+    { include = "slate/**/*.py" },
+    { include = "slate/py.typed" },
+]
+include = ["LICENSE"]
+
+
+[tool.poetry.dependencies]
+python = ">=3.10.0,<4.0"
+aiohttp = ">=3.6.0,<3.8.0"
+"spoti.py" = "^0.1.1"
+
+orjson = { version = "^3.6.4", optional = true }
+
+sphinx = { version = "^4.3.1", optional = true }
+sphinxcontrib-trio = { version = "^1.1.2", optional = true }
+sphinx-copybutton = { version = "^0.4.0", optional = true }
+sphinxext-opengraph = { version = "^0.5.0", optional = true }
+furo = { version = "^2021.11.23", optional = true }
+
+
+[tool.poetry.dev-dependencies]
+isort = "^5.10.1"
+"discord.py" = { git = "https://github.com/Rapptz/discord.py" }
+
+
+[tool.poetry.extras]
+speed = ["orjson"]
+docs = ["sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinxext-opengraph", "furo", "discord.py"]
+
+
+[tool.poetry.urls]
+"Issue Tracker" = "https://github.com/Axelware/slate/issues"
+"Discord" = "https://discord.com/invite/w9f6NkQbde"
+
+
 [tool.isort]
 line_length = 120
 multi_line_output = 3
@@ -10,3 +74,8 @@ import_heading_stdlib = "Standard Library"
 import_heading_thirdparty = "Packages"
 import_heading_firstparty="My stuff"
 import_heading_localfolder="My stuff"
+
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
