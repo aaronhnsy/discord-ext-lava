@@ -1,4 +1,3 @@
 aiohttp>=3.7.4post0
-aiospotify @ git+https://github.com/Axelancerr/aiospotify.git@main#egg=aiospotify
+spoti-py @ git+https://github.com/Axelware/spoti.py.git@main#egg=spoti.py
 async_timeout>=3.0.1
-
