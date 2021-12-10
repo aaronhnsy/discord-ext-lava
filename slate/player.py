@@ -41,7 +41,7 @@ class BasePlayer(discord.VoiceProtocol, abc.ABC, Generic[BotT]):
 
     @property
     def listeners(self) -> list[discord.Member]:
-        return [member for member in getattr(self.channel, "members", []) if not member.bot and not member.voice.deaf or not member.voice.self_deaf]
+        return [member for member in getattr(self.channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
 
     def is_connected(self) -> bool:
         return self.channel is not None
