@@ -376,7 +376,8 @@ class Node(BaseNode, Generic[BotT, ContextT, PlayerT]):
                     "source_name": "spotify",
                     "artwork_url": (result.images[0].url if result.images else None)
                                    if isinstance(result, spotipy.Album)
-                                   else (track.album.images[0].url if track.album.images else None)
+                                   else (track.album.images[0].url if track.album.images else None),
+                    "irsc":        track.external_ids.get("isrc") or None,
                 },
                 ctx=ctx
             ) for track in tracks

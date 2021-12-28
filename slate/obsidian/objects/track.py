@@ -45,6 +45,7 @@ class Track(Generic[ContextT]):
         self._is_seekable: bool = info["is_seekable"]
         self._source: Source = Source(info["source_name"])
         self._artwork_url: str | None = info["artwork_url"]
+        self._isrc: str | None = info["isrc"]
 
     def __repr__(self) -> str:
         return "<slate.obsidian.Track>"
@@ -98,6 +99,10 @@ class Track(Generic[ContextT]):
     @property
     def artwork_url(self) -> str | None:
         return self._artwork_url
+
+    @property
+    def isrc(self) -> str | None:
+        return self._isrc
 
     #
 
