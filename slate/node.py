@@ -109,13 +109,13 @@ class BaseNode(abc.ABC, Generic[BotT]):
 
                     delay = 1 + tries * 2
 
-                    __log__.debug(f"'{method}' @ '{response.url}' raised OSError, retrying in {delay}s.")
+                    __log__.debug(f"'{method}' @ '{response.url}' raised OSError, retrying in {delay}s.")  # type: ignore
                     await asyncio.sleep(delay)
 
                     continue
                 raise
 
-        if response:
+        if response:  # type: ignore
             __log__.debug(f"'{method}' @ '{response.url}' received '{response.status}' status code, all 5 retries used.")
             raise HTTPError(response, message=f"A {response.status} status code was received, 5 retries used.")
 

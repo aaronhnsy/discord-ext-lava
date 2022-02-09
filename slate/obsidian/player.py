@@ -42,7 +42,7 @@ __log__: logging.Logger = logging.getLogger("slate.obsidian.player")
 
 BotT = TypeVar("BotT", bound=Union[discord.Client, discord.AutoShardedClient, commands.Bot, commands.AutoShardedBot])
 ContextT = TypeVar("ContextT", bound=commands.Context)
-PlayerT = TypeVar("PlayerT", bound="Player")
+PlayerT = TypeVar("PlayerT", bound="Player")  # type: ignore
 
 
 class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
