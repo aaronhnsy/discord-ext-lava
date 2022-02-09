@@ -25,6 +25,7 @@ from slate.obsidian.objects.events import (
 from slate.obsidian.objects.filters import Filter
 from slate.obsidian.objects.track import Track
 from slate.player import BasePlayer
+from slate.utils import MISSING
 
 
 if TYPE_CHECKING:
@@ -48,7 +49,7 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
 
     def __call__(self, client: BotT, channel: discord.VoiceChannel) -> Player[BotT, ContextT, PlayerT]:
 
-        self.client: CD = client
+        self.client: BotT = client
         self.channel: discord.VoiceChannel = channel
 
         self._node = NodePool.get_node()
@@ -67,8 +68,8 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
             channel
         )
 
-        self.client: BotT = MISSING
-        self.channel: discord.VoiceChannel = MISSING
+        self.client: BotT = client
+        self.channel: discord.VoiceChannel = channel
         self._node: Node[BotT, ContextT, PlayerT] = MISSING
 
         self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
