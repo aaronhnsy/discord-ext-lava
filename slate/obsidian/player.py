@@ -46,16 +46,30 @@ PlayerT = TypeVar("PlayerT", bound="Player")
 
 class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
 
+    def __call__(self, client: BotT, channel: discord.VoiceChannel) -> Player[BotT, ContextT, PlayerT]:
+
+        self.client: CD = client
+        self.channel: discord.VoiceChannel = channel
+
+        self._node = NodePool.get_node()
+        self._node._players[channel.guild.id] = self
+
+        return self
+
     def __init__(
         self,
-        client: BotT,
-        channel: discord.VoiceChannel
+        client: BotT = MISSING,
+        channel: discord.VoiceChannel = MISSING,
     ) -> None:
 
         super().__init__(
             client,
             channel
         )
+
+        self.client: BotT = MISSING
+        self.channel: discord.VoiceChannel = MISSING
+        self._node: Node[BotT, ContextT, PlayerT] = MISSING
 
         self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
         self._session_id: str | None = None
@@ -74,9 +88,6 @@ class Player(BasePlayer, Generic[BotT, ContextT, PlayerT]):
         self._paused: bool = False
 
         self._timestamp: int = 0
-
-        self._node: Node[BotT, ContextT, PlayerT] = NodePool.get_node()
-        self._node.players[self.channel.guild.id] = self
 
     def __repr__(self) -> str:
         return "<slate.obsidian.Player>"
