@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from .enums import SearchType, Source
+from .enums import Source
 from .track import Track
 
 
@@ -32,13 +32,13 @@ class Collection(Generic[ContextT]):
     ) -> None:
 
         self._name: str = info["name"]
-        self._url: str | None = info["url"]
-        self._selected_track: int | None = info["selected_track"]
-        self._search_type: SearchType = SearchType(info["type"]["name"].lower())
+        self._url: str | None = info.get("url")
+        self._selected_track: int | None = info.get("selected_track", info.get("selectedTrack", None))
+        self._type: str = (info.get("type", {}).get("name", None) or "PLAYLIST").lower()
 
         self._tracks: list[Track[ContextT]] = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in tracks]
-        self._ctx: ContextT | None = ctx
 
+        self._ctx: ContextT | None = ctx
         self._requester: discord.Member | discord.User | None = ctx.author if (ctx and ctx.author) else None
 
     def __repr__(self) -> str:
@@ -66,8 +66,8 @@ class Collection(Generic[ContextT]):
             return self._selected_track
 
     @property
-    def search_type(self) -> SearchType:
-        return self._search_type
+    def type(self) -> str:
+        return self._type
 
     @property
     def source(self) -> Source:

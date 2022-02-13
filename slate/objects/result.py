@@ -10,7 +10,7 @@ from discord.ext import commands
 
 # My stuff
 from .collection import Collection
-from .enums import SearchType, Source
+from .enums import Source
 from .track import Track
 
 
@@ -27,33 +27,33 @@ class Result(Generic[ContextT]):
     def __init__(
         self,
         *,
-        search_source: Source,
-        search_type: SearchType,
-        search_result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT],
+        source: Source,
+        type: str,
+        result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT],
         tracks: list[Track[ContextT]]
     ) -> None:
 
-        self._search_source: Source = search_source
-        self._search_type: SearchType = search_type
-        self._search_result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT] = search_result
+        self._source: Source = source
+        self._type: str = type
+        self._result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT] = result
         self._tracks: list[Track[ContextT]] = tracks
 
     def __repr__(self) -> str:
-        return "<slate.obsidian.Result>"
+        return "<slate.Result>"
 
     #
 
     @property
-    def search_source(self) -> Source:
-        return self._search_source
+    def source(self) -> Source:
+        return self._source
 
     @property
-    def search_type(self) -> SearchType:
-        return self._search_type
+    def type(self) -> str:
+        return self._type
 
     @property
     def result(self) -> spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT]:
-        return self._search_result
+        return self._result
 
     @property
     def tracks(self) -> list[Track[ContextT]]:

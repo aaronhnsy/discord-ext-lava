@@ -8,7 +8,7 @@ from typing import Any, Literal
 import aiohttp
 
 # My stuff
-from .objects.enums import SearchType, Source
+from .objects.enums import Source
 
 
 __all__ = (
@@ -82,25 +82,25 @@ class NoResultsFound(SlateError):
         self,
         *,
         search: str,
-        search_source: Source,
-        search_type: SearchType
+        source: Source,
+        type: str
     ) -> None:
 
         self._search: str = search
-        self._search_source: Source = search_source
-        self._search_type: SearchType = search_type
+        self._source: Source = source
+        self._type: str = type
 
     @property
     def search(self) -> str:
         return self._search
 
     @property
-    def search_source(self) -> Source:
-        return self._search_source
+    def source(self) -> Source:
+        return self._source
 
     @property
-    def search_type(self) -> SearchType:
-        return self._search_type
+    def type(self) -> str:
+        return self._type
 
 
 class SearchFailed(SlateError):

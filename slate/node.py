@@ -23,7 +23,7 @@ from .exceptions import (
     SearchFailed,
 )
 from .objects.collection import Collection
-from .objects.enums import NodeType, SearchType, Source
+from .objects.enums import NodeType, Source
 from .objects.result import Result
 from .objects.stats import Stats
 from .objects.track import Track
@@ -129,7 +129,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
     async def request(
         self,
-        method: Literal["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"], /,
+        method: Literal["GET"], /,
         *,
         endpoint: str,
         parameters: dict[str, Any] | None = None,
@@ -145,108 +145,93 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         for tries in range(5):
 
             try:
-
-                async with self._session.request(
-                        method=method,
-                        url=url,
-                        headers=headers,
-                        params=parameters,
-                        data=data
-                ) as response:
+                async with self._session.request(method, url=url, headers=headers, params=parameters, data=data) as response:
 
                     if 200 <= response.status < 300:
-
-                        response_data = await response.json(loads=self._json_loads)
-
-                        __log__.debug(f"'{method}' @ '{response.url}' success.\nPayload: {response_data}")
-                        return response_data
-
-                    delay = 1 + tries * 2
-
-                    __log__.debug(f"'{method}' @ '{response.url}' received '{response.status}' status code, retrying in {delay}s.")
-                    await asyncio.sleep(delay)
+                        __log__.info(f"'{method}' @ '{response.url}' -> '{response.status}'")
+                        return await response.json(loads=self._json_loads)
 
             except OSError as error:
-                if tries < 4 and error.errno in (54, 10054):
+                if tries >= 4 or error.errno not in (54, 10054):
+                    raise
 
-                    delay = 1 + tries * 2
+            delay = 1 + tries * 2
 
-                    __log__.debug(f"'{method}' @ '{response.url}' raised OSError, retrying in {delay}s.")  # type: ignore
-                    await asyncio.sleep(delay)
+            __log__.info(f"'{method}' @ '{response.url}' -> '{response.status}', retrying in {delay}s.")  # type: ignore
+            await asyncio.sleep(delay)
 
-                    continue
-                raise
+        message = f"'{method}' @ '{response.url}' -> '{response.status}', all five retries used."  # type: ignore
 
-        if response:  # type: ignore
-            __log__.debug(f"'{method}' @ '{response.url}' received '{response.status}' status code, all 5 retries used.")
-            raise HTTPError(response, message=f"A {response.status} status code was received, 5 retries used.")
-
-        raise RuntimeError("This shouldn't happen.")
+        __log__.info(message)
+        raise HTTPError(response, message=message)  # type: ignore
 
     async def _search_spotify(
         self,
         id: str, /,
         *,
-        type: SearchType,
+        type: str,
         ctx: ContextT | None = None,
     ) -> Result[ContextT]:
 
         assert self._spotify
 
         try:
-            if type is SearchType.ALBUM:
+            if type == "album":
                 result = await self._spotify.get_full_album(id)
                 tracks = result.tracks
 
-            elif type is SearchType.PLAYLIST:
+            elif type == "playlist":
                 result = await self._spotify.get_full_playlist(id)
                 tracks = result.tracks
 
-            elif type is SearchType.ARTIST:
+            elif type == "artist":
                 result = await self._spotify.get_artist(id)
                 tracks = await self._spotify.get_artist_top_tracks(id)
 
-            else:
+            else:  # type == "track"
                 result = await self._spotify.get_track(id)
                 tracks = [result]
 
         except spotipy.NotFound:
-            raise NoResultsFound(search=id, search_source=Source.SPOTIFY, search_type=type)
+            raise NoResultsFound(search=id, source=Source.SPOTIFY, type=type)
         except spotipy.HTTPError:
             raise SearchFailed({"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
-        converted_tracks = [
-            Track(
-                id="",
-                info={
-                    "title":       track.name or "UNKNOWN",
-                    "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "UNKNOWN",
-                    "uri":         track.url or "UNKNOWN",
-                    "identifier":  track.id or
-                                   hash(
-                                       f"{track.name or 'UNKNOWN'} - "
-                                       f"{', '.join(artist.name for artist in track.artists) if track.artists else 'UNKNOWN'} - "
-                                       f"{track.duration_ms or 0}"
-                                   ),
-                    "length":      track.duration_ms or 0,
-                    "position":    0,
-                    "is_stream":   False,
-                    "is_seekable": False,
-                    "source_name": "spotify",
-                    "artwork_url": (result.images[0].url if result.images else None)
-                                   if isinstance(result, spotipy.Album)
-                                   else (track.album.images[0].url if track.album.images else None),
-                    "isrc":        getattr(track, "external_ids", {}).get("isrc") or None,
-                },
-                ctx=ctx
-            ) for track in tracks
-        ]
-
-        return Result(search_source=Source.SPOTIFY, search_type=type, search_result=result, tracks=converted_tracks)
+        return Result(
+            source=Source.SPOTIFY,
+            type=type,
+            result=result,
+            tracks=[
+                Track(
+                    id="",
+                    info={
+                        "title":       track.name or "Unknown",
+                        "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "Unknown",
+                        "uri":         track.url or "Unknown",
+                        "identifier":  track.id or hash(
+                                           f"{track.name or 'Unknown'} - "
+                                           f"{', '.join(artist.name for artist in track.artists) if track.artists else 'Unknown'} - "
+                                           f"{track.duration_ms or 0}"
+                                       ),
+                        "length":      track.duration_ms or 0,
+                        "position":    0,
+                        "is_stream":   False,
+                        "is_seekable": False,
+                        "source_name": "spotify",
+                        "artwork_url": (result.images[0].url if result.images else None)
+                                       if isinstance(result, spotipy.Album)
+                                       else (track.album.images[0].url if track.album.images else None),
+                        "isrc":        getattr(track, "external_ids", {}).get("isrc") or None,
+                    },
+                    ctx=ctx
+                ) for track in tracks
+            ]
+        )
 
     async def _search_obsidian(
         self,
-        search: str, /,
+        search: str,
+        /,
         *,
         source: Source = Source.NONE,
         ctx: ContextT | None = None,
@@ -262,24 +247,65 @@ class Node(Generic[BotT, ContextT, PlayerT]):
             identifier = search
 
         data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": identifier})
-
         load_type = data["load_type"]
 
         if load_type == "FAILED":
             raise SearchFailed(data["exception"])
 
         elif load_type == "NONE":
-            raise NoResultsFound(search=search, search_source=source, search_type=SearchType.TRACK)
+            raise NoResultsFound(search=search, source=source, type="track")
 
         elif load_type == "TRACK":
 
             track = Track(id=data["tracks"][0]["track"], info=data["tracks"][0]["info"], ctx=ctx)
-            return Result(search_source=track.source, search_type=SearchType.TRACK, search_result=track, tracks=[track])
+            return Result(source=track.source, type="track", result=track, tracks=[track])
 
         elif load_type == "TRACK_COLLECTION":
 
             collection = Collection(info=data["collection_info"], tracks=data["tracks"], ctx=ctx)
-            return Result(search_source=collection.source, search_type=collection.search_type, search_result=collection, tracks=collection.tracks)
+            return Result(source=collection.source, type=collection.type, result=collection, tracks=collection.tracks)
+
+        else:
+            raise SearchFailed({"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
+
+    async def _search_lavalink(
+        self,
+        search: str,
+        /,
+        *,
+        source: Source = Source.NONE,
+        ctx: ContextT | None = None,
+    ) -> Result[ContextT]:
+
+        if source is Source.YOUTUBE:
+            identifier = f"ytsearch:{search}"
+        elif source is Source.YOUTUBE_MUSIC:
+            identifier = f"ytmsearch:{search}"
+        elif source is Source.SOUNDCLOUD:
+            identifier = f"scsearch:{search}"
+        else:
+            identifier = search
+
+        data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": identifier})
+        load_type = data["loadType"]
+
+        if load_type == "LOAD_FAILED":
+            raise SearchFailed(data["exception"])
+
+        elif load_type == "NO_MATCHES":
+            raise NoResultsFound(search=search, source=source, type="track")
+
+        elif load_type in ("SEARCH_RESULT", "TRACK_LOADED"):
+
+            track = Track(id=data["tracks"][0]["track"], info=data["tracks"][0]["info"], ctx=ctx)
+            return Result(source=track.source, type="track", result=track, tracks=[track])
+
+        elif load_type == "PLAYLIST_LOADED":
+
+            collection = Collection(info=data["playlistInfo"], tracks=data["tracks"], ctx=ctx)
+            collection._url = search
+
+            return Result(source=collection.source, type=collection.type, result=collection, tracks=collection.tracks)
 
         else:
             raise SearchFailed({"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
@@ -294,12 +320,12 @@ class Node(Generic[BotT, ContextT, PlayerT]):
     ) -> Result[ContextT]:
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
-            return await self._search_spotify(match.group("id"), type=SearchType(match.group("type")), ctx=ctx)
+            return await self._search_spotify(match.group("id"), type=match.group("type"), ctx=ctx)
 
         if self._type is NodeType.OBSIDIAN:
             return await self._search_obsidian(search, source=source, ctx=ctx)
-
-        return await self._search_lavalink(search, source=source, ctx=ctx)
+        else:
+            return await self._search_lavalink(search, source=source, ctx=ctx)
 
     # Websocket
 
@@ -336,10 +362,11 @@ class Node(Generic[BotT, ContextT, PlayerT]):
             if self._task is None:
                 self._task = asyncio.create_task(self._listen())
 
-            await self._send_payload(
-                2 if self._type is NodeType.OBSIDIAN else "configureResuming",
-                data={"key": self.resume_key, "timeout": 120}
-            )
+            if self._resume_key:
+                await self._send_payload(
+                    2 if self._type is NodeType.OBSIDIAN else "configureResuming",
+                    data={"key": self.resume_key, "timeout": 120}
+                )
 
             self._bot.dispatch("slate_node_connected", self)
             __log__.info(f"Node '{self._identifier}' connected.")
@@ -397,7 +424,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         __log__.debug(f"Node '{self._identifier}' received a payload with op '{op}'.\nPayload: {data}")
 
         if op in (1, "stats"):  # Stats
-            self._stats = Stats(data)
+            # self._stats = Stats(data)
             return
 
         player = self._players.get(int(data["guild_id"] if self._type is NodeType.OBSIDIAN else data["guildId"]))

@@ -9,7 +9,6 @@ __all__ = (
     "NodeType",
     "QueueLoopMode",
     "Source",
-    "SearchType",
 )
 
 
@@ -38,12 +37,3 @@ class Source(Enum):
     YOUTUBE_MUSIC = "youtube_music"
     SPOTIFY = "spotify"
     NONE = ""
-
-
-class SearchType(Enum):
-
-    SEARCH_RESULT = "searchresult"
-    PLAYLIST = "playlist"
-    ALBUM = "album"
-    TRACK = "track"
-    ARTIST = "artist"
