@@ -9,8 +9,8 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from slate.obsidian.objects.enums import SearchType, Source
-from slate.obsidian.objects.track import Track
+from .enums import SearchType, Source
+from .track import Track
 
 
 __all__ = (

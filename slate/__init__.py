@@ -6,12 +6,13 @@ import logging
 from typing import Final, Literal, NamedTuple
 
 # My stuff
-from slate.exceptions import *
-from slate.node import *
-from slate.objects import *
-from slate.player import *
-from slate.queue import *
-from slate.utils import *
+from .exceptions import *
+from .node import *
+from .objects import *
+from .player import *
+from .pool import *
+from .queue import *
+from .utils import *
 
 
 class VersionInfo(NamedTuple):
@@ -22,13 +23,13 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-version_info: Final[VersionInfo] = VersionInfo(major=0, minor=0, micro=6, releaselevel="final", serial=0)
+version_info: Final[VersionInfo] = VersionInfo(major=0, minor=1, micro=0, releaselevel="final", serial=0)
 
 __title__: Final[str] = "slate"
 __author__: Final[str] = "Axelancerr"
 __copyright__: Final[str] = "Copyright 2020-present Axelancerr"
 __license__: Final[str] = "MIT"
-__version__: Final[str] = "0.0.6"
+__version__: Final[str] = "0.1.0"
 __maintainer__: Final[str] = "Aaron Hennessey"
 __source__: Final[str] = "https://github.com/Axelware/slate"
 
