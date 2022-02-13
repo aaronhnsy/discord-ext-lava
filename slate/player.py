@@ -178,7 +178,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
             data = {
                 "guildId": self._voice_server_update_data["guild_id"],
                 "sessionId": self._session_id,
-                **self._voice_server_update_data
+                "event": self._voice_server_update_data,
             }
 
         await self._node._send_payload(op, data=data)
@@ -347,7 +347,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         filter: Filter,
         /,
         *,
-        seek: bool = True
+        set_position: bool = True
     ) -> None:
 
         if self._node._type is NodeType.OBSIDIAN:
@@ -362,7 +362,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
         self._filter = filter
 
-        if seek:
+        if set_position:
             await self.set_position(self.position)
 
     async def set_position(
