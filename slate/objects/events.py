@@ -22,7 +22,7 @@ class BaseEvent:
 
     def __init__(self, data: dict[str, Any]) -> None:
         self._type: str = MISSING
-        self._guild_id: int = int(data["guild_id"])
+        self._guild_id: int = int(data.get("guild_id", data.get("guildId")))
 
     def __repr__(self) -> str:
         return f"<slate.BaseEvent guild_id={self.guild_id}>"
@@ -106,7 +106,7 @@ class TrackException(BaseEvent):
 
         self._track_id: str = data["track"]
 
-        exception: dict[str, Any] = data.get("exception", data["error"])
+        exception: dict[str, Any] = data.get("exception", data.get("error"))
         self._message: str = exception["message"]
         self._cause: str = exception["cause"]
         self._severity: Literal["COMMON", "FAULT", "SUSPICIOUS"] = exception["severity"]
