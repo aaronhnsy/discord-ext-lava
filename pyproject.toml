@@ -1,16 +1,18 @@
 [tool.poetry]
-name = "slate"
-version = "0.1.0"
+name        = "slate"
+version     = "0.1.0"
 description = "A discord.py compatible wrapper for the lavalink and obsidian websocket and rest API."
-license = "MIT"
-authors = ["Axel <axelancerr@gmail.com>"]
-readme = "README.md"
+license     = "MIT"
+authors     = ["Axel <axelancerr@gmail.com>"]
+readme      = "README.md"
 
-homepage = "https://github.com/Axelware/slate"
-repository = "https://github.com/Axelware/slate"
-documentation = "https://slate-py.readthedocs.io/en/latest/"
+homepage        = "https://github.com/Axelware/slate"
+repository      = "https://github.com/Axelware/slate"
+documentation   = "https://slate-py.readthedocs.io/en/latest/"
 
-keywords = ["obsidian", "lavalink", "api", "wrapper", "async"]
+keywords = [
+    "obsidian", "lavalink", "api", "wrapper", "async"
+]
 classifiers = [
     "Framework :: AsyncIO",
     "Topic :: Software Development",
@@ -76,8 +78,8 @@ star_first                  = true
 import_heading_future       = "Future"
 import_heading_stdlib       = "Standard Library"
 import_heading_thirdparty   = "Packages"
-import_heading_firstparty   ="My stuff"
-import_heading_localfolder  ="My stuff"
+import_heading_firstparty   = "My stuff"
+import_heading_localfolder  = "My stuff"
 
 
 [build-system]
@@ -86,14 +88,14 @@ build-backend   = "poetry.core.masonry.api"
 
 
 [tool.pyright]
-include = ["slate"]
-verboseOutput = false
-pythonVersion = "3.10"
-typeCheckingMode = "basic"
-useLibraryCodeForTypes = true
+include                 = ["slate"]
+verboseOutput           = false
+pythonVersion           = "3.10"
+typeCheckingMode        = "basic"
+useLibraryCodeForTypes  = true
 
-strictListInference = true
-strictDictionaryInference = true
-strictSetInference = true
-reportMissingImports = false
-reportPrivateImportUsage = false
+strictListInference         = true
+strictDictionaryInference   = true
+strictSetInference          = true
+reportMissingImports        = false
+reportPrivateImportUsage    = false
