@@ -12,7 +12,7 @@ import discord.types.voice
 from discord.ext import commands
 
 # My stuff
-from .objects.enums import NodeType
+from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
 from .objects.filters import Filter
 from .objects.track import Track
@@ -56,7 +56,11 @@ VoiceChannel = discord.VoiceChannel | discord.StageChannel
 
 class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
-    def __call__(self, client: BotT, channel: VoiceChannel) -> Player[BotT, ContextT, PlayerT]:
+    def __call__(
+        self,
+        client: BotT,
+        channel: VoiceChannel
+    ) -> Player[BotT, ContextT, PlayerT]:
 
         self.client: BotT = client
         self.channel: VoiceChannel = channel
@@ -93,7 +97,89 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
     def __repr__(self) -> str:
         return "<slate.Player>"
 
-    # Properties / Utilities
+    # Discord.py abstract methods
+
+    async def on_voice_server_update(
+        self,
+        data: discord.types.voice.VoiceServerUpdate
+    ) -> None:
+
+        __log__.debug(f"Player '{self.voice_channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
+
+        self._voice_server_update_data = data
+        await self._dispatch_voice_update()
+
+    async def on_voice_state_update(
+        self,
+        data: discord.types.voice.GuildVoiceState
+    ) -> None:
+
+        __log__.debug(f"Player '{self.voice_channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
+
+        self._session_id = data.get("session_id")
+        await self._dispatch_voice_update()
+
+    async def _dispatch_voice_update(self) -> None:
+
+        if not self._session_id or not self._voice_server_update_data:
+            return
+
+        if self._node._provider is Provider.OBSIDIAN:
+            op = 0
+            data = {
+                "session_id": self._session_id,
+                **self._voice_server_update_data
+            }
+        else:
+            op = "voiceUpdate"
+            data = {
+                "guildId": self._voice_server_update_data["guild_id"],
+                "sessionId": self._session_id,
+                "event": self._voice_server_update_data,
+            }
+
+        await self._node._send_payload(op, data=data)
+
+    # Websocket event handlers
+
+    def _dispatch_event(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
+        _type = data["type"]
+
+        if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node._provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
+            __log__.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
+            return
+
+        event = event(data)
+
+        __log__.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
+        self.bot.dispatch(f"slate_{event.type.lower()}", self, event)
+
+    def _update_state(
+        self,
+        data: dict[str, Any]
+    ) -> None:
+
+        self._last_update = time.time() * 1000
+
+        if self._node._provider is Provider.OBSIDIAN:
+
+            current: dict[str, Any] = data["current_track"]
+            self._current_track_id = current["track"]
+            self._paused = current["paused"]
+            self._position = current["position"]
+            self._timestamp = data["timestamp"]
+            # TODO: Parse filters from data["filters"]
+
+        else:
+            state: dict[str, Any] = data["state"]
+            self._position = state["position"]
+            self._timestamp = state["time"]
+
+    # Properties
 
     @property
     def bot(self) -> BotT:
@@ -106,6 +192,10 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
     @property
     def node(self) -> Node[BotT, ContextT, PlayerT]:
         return self._node
+
+    @property
+    def current_track_id(self) -> str | None:
+        return self._current_track_id
 
     @property
     def current(self) -> Track[ContextT] | None:
@@ -137,6 +227,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
     def filter(self) -> Filter | None:
         return self._filter
 
+    # Utility methods
+
     def is_connected(self) -> bool:
         return self.channel is not None
 
@@ -146,77 +238,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
     def is_paused(self) -> bool:
         return self._paused is True
 
-    #
-
-    async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate) -> None:
-
-        __log__.debug(f"Player '{self.voice_channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
-
-        self._voice_server_update_data = data
-        await self._dispatch_voice_update()
-
-    async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState) -> None:
-
-        __log__.debug(f"Player '{self.voice_channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
-
-        self._session_id = data.get("session_id")
-        await self._dispatch_voice_update()
-
-    async def _dispatch_voice_update(self) -> None:
-
-        if not self._session_id or not self._voice_server_update_data:
-            return
-
-        if self._node._type is NodeType.OBSIDIAN:
-            op = 0
-            data = {
-                "session_id": self._session_id,
-                **self._voice_server_update_data
-            }
-        else:
-            op = "voiceUpdate"
-            data = {
-                "guildId": self._voice_server_update_data["guild_id"],
-                "sessionId": self._session_id,
-                "event": self._voice_server_update_data,
-            }
-
-        await self._node._send_payload(op, data=data)
-
-    #
-
-    def _dispatch_event(self, data: dict[str, Any]) -> None:
-
-        _type = data["type"]
-
-        if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node._type is NodeType.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
-            __log__.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
-            return
-
-        event = event(data)
-
-        __log__.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
-        self.bot.dispatch(f"slate_{event.type.lower()}", self, event)
-
-    def _update_state(self, data: dict[str, Any]) -> None:
-
-        self._last_update = time.time() * 1000
-
-        if self._node._type is NodeType.OBSIDIAN:
-
-            current: dict[str, Any] = data["current_track"]
-            self._current_track_id = current["track"]
-            self._paused = current["paused"]
-            self._position = current["position"]
-            self._timestamp = data["timestamp"]
-            # TODO: Parse filters from data["filters"]
-
-        else:
-            state: dict[str, Any] = data["state"]
-            self._position = state["position"]
-            self._timestamp = state["time"]
-
-    #
+    # Public methods
 
     async def connect(
         self,
@@ -243,7 +265,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
             await self.stop(force=force)
 
-            if self._node._type is NodeType.OBSIDIAN:
+            if self._node._provider is Provider.OBSIDIAN:
                 op = 11
                 data = {"guild_id": str(self.voice_channel.guild.id)}
             else:
@@ -259,8 +281,6 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
         self.cleanup()
 
-    #
-
     async def play(
         self,
         track: Track[ContextT], /,
@@ -274,7 +294,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
             "track": track.id,
         }
 
-        if self._node._type is NodeType.OBSIDIAN:
+        if self._node._provider is Provider.OBSIDIAN:
             op = 6
             data["guild_id"] = str(self.voice_channel.guild.id)
             if start_time:
@@ -310,7 +330,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         if self._current is None and not force:
             return
 
-        if self._node._type is NodeType.OBSIDIAN:
+        if self._node._provider is Provider.OBSIDIAN:
             op = 7
             data = {"guild_id": str(self.voice_channel.guild.id)}
         else:
@@ -330,7 +350,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         pause: bool, /,
     ) -> None:
 
-        if self._node._type is NodeType.OBSIDIAN:
+        if self._node._provider is Provider.OBSIDIAN:
             op = 8
             data = {"guild_id": str(self.voice_channel.guild.id), "state": pause}
         else:
@@ -344,13 +364,12 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
     async def set_filter(
         self,
-        filter: Filter,
-        /,
+        filter: Filter, /,
         *,
         set_position: bool = True
     ) -> None:
 
-        if self._node._type is NodeType.OBSIDIAN:
+        if self._node._provider is Provider.OBSIDIAN:
             op = 9
             data = {"guild_id": str(self.voice_channel.guild.id), "filters": {**filter._payload}}
         else:
@@ -367,8 +386,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
     async def set_position(
         self,
-        position: float,
-        /,
+        position: float, /,
         *,
         force: bool = False
     ) -> None:
@@ -376,7 +394,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         if (self._current is None or 0 > position > self._current.length) and not force:
             return
 
-        if self._node._type is NodeType.OBSIDIAN:
+        if self._node._provider is Provider.OBSIDIAN:
             op = 10
             data = {"guild_id": str(self.voice_channel.guild.id), "position": round(position)}
         else:

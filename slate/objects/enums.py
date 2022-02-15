@@ -6,13 +6,13 @@ from enum import Enum
 
 
 __all__ = (
-    "NodeType",
+    "Provider",
     "QueueLoopMode",
     "Source",
 )
 
 
-class NodeType(Enum):
+class Provider(Enum):
     OBSIDIAN = 0
     LAVALINK = 1
 
@@ -36,4 +36,5 @@ class Source(Enum):
     YOUTUBE = "youtube"
     YOUTUBE_MUSIC = "youtube_music"
     SPOTIFY = "spotify"
+    UNKNOWN = "unknown"
     NONE = ""

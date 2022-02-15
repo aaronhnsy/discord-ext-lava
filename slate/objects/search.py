@@ -15,33 +15,34 @@ from .track import Track
 
 
 __all__ = (
-    "Result",
+    "Search",
 )
 
 
 ContextT = TypeVar("ContextT", bound=commands.Context)
+Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT]
 
 
-class Result(Generic[ContextT]):
+class Search(Generic[ContextT]):
 
     def __init__(
         self,
         *,
         source: Source,
         type: str,
-        result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT],
+        result: Result[ContextT],
         tracks: list[Track[ContextT]]
     ) -> None:
 
         self._source: Source = source
         self._type: str = type
-        self._result: spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT] = result
+        self._result: Result[ContextT] = result
         self._tracks: list[Track[ContextT]] = tracks
 
     def __repr__(self) -> str:
-        return "<slate.Result>"
+        return f"<slate.Result source={self._source}, type='{self._type}', result={type(self._result)}>"
 
-    #
+    # Properties
 
     @property
     def source(self) -> Source:
@@ -52,7 +53,7 @@ class Result(Generic[ContextT]):
         return self._type
 
     @property
-    def result(self) -> spotipy.Playlist | spotipy.Album | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT]:
+    def result(self) -> Result[ContextT]:
         return self._result
 
     @property

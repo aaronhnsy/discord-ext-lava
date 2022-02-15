@@ -23,14 +23,15 @@ from .exceptions import (
     SearchFailed,
 )
 from .objects.collection import Collection
-from .objects.enums import NodeType, Source
-from .objects.result import Result
+from .objects.enums import Provider, Source
+from .objects.search import Search
 from .objects.stats import Stats
 from .objects.track import Track
 from .utils import SPOTIFY_URL_REGEX, ExponentialBackoff
 
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     # My stuff
     from .player import Player
 
@@ -50,7 +51,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
     def __init__(
         self,
-        type: NodeType,
+        provider: Provider,
         bot: BotT,
         identifier: str,
         host: str,
@@ -66,7 +67,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         spotify_client_secret: str | None = None,
     ) -> None:
 
-        self._type: NodeType = type
+        self._provider: Provider = provider
         self._bot: BotT = bot
         self._identifier: str = identifier
 
@@ -76,7 +77,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         self._resume_key: str | None = resume_key
 
         self._rest_url: str = rest_url or f"http://{host}:{port}"
-        self._ws_url: str = ws_url or f"ws://{host}:{port}{'/magma' if type is NodeType.OBSIDIAN else ''}"
+        self._ws_url: str = ws_url or f"ws://{host}:{port}{'/magma' if provider is Provider.OBSIDIAN else ''}"
 
         self._json_dumps: Callable[..., str] = json_dumps or json.dumps
         self._json_loads: Callable[..., dict[str, Any]] = json_loads or json.loads
@@ -99,8 +100,8 @@ class Node(Generic[BotT, ContextT, PlayerT]):
     # Properties / Utilities
 
     @property
-    def type(self) -> NodeType:
-        return self._type
+    def provider(self) -> Provider:
+        return self._provider
 
     @property
     def bot(self) -> BotT:
@@ -125,7 +126,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
     def is_connected(self) -> bool:
         return self._websocket is not None and self._websocket.closed is False
 
-    # Rest
+    # Rest API / Track Search
 
     async def request(
         self,
@@ -167,11 +168,10 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
     async def _search_spotify(
         self,
-        id: str, /,
-        *,
+        id: str,
         type: str,
         ctx: ContextT | None = None,
-    ) -> Result[ContextT]:
+    ) -> Search[ContextT]:
 
         assert self._spotify
 
@@ -195,9 +195,9 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         except spotipy.NotFound:
             raise NoResultsFound(search=id, source=Source.SPOTIFY, type=type)
         except spotipy.HTTPError:
-            raise SearchFailed({"message": "Error while accessing spotify API.", "severity": "COMMON"})
+            raise SearchFailed(data={"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
-        return Result(
+        return Search(
             source=Source.SPOTIFY,
             type=type,
             result=result,
@@ -228,14 +228,13 @@ class Node(Generic[BotT, ContextT, PlayerT]):
             ]
         )
 
-    async def _search_obsidian(
+    async def _search_other(
         self,
-        search: str,
-        /,
+        search: str, /,
         *,
         source: Source = Source.NONE,
         ctx: ContextT | None = None,
-    ) -> Result[ContextT]:
+    ) -> Search[ContextT]:
 
         if source is Source.YOUTUBE:
             identifier = f"ytsearch:{search}"
@@ -247,68 +246,32 @@ class Node(Generic[BotT, ContextT, PlayerT]):
             identifier = search
 
         data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": identifier})
-        load_type = data["load_type"]
+        load_type = data["load_type" if "load_type" in data else "loadType"]
 
-        if load_type == "FAILED":
+        if load_type in {"FAILED", "LOAD_FAILED"}:
             raise SearchFailed(data["exception"])
 
-        elif load_type == "NONE":
+        elif load_type in {"NONE", "NO_MATCHES"}:
             raise NoResultsFound(search=search, source=source, type="track")
 
-        elif load_type == "TRACK":
+        elif load_type in {"TRACK", "TRACK_LOADED", "SEARCH_RESULT"}:
 
-            track = Track(id=data["tracks"][0]["track"], info=data["tracks"][0]["info"], ctx=ctx)
-            return Result(source=track.source, type="track", result=track, tracks=[track])
+            tracks = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
+            return Search(source=tracks[0].source, type="track", result=tracks, tracks=tracks)
 
-        elif load_type == "TRACK_COLLECTION":
+        elif load_type in {"TRACK_COLLECTION", "PLAYLIST_LOADED"}:
 
-            collection = Collection(info=data["collection_info"], tracks=data["tracks"], ctx=ctx)
-            return Result(source=collection.source, type=collection.type, result=collection, tracks=collection.tracks)
+            if self._provider is Provider.OBSIDIAN:
+                info = data["collection_info"]
+            else:
+                info = data["playlistInfo"]
+                info["url"] = search
 
-        else:
-            raise SearchFailed({"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
-
-    async def _search_lavalink(
-        self,
-        search: str,
-        /,
-        *,
-        source: Source = Source.NONE,
-        ctx: ContextT | None = None,
-    ) -> Result[ContextT]:
-
-        if source is Source.YOUTUBE:
-            identifier = f"ytsearch:{search}"
-        elif source is Source.YOUTUBE_MUSIC:
-            identifier = f"ytmsearch:{search}"
-        elif source is Source.SOUNDCLOUD:
-            identifier = f"scsearch:{search}"
-        else:
-            identifier = search
-
-        data = await self.request("GET", endpoint="/loadtracks", parameters={"identifier": identifier})
-        load_type = data["loadType"]
-
-        if load_type == "LOAD_FAILED":
-            raise SearchFailed(data["exception"])
-
-        elif load_type == "NO_MATCHES":
-            raise NoResultsFound(search=search, source=source, type="track")
-
-        elif load_type in ("SEARCH_RESULT", "TRACK_LOADED"):
-
-            track = Track(id=data["tracks"][0]["track"], info=data["tracks"][0]["info"], ctx=ctx)
-            return Result(source=track.source, type="track", result=track, tracks=[track])
-
-        elif load_type == "PLAYLIST_LOADED":
-
-            collection = Collection(info=data["playlistInfo"], tracks=data["tracks"], ctx=ctx)
-            collection._url = search
-
-            return Result(source=collection.source, type=collection.type, result=collection, tracks=collection.tracks)
+            collection = Collection(info=info, tracks=data["tracks"], ctx=ctx)
+            return Search(source=collection.source, type="collection", result=collection, tracks=collection.tracks)
 
         else:
-            raise SearchFailed({"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
+            raise SearchFailed(data={"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
 
     async def search(
         self,
@@ -317,19 +280,102 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         *,
         source: Source = Source.NONE,
         ctx: ContextT | None = None,
-    ) -> Result[ContextT]:
+    ) -> Search[ContextT]:
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
-            return await self._search_spotify(match.group("id"), type=match.group("type"), ctx=ctx)
+            return await self._search_spotify(id=match.group("id"), type=match.group("type"), ctx=ctx)
 
-        if self._type is NodeType.OBSIDIAN:
-            return await self._search_obsidian(search, source=source, ctx=ctx)
+        return await self._search_other(search, source=source, ctx=ctx)
+
+    # Internal websocket handling
+
+    async def _listen(
+        self
+    ) -> None:
+
+        backoff = ExponentialBackoff(base=4)
+
+        while True:
+
+            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
+            message = await self._websocket.receive()
+
+            if message.type is aiohttp.WSMsgType.CLOSED:
+
+                retry = backoff.delay()
+                __log__.warning(f"Node '{self._identifier}'s websocket was closed, attempting reconnection in {round(retry)} seconds.")
+
+                await asyncio.sleep(retry)
+
+                if not self._websocket or self._websocket.closed:
+                    await self.connect()
+
+                continue
+
+            payload = message.json(loads=self._json_loads)
+            asyncio.create_task(self._handle_payload(payload["op"], data=payload["d"] if "d" in payload else payload))
+
+    async def _handle_payload(
+        self,
+        op: str | int, /,
+        *, data: dict[str, Any]
+    ) -> None:
+
+        __log__.debug(f"Node '{self._identifier}' received a payload with op '{op}'.\nData: {data}")
+
+        if op in (1, "stats"):
+            # self._stats = Stats(data)
+            return
+
+        guild_id = int(data["guild_id"] if self._provider is Provider.OBSIDIAN else data["guildId"])
+
+        if not (player := self._players.get(guild_id)):
+            __log__.warning(
+                f"Node '{self._identifier} received a payload with op '{op}' for a guild '{guild_id}' without a voice client.\nData: {data}"
+            )
+            return
+
+        if op in (4, "event"):
+            player._dispatch_event(data)
+            return
+
+        if op in (5, "playerUpdate"):
+            player._update_state(data)
+            return
+
+        __log__.warning(f"Node '{self._identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
+
+    async def _send_payload(
+        self,
+        op: int | str, /,
+        *, data: dict[str, Any]
+    ) -> None:
+
+        if not self._websocket or self._websocket.closed:
+            raise NodeNotConnected(f"Node '{self._identifier}' is not connected.")
+
+        payload: dict[str, Any] = {
+            "op": op,
+        }
+        if self._provider is Provider.OBSIDIAN:
+            payload["d"] = data
         else:
-            return await self._search_lavalink(search, source=source, ctx=ctx)
+            payload |= data
 
-    # Websocket
+        _json = self._json_dumps(payload)
+        if isinstance(_json, bytes):
+            _json = _json.decode("utf-8")
 
-    async def connect(self, *, raise_on_error: bool = True) -> None:
+        await self._websocket.send_str(_json)
+        __log__.debug(f"Node '{self._identifier}' sent a payload with op '{op}'.\nPayload: {payload}")
+
+    # Websocket connection
+
+    async def connect(
+        self,
+        *,
+        raise_on_error: bool = True
+    ) -> None:
 
         assert self._bot.user
 
@@ -364,14 +410,18 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
             if self._resume_key:
                 await self._send_payload(
-                    2 if self._type is NodeType.OBSIDIAN else "configureResuming",
+                    2 if self._provider is Provider.OBSIDIAN else "configureResuming",
                     data={"key": self.resume_key, "timeout": 120}
                 )
 
             self._bot.dispatch("slate_node_connected", self)
             __log__.info(f"Node '{self._identifier}' connected.")
 
-    async def disconnect(self, *, force: bool = False) -> None:
+    async def disconnect(
+        self,
+        *,
+        force: bool = False
+    ) -> None:
 
         for player in self._players.copy().values():
             await player.disconnect(force=force)
@@ -388,83 +438,3 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         self._bot.dispatch("slate_node_disconnected", self)
         __log__.info(f"Node '{self._identifier}' disconnected.")
-
-    async def _listen(
-        self
-    ) -> None:
-
-        backoff = ExponentialBackoff(base=4)
-
-        while True:
-
-            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
-            payload = await self._websocket.receive()
-
-            if payload.type is aiohttp.WSMsgType.CLOSED:
-
-                retry = backoff.delay()
-                __log__.warning(f"Node '{self._identifier}'s websocket was closed, attempting reconnection in {round(retry)} seconds.")
-
-                await asyncio.sleep(retry)
-
-                if not self._websocket or self._websocket.closed:
-                    await self.connect()
-
-            else:
-                asyncio.create_task(self._handle_payload(payload.json(loads=self._json_loads)))
-
-    async def _handle_payload(
-        self,
-        payload: dict[str, Any], /
-    ) -> None:
-
-        op = payload["op"]
-        data = payload["d"] if self._type is NodeType.OBSIDIAN else payload
-
-        __log__.debug(f"Node '{self._identifier}' received a payload with op '{op}'.\nPayload: {data}")
-
-        if op in (1, "stats"):  # Stats
-            # self._stats = Stats(data)
-            return
-
-        player = self._players.get(int(data["guild_id"] if self._type is NodeType.OBSIDIAN else data["guildId"]))
-        if not player:
-            __log__.warning(f"Node '{self._identifier}' received a payload for a guild without a voice client.\nPayload: {payload}")
-            return
-
-        if op in (4, "event"):
-            player._dispatch_event(data)
-            return
-
-        if op in (5, "playerUpdate"):
-            player._update_state(data)
-            return
-
-        __log__.warning(f"Node '{self._identifier}' received a payload with an unknown op '{op}'.\nPayload: {payload}")
-
-    async def _send_payload(
-        self,
-        op: int | str, /,
-        *, data: dict[str, Any]
-    ) -> None:
-
-        if not self._websocket or self._websocket.closed:
-            raise NodeNotConnected(f"Node '{self._identifier}' is not connected.")
-
-        if self._type is NodeType.OBSIDIAN:
-            payload = {
-                "op": op,
-                "d": data
-            }
-        else:
-            payload = {
-                "op": op,
-                **data
-            }
-
-        _json = self._json_dumps(payload)
-        if isinstance(_json, bytes):
-            _json = _json.decode("utf-8")
-
-        await self._websocket.send_str(_json)
-        __log__.debug(f"Node '{self._identifier}' sent a payload with op '{op}'.\nPayload: {payload}")

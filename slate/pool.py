@@ -13,10 +13,11 @@ from discord.ext import commands
 # My stuff
 from .exceptions import NodeCreationError, NodeNotFound, NoNodesConnected
 from .node import Node
-from .objects.enums import NodeType
+from .objects.enums import Provider
 
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     # My stuff
     from .player import Player
 
@@ -34,16 +35,16 @@ PlayerT = TypeVar("PlayerT", bound="Player")  # type: ignore
 
 class Pool(Generic[BotT, ContextT, PlayerT]):
 
-    nodes: dict[str, Node[BotT, ContextT, PlayerT]] = {}
-
     def __repr__(self) -> str:
         return "<slate.Pool>"
+
+    nodes: dict[str, Node[BotT, ContextT, PlayerT]] = {}
 
     @classmethod
     async def create_node(
         cls,
+        provider: Provider, /,
         *,
-        type: NodeType,
         bot: BotT,
         identifier: str,
         host: str,
@@ -63,7 +64,7 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
             raise NodeCreationError(f"A Node with the identifier '{identifier}' already exists.")
 
         node = Node(
-            type=type,
+            provider=provider,
             bot=bot,
             identifier=identifier,
             host=host,
@@ -87,6 +88,7 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
     @classmethod
     def get_node(
         cls,
+        *,
         identifier: str | None = None
     ) -> Node[BotT, ContextT, PlayerT]:
 
@@ -105,12 +107,12 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
     @classmethod
     async def remove_node(
         cls,
-        identifier: str,
+        identifier: str, /,
         *,
         force: bool = False
     ) -> None:
 
-        node = cls.get_node(identifier)
+        node = cls.get_node(identifier=identifier)
 
         await node.disconnect(force=force)
         del cls.nodes[node._identifier]

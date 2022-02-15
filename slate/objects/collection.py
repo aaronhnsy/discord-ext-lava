@@ -32,9 +32,8 @@ class Collection(Generic[ContextT]):
     ) -> None:
 
         self._name: str = info["name"]
-        self._url: str | None = info.get("url")
-        self._selected_track: int | None = info.get("selected_track", info.get("selectedTrack", None))
-        self._type: str = (info.get("type", {}).get("name", None) or "PLAYLIST").lower()
+        self._url: str = info["url"]
+        self._selected_track: int | None = info.get("selected_track") or info.get("selectedTrack")
 
         self._tracks: list[Track[ContextT]] = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in tracks]
 
@@ -42,16 +41,16 @@ class Collection(Generic[ContextT]):
         self._requester: discord.Member | discord.User | None = ctx.author if (ctx and ctx.author) else None
 
     def __repr__(self) -> str:
-        return "<slate.obsidian.Collection>"
+        return "<slate.Collection>"
 
-    #
+    # Properties
 
     @property
     def name(self) -> str:
         return self._name
 
     @property
-    def url(self) -> str | None:
+    def url(self) -> str:
         return self._url
 
     @property
@@ -66,20 +65,6 @@ class Collection(Generic[ContextT]):
             return self._selected_track
 
     @property
-    def type(self) -> str:
-        return self._type
-
-    @property
-    def source(self) -> Source:
-
-        try:
-            return self.tracks[0].source
-        except KeyError:
-            return Source.NONE
-
-    #
-
-    @property
     def tracks(self) -> list[Track[ContextT]]:
         return self._tracks
 
@@ -87,8 +72,14 @@ class Collection(Generic[ContextT]):
     def ctx(self) -> ContextT | None:
         return self._ctx
 
-    #
-
     @property
     def requester(self) -> discord.Member | discord.User | None:
         return self._requester
+
+    @property
+    def source(self) -> Source:
+
+        try:
+            return self._tracks[0].source
+        except IndexError:
+            return Source.UNKNOWN

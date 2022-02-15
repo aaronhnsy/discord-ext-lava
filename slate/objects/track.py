@@ -41,12 +41,12 @@ class Track(Generic[ContextT]):
         self._identifier: str = info["identifier"]
         self._length: int = info["length"]
         self._position: int = info["position"]
-        self._is_stream: bool = info.get("is_stream", info.get("isStream", False))
-        self._is_seekable: bool = info.get("is_seekable", info.get("isSeekable", False))
         self._source: Source = Source(info.get("source_name", info.get("sourceName", "Unknown")))
-
         self._artwork_url: str | None = info.get("artwork_url")
         self._isrc: str | None = info.get("isrc")
+
+        self._is_stream: bool = info.get("is_stream", info.get("isStream", False))
+        self._is_seekable: bool = info.get("is_seekable", info.get("isSeekable", False))
 
     def __repr__(self) -> str:
         return f"<slate.Track title='{self.title}', author='{self.author}'>"
@@ -64,8 +64,6 @@ class Track(Generic[ContextT]):
     @property
     def requester(self) -> discord.Member | discord.User | None:
         return self._requester
-
-    #
 
     @property
     def title(self) -> str:
@@ -91,22 +89,29 @@ class Track(Generic[ContextT]):
     def position(self) -> int:
         return self._position
 
+    @property
+    def source(self) -> Source:
+        return self._source
+
+    @property
+    def artwork_url(self) -> str | None:
+
+        if self._artwork_url:
+            return self._artwork_url
+        elif self.source is Source.YOUTUBE:
+            return f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"
+
+        return "https://dummyimage.com/1920x1080/000/fff.png&text=+"
+
+
+    @property
+    def isrc(self) -> str | None:
+        return self._isrc
+
+    # Utilities
+
     def is_stream(self) -> bool:
         return self._is_stream
 
     def is_seekable(self) -> bool:
         return self._is_seekable
-
-    @property
-    def source(self) -> Source:
-        return self._source
-
-    #
-
-    @property
-    def artwork_url(self) -> str | None:
-        return self._artwork_url
-
-    @property
-    def isrc(self) -> str | None:
-        return self._isrc
