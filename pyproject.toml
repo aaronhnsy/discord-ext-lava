@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "slate"
-version = "0.1.1"
+version = "0.1.0"
 description = "A discord.py compatible wrapper for the lavalink and obsidian websocket and rest API."
 license = "MIT"
 authors = ["Axel <axelancerr@gmail.com>"]
