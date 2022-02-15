@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 # My stuff
-from slate.obsidian.objects.enums import Source
+from .enums import Source
 
 
 __all__ = (
@@ -31,8 +31,8 @@ class Track(Generic[ContextT]):
     ) -> None:
 
         self._id: str = id
-        self._ctx: ContextT | None = ctx
 
+        self._ctx: ContextT | None = ctx
         self._requester: discord.Member | discord.User | None = ctx.author if (ctx and ctx.author) else None
 
         self._title: str = info["title"]
@@ -41,14 +41,15 @@ class Track(Generic[ContextT]):
         self._identifier: str = info["identifier"]
         self._length: int = info["length"]
         self._position: int = info["position"]
-        self._is_stream: bool = info["is_stream"]
-        self._is_seekable: bool = info["is_seekable"]
-        self._source: Source = Source(info["source_name"])
-        self._artwork_url: str | None = info["artwork_url"]
+        self._source: Source = Source(info.get("source_name", info.get("sourceName", "Unknown")))
+        self._artwork_url: str | None = info.get("artwork_url")
         self._isrc: str | None = info.get("isrc")
 
+        self._is_stream: bool = info.get("is_stream", info.get("isStream", False))
+        self._is_seekable: bool = info.get("is_seekable", info.get("isSeekable", False))
+
     def __repr__(self) -> str:
-        return "<slate.obsidian.Track>"
+        return f"<slate.Track title='{self.title}', author='{self.author}'>"
 
     #
 
@@ -60,7 +61,9 @@ class Track(Generic[ContextT]):
     def ctx(self) -> ContextT | None:
         return self._ctx
 
-    #
+    @property
+    def requester(self) -> discord.Member | discord.User | None:
+        return self._requester
 
     @property
     def title(self) -> str:
@@ -86,26 +89,28 @@ class Track(Generic[ContextT]):
     def position(self) -> int:
         return self._position
 
-    def is_stream(self) -> bool:
-        return self._is_stream
-
-    def is_seekable(self) -> bool:
-        return self._is_seekable
-
     @property
     def source(self) -> Source:
         return self._source
 
     @property
     def artwork_url(self) -> str | None:
-        return self._artwork_url
+
+        if self._artwork_url:
+            return self._artwork_url
+        elif self.source is Source.YOUTUBE:
+            return f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"
+
+        return "https://dummyimage.com/1920x1080/000/fff.png&text=+"
 
     @property
     def isrc(self) -> str | None:
         return self._isrc
 
-    #
+    # Utilities
 
-    @property
-    def requester(self) -> discord.Member | discord.User | None:
-        return self._requester
+    def is_stream(self) -> bool:
+        return self._is_stream
+
+    def is_seekable(self) -> bool:
+        return self._is_seekable

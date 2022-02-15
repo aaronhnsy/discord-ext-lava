@@ -14,18 +14,18 @@ class Stats:
 
     def __init__(
         self,
-        data: dict[str, Any]
+        data: dict[str, Any], /
     ) -> None:
 
         memory = data.get("memory", {})
-        heap_used = memory.get("heap_used", {})
-        non_heap_used = memory.get("non_heap_used", {})
 
+        heap_used = memory.get("heap_used", {})
         self.heap_used_init = heap_used.get("init")
         self.heap_used_max = heap_used.get("max")
         self.heap_used_committed = heap_used.get("committed")
         self.heap_used_used = heap_used.get("used")
 
+        non_heap_used = memory.get("non_heap_used", {})
         self.non_heap_used_init = non_heap_used.get("init")
         self.non_heap_used_max = non_heap_used.get("max")
         self.non_heap_used_committed = non_heap_used.get("committed")
@@ -49,4 +49,4 @@ class Stats:
         self.players_total = players.get("total")
 
     def __repr__(self) -> str:
-        return "<slate.obsidian.Stats>"
+        return "<slate.Stats>"
