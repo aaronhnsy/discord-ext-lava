@@ -20,7 +20,7 @@ __all__ = (
 
 
 ContextT = TypeVar("ContextT", bound=commands.Context)
-Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | Track[ContextT] | list[Track[ContextT]] | Collection[ContextT]
+Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | list[Track[ContextT]] | Collection[ContextT]
 
 
 class Search(Generic[ContextT]):
