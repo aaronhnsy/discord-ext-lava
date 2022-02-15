@@ -176,7 +176,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
         else:
             state: dict[str, Any] = data["state"]
-            self._position = state["position"]
+            self._position = state.get("position", 0)
             self._timestamp = state["time"]
 
     # Properties
@@ -226,6 +226,10 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
     @property
     def filter(self) -> Filter | None:
         return self._filter
+
+    @property
+    def listeners(self) -> list[discord.Member]:
+        return [member for member in getattr(self.voice_channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
 
     # Utility methods
 
