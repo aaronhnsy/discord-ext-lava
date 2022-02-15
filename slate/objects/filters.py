@@ -56,7 +56,6 @@ class Tremolo(BaseFilter):
         frequency: float = 2.0,
         depth: float = 0.5
     ) -> None:
-
         super().__init__(name="Tremolo")
 
         if frequency < 0:
@@ -88,7 +87,6 @@ class Equalizer(BaseFilter):
         gains: list[float],
         name: str = "Equalizer"
     ) -> None:
-
         super().__init__(name=name)
 
         for gain in gains:
@@ -128,7 +126,6 @@ class Distortion(BaseFilter):
         offset: float = 0,
         scale: float = 1
     ) -> None:
-
         super().__init__(name="Distortion")
 
         self.sin_offset: float = sin_offset
@@ -173,7 +170,6 @@ class Timescale(BaseFilter):
         speed: float = 1.0,
         speed_change: float | None = None
     ) -> None:
-
         super().__init__(name="Timescale")
 
         if (pitch_octaves and pitch) or (pitch_semi_tones and pitch) or (pitch_octaves and pitch_semi_tones):
@@ -254,7 +250,6 @@ class ChannelMix(BaseFilter):
         left_to_right: float = 0,
         right_to_left: float = 0
     ) -> None:
-
         super().__init__(name="Channel Mix")
 
         if 0 > left_to_left > 1:
@@ -295,7 +290,6 @@ class Vibrato(BaseFilter):
         frequency: float = 2.0,
         depth: float = 0.5
     ) -> None:
-
         super().__init__(name="Vibrato")
 
         if not 0 < frequency <= 14:

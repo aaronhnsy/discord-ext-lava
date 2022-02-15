@@ -209,10 +209,10 @@ class Node(Generic[BotT, ContextT, PlayerT]):
                         "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "Unknown",
                         "uri":         track.url or "Unknown",
                         "identifier":  track.id or hash(
-                                           f"{track.name or 'Unknown'} - "
-                                           f"{', '.join(artist.name for artist in track.artists) if track.artists else 'Unknown'} - "
-                                           f"{track.duration_ms or 0}"
-                                       ),
+                            f"{track.name or 'Unknown'} - "
+                            f"{', '.join(artist.name for artist in track.artists) if track.artists else 'Unknown'} - "
+                            f"{track.duration_ms or 0}"
+                        ),
                         "length":      track.duration_ms or 0,
                         "position":    0,
                         "is_stream":   False,

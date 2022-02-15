@@ -32,20 +32,20 @@ __log__: logging.Logger = logging.getLogger("slate.player")
 
 
 OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
-    "WEBSOCKET_OPEN": WebsocketOpen,
+    "WEBSOCKET_OPEN":   WebsocketOpen,
     "WEBSOCKET_CLOSED": WebsocketClosed,
-    "TRACK_START": TrackStart,
-    "TRACK_END": TrackEnd,
-    "TRACK_STUCK": TrackStuck,
-    "TRACK_EXCEPTION": TrackException,
+    "TRACK_START":      TrackStart,
+    "TRACK_END":        TrackEnd,
+    "TRACK_STUCK":      TrackStuck,
+    "TRACK_EXCEPTION":  TrackException,
 }
 
 LAVALINK_EVENT_MAPPING = {
     "WebsocketClosedEvent": WebsocketClosed,
-    "TrackStartEvent": TrackStart,
-    "TrackEndEvent": TrackEnd,
-    "TrackStuckEvent": TrackStuck,
-    "TrackExceptionEvent": TrackException,
+    "TrackStartEvent":      TrackStart,
+    "TrackEndEvent":        TrackEnd,
+    "TrackStuckEvent":      TrackStuck,
+    "TrackExceptionEvent":  TrackException,
 }
 
 BotT = TypeVar("BotT", bound=Union[discord.Client, discord.AutoShardedClient, commands.Bot, commands.AutoShardedBot])
@@ -133,9 +133,9 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         else:
             op = "voiceUpdate"
             data = {
-                "guildId": self._voice_server_update_data["guild_id"],
+                "guildId":   self._voice_server_update_data["guild_id"],
                 "sessionId": self._session_id,
-                "event": self._voice_server_update_data,
+                "event":     self._voice_server_update_data,
             }
 
         await self._node._send_payload(op, data=data)

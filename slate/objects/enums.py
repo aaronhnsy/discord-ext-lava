@@ -24,7 +24,6 @@ class QueueLoopMode(Enum):
 
 
 class Source(Enum):
-
     BANDCAMP = "bandcamp"
     YARN = "getyarn.io"
     HTTP = "http"
