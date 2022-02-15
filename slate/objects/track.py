@@ -103,7 +103,6 @@ class Track(Generic[ContextT]):
 
         return "https://dummyimage.com/1920x1080/000/fff.png&text=+"
 
-
     @property
     def isrc(self) -> str | None:
         return self._isrc
