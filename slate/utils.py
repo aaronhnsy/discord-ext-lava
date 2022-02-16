@@ -10,7 +10,6 @@ from typing import Any, Literal
 
 __all__ = (
     "SPOTIFY_URL_REGEX",
-    "Backoff",
     "MISSING",
 )
 
@@ -18,6 +17,22 @@ __all__ = (
 SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
     r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z0-9]+)(\?si=[a-zA-Z0-9]+)?(&dl_branch=[0-9]+)?"
 )
+
+
+OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
+    0:  "voiceUpdate",
+    1:  "stats",
+    2:  "configureResuming",
+    3:  "configureDispatchBuffer",
+    4:  "event",
+    5:  "playerUpdate",
+    6:  "play",
+    7:  "stop",
+    8:  "pause",
+    9:  "filters",
+    10: "seek",
+    11: "destroy"
+}
 
 
 """

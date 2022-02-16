@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Standard Library
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, Union
+from typing import TYPE_CHECKING, Generic, TypeVar, Union
 
 # Packages
 import aiohttp
@@ -14,12 +14,12 @@ from discord.ext import commands
 from .exceptions import NodeCreationError, NodeNotFound, NoNodesConnected
 from .node import Node
 from .objects.enums import Provider
+from .types import JSONDumps, JSONLoads
 
 
 if TYPE_CHECKING:
-    # noinspection PyUnresolvedReferences
     # My stuff
-    from .player import Player
+    from .player import Player  # type: ignore
 
 
 __all__ = (
@@ -35,10 +35,10 @@ PlayerT = TypeVar("PlayerT", bound="Player")  # type: ignore
 
 class Pool(Generic[BotT, ContextT, PlayerT]):
 
+    nodes: dict[str, Node[BotT, ContextT, PlayerT]] = {}
+
     def __repr__(self) -> str:
         return "<slate.Pool>"
-
-    nodes: dict[str, Node[BotT, ContextT, PlayerT]] = {}
 
     @classmethod
     async def create_node(
@@ -53,8 +53,8 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
         resume_key: str | None = None,
         rest_url: str | None = None,
         ws_url: str | None = None,
-        json_dumps: Callable[..., str] | None = None,
-        json_loads: Callable[..., dict[str, Any]] | None = None,
+        json_dumps: JSONDumps | None = None,
+        json_loads: JSONLoads | None = None,
         session: aiohttp.ClientSession | None = None,
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
@@ -63,7 +63,7 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
         if identifier in cls.nodes:
             raise NodeCreationError(f"A Node with the identifier '{identifier}' already exists.")
 
-        node = Node(
+        node: Node[BotT, ContextT, PlayerT] = Node(
             provider=provider,
             bot=bot,
             identifier=identifier,
@@ -79,9 +79,10 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
             spotify_client_id=spotify_client_id,
             spotify_client_secret=spotify_client_secret,
         )
-
         await node.connect()
-        cls.nodes[node._identifier] = node
+
+        cls.nodes[identifier] = node
+        __log__.info(f"Node '{node.identifier}' added to Pool.")
 
         return node
 
@@ -112,9 +113,10 @@ class Pool(Generic[BotT, ContextT, PlayerT]):
         force: bool = False
     ) -> None:
 
-        node = cls.get_node(identifier=identifier)
-
+        node = cls.get_node(
+            identifier=identifier
+        )
         await node.disconnect(force=force)
-        del cls.nodes[node._identifier]
 
-        __log__.info(f"Node '{node._identifier}' removed.")
+        del cls.nodes[node.identifier]
+        __log__.info(f"Node '{node.identifier}' removed from Pool.")

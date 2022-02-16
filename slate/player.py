@@ -124,23 +124,24 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         if not self._session_id or not self._voice_server_update_data:
             return
 
-        if self._node._provider is Provider.OBSIDIAN:
-            op = 0
+        if self._node.provider is Provider.OBSIDIAN:
             data = {
                 "session_id": self._session_id,
                 **self._voice_server_update_data
             }
         else:
-            op = "voiceUpdate"
             data = {
-                "guildId":   self._voice_server_update_data["guild_id"],
                 "sessionId": self._session_id,
                 "event":     self._voice_server_update_data,
             }
 
-        await self._node._send_payload(op, data=data)
+        await self._node._send_payload(
+            0,  # voiceUpdate
+            data=data,
+            guild_id=str(self.voice_channel.guild.id)
+        )
 
-    # Websocket event handlers
+    # Websocket
 
     def _dispatch_event(
         self,
@@ -149,7 +150,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
         _type = data["type"]
 
-        if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node._provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
+        if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node.provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
             __log__.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
             return
 
@@ -165,7 +166,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
         self._last_update = time.time() * 1000
 
-        if self._node._provider is Provider.OBSIDIAN:
+        if self._node.provider is Provider.OBSIDIAN:
 
             current: dict[str, Any] = data["current_track"]
             self._current_track_id = current["track"]
@@ -242,7 +243,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
     def is_paused(self) -> bool:
         return self._paused is True
 
-    # Public methods
+    # Player methods
 
     async def connect(
         self,
@@ -268,15 +269,10 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         if self._node.is_connected():
 
             await self.stop(force=force)
-
-            if self._node._provider is Provider.OBSIDIAN:
-                op = 11
-                data = {"guild_id": str(self.voice_channel.guild.id)}
-            else:
-                op = "destroy"
-                data = {"guildId": str(self.voice_channel.guild.id)}
-
-            await self._node._send_payload(op, data=data)
+            await self._node._send_payload(
+                11,  # destroy
+                guild_id=str(self.voice_channel.guild.id)
+            )
 
         try:
             del self._node._players[self.channel.guild.id]
@@ -297,10 +293,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         data: dict[str, Any] = {
             "track": track.id,
         }
-
-        if self._node._provider is Provider.OBSIDIAN:
-            op = 6
-            data["guild_id"] = str(self.voice_channel.guild.id)
+        if self._node.provider is Provider.OBSIDIAN:
             if start_time:
                 data["start_time"] = start_time
             if end_time:
@@ -308,8 +301,6 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
             if no_replace:
                 data["no_replace"] = no_replace
         else:
-            op = "play"
-            data["guildId"] = str(self.voice_channel.guild.id)
             if start_time:
                 data["startTime"] = start_time
             if end_time:
@@ -317,7 +308,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
             if no_replace:
                 data["noReplace"] = no_replace
 
-        await self._node._send_payload(op, data=data)
+        await self._node._send_payload(
+            6,  # play
+            data=data,
+            guild_id=str(self.voice_channel.guild.id)
+        )
         __log__.info(f"Player '{self.voice_channel.guild.id}' started playing track '{track!r}'.")
 
         self._current_track_id = track.id
@@ -334,14 +329,10 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         if self._current is None and not force:
             return
 
-        if self._node._provider is Provider.OBSIDIAN:
-            op = 7
-            data = {"guild_id": str(self.voice_channel.guild.id)}
-        else:
-            op = "stop"
-            data = {"guildId": str(self.voice_channel.guild.id)}
-
-        await self._node._send_payload(op, data=data)
+        await self._node._send_payload(
+            7,  # stop
+            guild_id=str(self.voice_channel.guild.id)
+        )
         __log__.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
 
         self._current_track_id = None
@@ -354,14 +345,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         pause: bool, /,
     ) -> None:
 
-        if self._node._provider is Provider.OBSIDIAN:
-            op = 8
-            data = {"guild_id": str(self.voice_channel.guild.id), "state": pause}
-        else:
-            op = "pause"
-            data = {"guildId": str(self.voice_channel.guild.id), "pause": pause}
-
-        await self._node._send_payload(op, data=data)
+        await self._node._send_payload(
+            8,  # pause
+            data={"state": pause} if self._node.provider is Provider.OBSIDIAN else {"pause": pause},
+            guild_id=str(self.voice_channel.guild.id)
+        )
         __log__.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
 
         self._paused = pause
@@ -373,14 +361,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         set_position: bool = True
     ) -> None:
 
-        if self._node._provider is Provider.OBSIDIAN:
-            op = 9
-            data = {"guild_id": str(self.voice_channel.guild.id), "filters": {**filter._payload}}
-        else:
-            op = "filters"
-            data = {"guildId": str(self.voice_channel.guild.id), **filter._payload}
-
-        await self._node._send_payload(op, data=data)
+        await self._node._send_payload(
+            9,  # filters
+            data={"filters": filter._payload} if self._node.provider is Provider.OBSIDIAN else filter._payload,
+            guild_id=str(self.voice_channel.guild.id)
+        )
         __log__.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
 
         self._filter = filter
@@ -398,14 +383,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         if (self._current is None or 0 > position > self._current.length) and not force:
             return
 
-        if self._node._provider is Provider.OBSIDIAN:
-            op = 10
-            data = {"guild_id": str(self.voice_channel.guild.id), "position": round(position)}
-        else:
-            op = "seek"
-            data = {"guildId": str(self.voice_channel.guild.id), "position": round(position)}
-
-        await self._node._send_payload(op, data=data)
+        await self._node._send_payload(
+            10,  # seek
+            data={"position": round(position)},
+            guild_id=str(self.voice_channel.guild.id)
+        )
         __log__.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
 
         self._last_update = time.time() * 1000

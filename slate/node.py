@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, Union
 
 # Packages
 import aiohttp
@@ -27,13 +27,13 @@ from .objects.enums import Provider, Source
 from .objects.search import Search
 from .objects.stats import Stats
 from .objects.track import Track
-from .utils import SPOTIFY_URL_REGEX, Backoff
+from .types import JSONDumps, JSONLoads
+from .utils import OBSIDIAN_TO_LAVALINK_OP_MAP, SPOTIFY_URL_REGEX, Backoff
 
 
 if TYPE_CHECKING:
-    # noinspection PyUnresolvedReferences
     # My stuff
-    from .player import Player
+    from .player import Player  # type: ignore
 
 
 __all__ = (
@@ -60,8 +60,8 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         resume_key: str | None = None,
         rest_url: str | None = None,
         ws_url: str | None = None,
-        json_dumps: Callable[..., str] | None = None,
-        json_loads: Callable[..., dict[str, Any]] | None = None,
+        json_dumps: JSONDumps | None = None,
+        json_loads: JSONLoads | None = None,
         session: aiohttp.ClientSession | None = None,
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
@@ -79,8 +79,8 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         self._rest_url: str = rest_url or f"http://{host}:{port}"
         self._ws_url: str = ws_url or f"ws://{host}:{port}{'/magma' if provider is Provider.OBSIDIAN else ''}"
 
-        self._json_dumps: Callable[..., str] = json_dumps or json.dumps
-        self._json_loads: Callable[..., dict[str, Any]] = json_loads or json.loads
+        self._json_dumps: JSONDumps = json_dumps or json.dumps
+        self._json_loads: JSONLoads = json_loads or json.loads
 
         self._session: aiohttp.ClientSession = session or aiohttp.ClientSession()
 
@@ -97,7 +97,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
     def __repr__(self) -> str:
         return "<slate.Node>"
 
-    # Properties / Utilities
+    # Properties
 
     @property
     def provider(self) -> Provider:
@@ -123,10 +123,12 @@ class Node(Generic[BotT, ContextT, PlayerT]):
     def players(self) -> dict[int, PlayerT]:
         return self._players
 
+    # Utility methods
+
     def is_connected(self) -> bool:
         return self._websocket is not None and self._websocket.closed is False
 
-    # Rest API / Track Search
+    # Rest
 
     async def request(
         self,
@@ -287,11 +289,9 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         return await self._search_other(search, source=source, ctx=ctx)
 
-    # Internal websocket handling
+    # Websocket
 
-    async def _listen(
-        self
-    ) -> None:
+    async def _listen(self) -> None:
 
         backoff = Backoff(max_time=60, max_tries=5)
 
@@ -313,68 +313,83 @@ class Node(Generic[BotT, ContextT, PlayerT]):
                 continue
 
             payload = message.json(loads=self._json_loads)
-            asyncio.create_task(self._handle_payload(payload["op"], data=payload["d"] if "d" in payload else payload))
+            asyncio.create_task(self._receive_payload(payload["op"], data=payload["d"] if "d" in payload else payload))
 
-    async def _handle_payload(
+    async def _receive_payload(
         self,
         op: str | int, /,
-        *, data: dict[str, Any]
+        *,
+        data: dict[str, Any]
     ) -> None:
 
         __log__.debug(f"Node '{self._identifier}' received a payload with op '{op}'.\nData: {data}")
 
         if op in (1, "stats"):
-            # self._stats = Stats(data)
+            self._stats = None  # Stats(data)
             return
 
-        guild_id = int(data["guild_id"] if self._provider is Provider.OBSIDIAN else data["guildId"])
-
-        if not (player := self._players.get(guild_id)):
-            __log__.warning(
-                f"Node '{self._identifier} received a payload with op '{op}' for a guild '{guild_id}' without a voice client.\nData: {data}"
-            )
-            return
+        player = self._players.get(int(data["guild_id"] if self._provider is Provider.OBSIDIAN else data["guildId"]))
 
         if op in (4, "event"):
-            player._dispatch_event(data)
+
+            if not player:
+                __log__.warning(f"Node '{self._identifier}' received a player event for a guild without a player.\nData: {data}")
+            else:
+                player._dispatch_event(data)
             return
 
         if op in (5, "playerUpdate"):
-            player._update_state(data)
+
+            if not player:
+                __log__.warning(f"Node '{self._identifier}' received a player update for a guild without a player.\nData: {data}")
+            else:
+                player._update_state(data)
             return
 
         __log__.warning(f"Node '{self._identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
 
     async def _send_payload(
         self,
-        op: int | str, /,
-        *, data: dict[str, Any]
+        op: int, /,
+        *,
+        data: dict[str, Any] | None = None,
+        guild_id: str | None = None
     ) -> None:
 
         if not self._websocket or self._websocket.closed:
             raise NodeNotConnected(f"Node '{self._identifier}' is not connected.")
 
-        payload: dict[str, Any] = {
-            "op": op,
-        }
-        if self._provider is Provider.OBSIDIAN:
-            payload["d"] = data
-        else:
-            payload |= data
+        if not data:
+            data = {}
 
-        _json = self._json_dumps(payload)
+        if self._provider is Provider.OBSIDIAN:
+            if guild_id:
+                data["guild_id"] = guild_id
+            data = {
+                "op": op,
+                "d": data
+            }
+        else:
+            if guild_id:
+                data["guildId"] = guild_id
+            data = {
+                "op": OBSIDIAN_TO_LAVALINK_OP_MAP[op],
+                **data
+            }
+
+        _json = self._json_dumps(data)
         if isinstance(_json, bytes):
             _json = _json.decode("utf-8")
 
         await self._websocket.send_str(_json)
-        __log__.debug(f"Node '{self._identifier}' sent a payload with op '{op}'.\nPayload: {payload}")
+        __log__.debug(f"Node '{self._identifier}' sent a payload with op '{op}'.\nData: {data}")
 
-    # Websocket connection
+    # Node methods
 
     async def connect(
         self,
         *,
-        raise_on_error: bool = True
+        raise_on_fail: bool = True
     ) -> None:
 
         assert self._bot.user
@@ -398,7 +413,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
             message = f"Node '{self._identifier}' failed to connect."
             __log__.error(message)
 
-            if raise_on_error:
+            if raise_on_fail:
                 raise NodeConnectionError(message)
 
         else:
@@ -410,7 +425,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
             if self._resume_key:
                 await self._send_payload(
-                    2 if self._provider is Provider.OBSIDIAN else "configureResuming",
+                    2,  # configureResuming
                     data={"key": self.resume_key, "timeout": 120}
                 )
 
