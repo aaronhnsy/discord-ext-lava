@@ -27,7 +27,7 @@ from .objects.enums import Provider, Source
 from .objects.search import Search
 from .objects.stats import Stats
 from .objects.track import Track
-from .utils import SPOTIFY_URL_REGEX, ExponentialBackoff
+from .utils import SPOTIFY_URL_REGEX, Backoff
 
 
 if TYPE_CHECKING:
@@ -89,7 +89,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
             self._spotify = spotipy.Client(client_id=spotify_client_id, client_secret=spotify_client_secret, session=self._session)
 
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
-        self._task: asyncio.Task | None = None
+        self._task: asyncio.Task[None] | None = None
 
         self._stats: Stats | None = None
         self._players: dict[int, PlayerT] = {}
@@ -293,7 +293,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         self
     ) -> None:
 
-        backoff = ExponentialBackoff(base=4)
+        backoff = Backoff(max_time=60, max_tries=5)
 
         while True:
 
@@ -302,10 +302,10 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
             if message.type is aiohttp.WSMsgType.CLOSED:
 
-                retry = backoff.delay()
-                __log__.warning(f"Node '{self._identifier}'s websocket was closed, attempting reconnection in {round(retry)} seconds.")
+                delay = backoff.calculate()
+                __log__.warning(f"Node '{self._identifier}'s websocket was closed, attempting reconnection in {round(delay)} seconds.")
 
-                await asyncio.sleep(retry)
+                await asyncio.sleep(delay)
 
                 if not self._websocket or self._websocket.closed:
                     await self.connect()

@@ -4,49 +4,115 @@ from __future__ import annotations
 # Standard Library
 import random
 import re
-import time
+from collections.abc import Callable
 from typing import Any, Literal
 
 
 __all__ = (
-    "ExponentialBackoff",
+    "SPOTIFY_URL_REGEX",
+    "Backoff",
     "MISSING",
-    "SPOTIFY_URL_REGEX"
 )
 
 
-class ExponentialBackoff:
+SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
+    r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z0-9]+)(\?si=[a-zA-Z0-9]+)?(&dl_branch=[0-9]+)?"
+)
+
+
+"""
+https://github.com/PythonistaGuild/Wavelink/blob/fe27c9175e03ce42ea55ad47a4cb7b02bd1324d7/wavelink/backoff.py#L29-L75
+
+The MIT License (MIT)
+
+Copyright (c) 2021 PythonistaGuild, EvieePy, Rapptz
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
+
+
+class Backoff:
 
     def __init__(
         self,
-        base: int = 1,
         *,
-        integral: bool = False
+        base: int = 1,
+        max_time: float,
+        max_tries: int | None
     ) -> None:
 
-        self._base = base
+        self._base: int = base
+        self._max_time: float = max_time
+        self._max_tries: int | None = max_tries
 
-        self._exp = 0
-        self._max = 10
-        self._reset_time = base * 2 ** 11
-        self._last_invocation = time.monotonic()
+        _random = random.Random()
+        _random.seed()
+        self._random: Callable[[float, float], float] = _random.uniform
 
-        rand = random.Random()
-        rand.seed()
+        self._retries: int = 1
+        self._last_wait: float = 0
 
-        self._randfunc = rand.randrange if integral else rand.uniform
+    def calculate(self) -> float:
 
-    def delay(self) -> float:
+        exponent = min((self._retries ** 2), self._max_time)
+        wait = self._random(0, (self._base * 2) * exponent)
 
-        invocation = time.monotonic()
-        interval = invocation - self._last_invocation
-        self._last_invocation = invocation
+        if wait <= self._last_wait:
+            wait = self._last_wait * 2
 
-        if interval > self._reset_time:
-            self._exp = 0
+        self._last_wait = wait
 
-        self._exp = min(self._exp + 1, self._max)
-        return self._randfunc(0, self._base * 2 ** self._exp)
+        if wait > self._max_time:
+            wait = self._max_time
+            self._retries = 0
+            self._last_wait = 0
+
+        if self._max_tries and self._retries >= self._max_tries:
+            self._retries = 0
+            self._last_wait = 0
+
+        self._retries += 1
+
+        return wait
+
+
+"""
+https://github.com/Rapptz/discord.py/blob/45d498c1b76deaf3b394d17ccf56112fa691d160/discord/utils.py#L92-L103
+
+The MIT License (MIT)
+
+Copyright (c) 2015-present Rapptz
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
 
 
 class _MissingSentinel:
@@ -58,11 +124,7 @@ class _MissingSentinel:
         return False
 
     def __repr__(self) -> str:
-        return "..."
+        return "<MISSING>"
 
 
 MISSING: Any = _MissingSentinel()
-
-SPOTIFY_URL_REGEX: re.Pattern = re.compile(
-    r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z0-9]+)(\?si=[a-zA-Z0-9]+)?(&dl_branch=[0-9]+)?"
-)
