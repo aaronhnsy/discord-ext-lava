@@ -13,7 +13,7 @@ import discord
 import spotipy
 from discord.ext import commands
 
-# My stuff
+# Local
 from .exceptions import (
     HTTPError,
     NodeConnectionError,
@@ -32,7 +32,7 @@ from .utils import OBSIDIAN_TO_LAVALINK_OP_MAP, SPOTIFY_URL_REGEX, Backoff
 
 
 if TYPE_CHECKING:
-    # My stuff
+    # Local
     from .player import Player  # type: ignore
 
 

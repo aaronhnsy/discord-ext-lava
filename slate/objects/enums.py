@@ -18,9 +18,9 @@ class Provider(Enum):
 
 
 class QueueLoopMode(Enum):
-    OFF = 0
-    CURRENT = 1
-    QUEUE = 2
+    DISABLED = 0
+    ALL = 1
+    CURRENT = 2
 
 
 class Source(Enum):

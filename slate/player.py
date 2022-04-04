@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
 import discord
 from discord.ext import commands
 
-# My stuff
+# Local
 from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
 from .objects.filters import Filter
@@ -20,10 +20,11 @@ from .utils import MISSING
 
 
 if TYPE_CHECKING:
-    # My stuff
-    from .node import Node
-
+    # Packages
     import discord.types.voice
+
+    # Local
+    from .node import Node
 
 
 __all__ = (

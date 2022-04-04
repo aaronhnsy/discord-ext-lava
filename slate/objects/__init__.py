@@ -1,7 +1,7 @@
 # Future
 from __future__ import annotations
 
-# My stuff
+# Local
 from .collection import *
 from .enums import *
 from .events import *

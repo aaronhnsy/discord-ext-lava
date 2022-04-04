@@ -8,7 +8,7 @@ from typing import Generic, TypeVar
 import spotipy
 from discord.ext import commands
 
-# My stuff
+# Local
 from .collection import Collection
 from .enums import Source
 from .track import Track

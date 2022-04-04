@@ -8,7 +8,7 @@ from collections import deque
 from collections.abc import Iterator
 from typing import Any, Generic, TypeVar
 
-# My stuff
+# Local
 from slate.objects.enums import QueueLoopMode
 
 

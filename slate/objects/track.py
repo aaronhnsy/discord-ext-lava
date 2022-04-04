@@ -8,7 +8,7 @@ from typing import Any, Generic, TypeVar
 import discord
 from discord.ext import commands
 
-# My stuff
+# Local
 from .enums import Source
 
 

@@ -10,7 +10,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-# My stuff
+# Local
 from .exceptions import NodeCreationError, NodeNotFound, NoNodesConnected
 from .node import Node
 from .objects.enums import Provider
@@ -18,7 +18,7 @@ from .types import JSONDumps, JSONLoads
 
 
 if TYPE_CHECKING:
-    # My stuff
+    # Local
     from .player import Player  # type: ignore
 
 

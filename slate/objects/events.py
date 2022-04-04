@@ -4,7 +4,7 @@ from __future__ import annotations
 # Standard Library
 from typing import Any, Literal
 
-# My stuff
+# Local
 from ..utils import MISSING
 
 

@@ -7,7 +7,7 @@ from typing import Any, Literal
 # Packages
 import aiohttp
 
-# My stuff
+# Local
 from .objects.enums import Source
 
 
