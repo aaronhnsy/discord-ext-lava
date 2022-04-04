@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
 
 # Packages
 import discord
-import discord.types.voice
 from discord.ext import commands
 
 # My stuff
@@ -23,6 +22,8 @@ from .utils import MISSING
 if TYPE_CHECKING:
     # My stuff
     from .node import Node
+
+    import discord.types.voice
 
 
 __all__ = (
@@ -40,7 +41,7 @@ OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
     "TRACK_EXCEPTION":  TrackException,
 }
 
-LAVALINK_EVENT_MAPPING = {
+LAVALINK_EVENT_MAPPING: dict[str, Any] = {
     "WebsocketClosedEvent": WebsocketClosed,
     "TrackStartEvent":      TrackStart,
     "TrackEndEvent":        TrackEnd,

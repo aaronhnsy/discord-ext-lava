@@ -1,15 +1,13 @@
 [tool.poetry]
-name        = "slate"
-version     = "0.2.1"
-description = "A discord.py compatible wrapper for the lavalink and obsidian websocket and rest API."
-license     = "MIT"
-authors     = ["Axel <axelancerr@gmail.com>"]
-readme      = "README.md"
-
+name            = "slate"
+version         = "0.2.1"
+description     = "A discord.py compatible wrapper for lavalink-like applications."
+authors         = ["Axel <axelancerr@gmail.com>"]
+license         = "MIT"
+readme          = "README.md"
 homepage        = "https://github.com/Axelware/slate"
 repository      = "https://github.com/Axelware/slate"
 documentation   = "https://slate-py.readthedocs.io/en/latest/"
-
 keywords = [
     "obsidian", "lavalink", "api", "wrapper", "async"
 ]
@@ -26,7 +24,6 @@ classifiers = [
     "Natural Language :: English",
     "Typing :: Typed"
 ]
-
 packages = [
     { include = "slate" },
     { include = "slate/**/*.py" },
@@ -34,33 +31,30 @@ packages = [
 ]
 include = [
     "LICENSE",
-    "README.md"
 ]
 
 
 [tool.poetry.dependencies]
-python = "^3.10.0"
-
-aiohttp     = "^3.8.0"
-"spoti.py"  = "^0.1.0"
-
-orjson = { version = "^3.6.0", optional = true }
-
-sphinx              = { version = "^4.4.0",       optional = true }
-sphinxcontrib-trio  = { version = "^1.1.0",       optional = true }
-sphinx-copybutton   = { version = "^0.5.0",       optional = true }
-sphinxext-opengraph = { version = "^0.5.0",       optional = true }
-furo                = { version = "^2022.1.2",    optional = true }
+python              = "^3.10.0"
+aiohttp             = "^3.8.0"
+"spoti.py"          = "^0.1.0"
+sphinx              = { version = "^4.5.0", optional = true }
+sphinxcontrib-trio  = { version = "*",      optional = true }
+sphinx-copybutton   = { version = "*",      optional = true }
+sphinx-inline-tabs  = { version = "*",      optional = true }
+furo                = { version = "*",      optional = true }
+sphinx-autobuild    = { version = "*",      optional = true }
 
 
 [tool.poetry.dev-dependencies]
-isort           = "^5.10.0"
+isort           = "*"
 "discord.py"    = { git = "https://github.com/Rapptz/discord.py" }
 
 
 [tool.poetry.extras]
-speed   = ["orjson"]
-docs    = ["sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinxext-opengraph", "furo", "discord.py"]
+dev         = ["discord.py"]
+docs        = ["discord.py", "sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinx-inline-tabs", "furo"]
+docs-dev    = ["discord.py", "sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinx-inline-tabs", "furo", "sphinx-autobuild"]
 
 
 [tool.poetry.urls]
@@ -73,13 +67,15 @@ line_length                 = 120
 multi_line_output           = 3
 lines_after_imports         = 2
 combine_star                = true
-include_trailing_comma      = true
 star_first                  = true
+include_trailing_comma      = true
+dedup_headings              = true
+src_paths                   = ["slate"]
 import_heading_future       = "Future"
 import_heading_stdlib       = "Standard Library"
 import_heading_thirdparty   = "Packages"
-import_heading_firstparty   = "My stuff"
-import_heading_localfolder  = "My stuff"
+import_heading_firstparty   = "Local"
+import_heading_localfolder  = "Local"
 
 
 [build-system]
@@ -88,17 +84,16 @@ build-backend   = "poetry.core.masonry.api"
 
 
 [tool.pyright]
-include                 = ["slate"]
-verboseOutput           = false
-pythonVersion           = "3.10"
-typeCheckingMode        = "strict"
-useLibraryCodeForTypes  = true
-
-reportMissingTypeStubs = false
-reportPrivateImportUsage = false
-reportPrivateUsage = false
-reportFunctionMemberAccess = false
-reportUnknownMemberType = false
-reportUnknownVariableType = false
-reportUnknownArgumentType = false
-reportImportCycles = false
+include                     = ["slate"]
+verboseOutput               = false
+pythonVersion               = "3.10"
+typeCheckingMode            = "strict"
+useLibraryCodeForTypes      = true
+reportMissingTypeStubs      = false
+reportPrivateImportUsage    = false
+reportPrivateUsage          = false
+reportFunctionMemberAccess  = false
+reportUnknownMemberType     = false
+reportUnknownVariableType   = false
+reportUnknownArgumentType   = false
+reportImportCycles          = false

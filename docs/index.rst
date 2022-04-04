@@ -1,32 +1,38 @@
 .. py:currentmodule:: slate
 
 Welcome to slate
-====================================
+================
 
 .. image:: /images/slate.jpg
 
 slate is a :resource:`lavalink <lavalink>` and :resource:`obsidian <obsidian>`
 python wrapper for use with :resource:`discord.py's <discord.py>` command extension.
 
-**Features:**
+Installation
+------------
+From PyPI
 
-- stuff 1
-- stuff 2
-- stuff  3
+From GitHub:
+
+.. tab:: Linux
+
+    .. code:: bash
+
+        git clone https://github.com/Axelware/slate
+        cd aiolastfm
+        python3 -m pip install .
+
+.. tab:: Windows
+
+    .. code:: bash
+
+        git clone https://github.com/Axelware/slate
+        cd aiolastfm
+        py -3 -m pip install .
 
 
-Support
-------------------------------------
-If you need help with anything, the following might help:
-
-- Open an :resource:`issue <issues>` or start a :resource:`discussion <discussions>` on the :resource:`github <github>`.
-- Join the :resource:`discord <discord>` server.
-
-
-Contents:
-------------------------------------
-
+Contents
+--------
 .. toctree::
-    :maxdepth: 5
-
-    reference/index
+    pages/api
+    pages/examples
