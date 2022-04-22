@@ -1,3 +1,8 @@
+[build-system]
+requires        = ["poetry_core>=1.0.0"]
+build-backend   = "poetry.core.masonry.api"
+
+
 [tool.poetry]
 name            = "slate"
 version         = "0.2.2"
@@ -8,9 +13,7 @@ readme          = "README.md"
 homepage        = "https://github.com/Axelware/slate"
 repository      = "https://github.com/Axelware/slate"
 documentation   = "https://slate-py.readthedocs.io/en/latest/"
-keywords = [
-    "obsidian", "lavalink", "api", "wrapper", "async"
-]
+keywords        = ["obsidian", "lavalink", "api", "wrapper", "async"]
 classifiers = [
     "Framework :: AsyncIO",
     "Topic :: Software Development",
@@ -30,7 +33,7 @@ packages = [
     { include = "slate/py.typed" },
 ]
 include = [
-    "LICENSE",
+    "LICENSE"
 ]
 
 
@@ -43,18 +46,26 @@ sphinxcontrib-trio  = { version = "*",      optional = true }
 sphinx-copybutton   = { version = "*",      optional = true }
 sphinx-inline-tabs  = { version = "*",      optional = true }
 furo                = { version = "*",      optional = true }
-sphinx-autobuild    = { version = "*",      optional = true }
 
 
 [tool.poetry.dev-dependencies]
-isort           = "*"
-"discord.py"    = { git = "https://github.com/Rapptz/discord.py" }
+isort               = "*"
+typing_extensions   = "*"
+"discord.py"        = { git = "https://github.com/Rapptz/discord.py" }
 
 
 [tool.poetry.extras]
-dev         = ["discord.py"]
-docs        = ["discord.py", "sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinx-inline-tabs", "furo"]
-docs-dev    = ["discord.py", "sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinx-inline-tabs", "furo", "sphinx-autobuild"]
+dev = [
+    "discord.py"
+]
+docs = [
+    "discord.py",
+    "sphinx",
+    "sphinxcontrib-trio",
+    "sphinx-copybutton",
+    "sphinx-inline-tabs",
+    "furo"
+]
 
 
 [tool.poetry.urls]
@@ -78,14 +89,12 @@ import_heading_firstparty   = "Local"
 import_heading_localfolder  = "Local"
 
 
-[build-system]
-requires        = ["poetry_core>=1.0.0"]
-build-backend   = "poetry.core.masonry.api"
-
-
 [tool.pyright]
-include                     = ["slate"]
-verboseOutput               = false
+include = [
+    "slate",
+    "slate/objects",
+    "slate/types",
+]
 pythonVersion               = "3.10"
 typeCheckingMode            = "strict"
 useLibraryCodeForTypes      = true

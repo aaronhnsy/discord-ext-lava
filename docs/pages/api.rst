@@ -4,45 +4,29 @@ API Reference
 =============
 placeholder text
 
-Clients
--------
-placeholder text
-
 Pool
 ^^^^
-.. autoclass:: Pool
+.. autoclass:: slate.Pool
     :members:
 
 Node
 ^^^^
-.. autoclass:: Node
+.. autoclass:: slate.Node
     :members:
-
 
 Player
 ^^^^^^
-.. autoclass:: Player
+.. autoclass:: slate.Player
     :members:
-
 
 Queue
 ^^^^^
-.. autoclass:: Queue
-    :members:
-
-
-Utils
-----------
-placeholder text
-
-.. automodule:: slate.utils
+.. autoclass:: slate.Queue
     :members:
 
 
 Exceptions
 ----------
-placeholder text
-
 .. automodule:: slate.exceptions
     :members:
 

@@ -3,4 +3,5 @@
 
 .idea/
 dist/
-docs/_build
+tests/
+docs/_build/

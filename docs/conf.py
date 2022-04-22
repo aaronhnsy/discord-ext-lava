@@ -27,12 +27,12 @@ project: str = "slate"
 author: str = "Axel#3456"
 copyright: str = "2022 Axelancerr"
 
-with open(os.path.abspath(os.path.join(os.path.dirname(__file__), '../slate/__init__.py'))) as file:
+with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../slate/__init__.py"))) as file:
 
     if not (match := re.search(r"^__version__: [^=]* = \"([^\"]*)\"", file.read(), re.MULTILINE)):
         raise RuntimeError
 
-    _VERSION: str = match.group(1)
+    _VERSION: str = match[1]
     version: str = _VERSION
     release: str = _VERSION
 
