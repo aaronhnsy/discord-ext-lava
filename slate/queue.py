@@ -26,7 +26,7 @@ class Queue(Generic[Item]):
         self._queue: list[Item] = []
         self._history: list[Item] = []
 
-        self._loop_mode: QueueLoopMode = QueueLoopMode.OFF
+        self._loop_mode: QueueLoopMode = QueueLoopMode.DISABLED
 
         self._waiters: deque[Any] = deque()
 
@@ -93,7 +93,7 @@ class Queue(Generic[Item]):
         if put_history:
             self.put_history(item)
 
-        if self._loop_mode is not QueueLoopMode.OFF:
+        if self._loop_mode is not QueueLoopMode.DISABLED:
             self.put(item, position=0 if self._loop_mode is QueueLoopMode.CURRENT else None)
 
         return item
