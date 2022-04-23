@@ -14,8 +14,8 @@ From GitHub:
     cd slate
     python3.10 -m pip install .
 
-Contents
---------
+
 .. toctree::
+    :hidden:
+
     pages/api
-    pages/examples
