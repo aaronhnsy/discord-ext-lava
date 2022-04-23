@@ -13,12 +13,9 @@ from .objects.enums import Source
 
 __all__ = (
     "SlateError",
-    "NodeNotFound",
-    "NoNodesConnected",
-    "NodeCreationError",
-    "NodeNotConnected",
     "NodeConnectionError",
-    "NodeInvalidPassword",
+    "InvalidNodePassword",
+    "NodeNotConnected",
     "HTTPError",
     "NoResultsFound",
     "SearchFailed"
@@ -29,31 +26,16 @@ class SlateError(Exception):
     pass
 
 
-class NodeNotFound(SlateError):
+class NodeConnectionError(SlateError):
     pass
 
 
-class NoNodesConnected(SlateError):
-    pass
-
-
-class NodeCreationError(SlateError):
+class InvalidNodePassword(NodeConnectionError):
     pass
 
 
 class NodeNotConnected(SlateError):
     pass
-
-
-class NodeConnectionError(SlateError):
-    pass
-
-
-class NodeInvalidPassword(NodeConnectionError):
-    pass
-
-
-#
 
 
 class HTTPError(SlateError):

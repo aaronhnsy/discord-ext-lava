@@ -14,8 +14,8 @@ import spotipy
 # Local
 from .exceptions import (
     HTTPError,
+    InvalidNodePassword,
     NodeConnectionError,
-    NodeInvalidPassword,
     NodeNotConnected,
     NoResultsFound,
     SearchFailed,
@@ -36,6 +36,12 @@ __log__: logging.Logger = logging.getLogger("slate.node")
 
 
 class Node(Generic[BotT, ContextT, PlayerT]):
+    """
+    A Node object which handles lavalink connection logic and state, players and searching.
+
+    Attributes
+    ----------
+    """
 
     def __init__(
         self,
@@ -96,23 +102,59 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
     @property
     def bot(self) -> BotT:
+        """
+        The bot instance that this node is connected to.
+
+        Returns
+        -------
+        :class:`~discord.ext.commands.Bot` | :class:`~discord.ext.commands.AutoShardedBot`
+        """
         return self._bot
 
     @property
     def rest_url(self) -> str:
+        """
+        The url that this node should use for REST requests.
+
+        Returns
+        -------
+        :class:`str`
+        """
         return self._rest_url or f"http://{self.host}:{self.port}"
 
     @property
     def ws_url(self) -> str:
+        """
+        The url that this node will use for WebSocket connections.
+
+        Returns
+        -------
+        :class:`str`
+        """
         return self._ws_url or f"ws://{self.host}:{self.port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
 
     @property
     def players(self) -> dict[int, PlayerT]:
+        """
+        A mapping of guild id to player instance that this node is managing.
+
+        Returns
+        -------
+        :class:`dict` [ :class:`int`, :class:`~slate.player.Player` ]
+
+        """
         return self._players
 
     # Utilities
 
     def is_connected(self) -> bool:
+        """
+        Checks if this node's websocket is connected to its provider server.
+
+        Returns
+        -------
+        :class:`bool`
+        """
         return self._websocket is not None and self._websocket.closed is False
 
     # Connection
@@ -122,6 +164,18 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         *,
         raise_on_failure: bool = False
     ) -> None:
+        """
+        Connects this node to its provider server.
+
+        Arguments
+        ---------
+        raise_on_failure: bool
+            Whether to raise an exception if the connection fails.
+
+        Returns
+        -------
+        :class:`None`
+        """
 
         assert self._bot.user is not None
 
@@ -141,7 +195,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         except Exception as error:
 
             if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
-                raise NodeInvalidPassword(f"Node '{self.identifier}' failed to connect due to an invalid password.")
+                raise InvalidNodePassword(f"Node '{self.identifier}' failed to connect due to an invalid password.")
 
             __log__.error((message := f"Node '{self.identifier}' failed to connect."))
             if raise_on_failure:
@@ -170,6 +224,18 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         *,
         force: bool = False
     ) -> None:
+        """
+        Disconnects this node from its provider server.
+
+        Parameters
+        ----------
+        force: bool
+            Passthrough argument for :meth:`Player.disconnect`.
+
+        Returns
+        -------
+        :class:`None`
+        """
 
         for player in self._players.copy().values():
             await player.disconnect(force=force)
@@ -195,7 +261,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         return self._session
 
-    async def request(
+    async def _request(
         self,
         method: Literal["GET"], /,
         *,
@@ -320,7 +386,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         else:
             identifier = search
 
-        data = await self.request("GET", path="/loadtracks", parameters={"identifier": identifier})
+        data = await self._request("GET", path="/loadtracks", parameters={"identifier": identifier})
         load_type = data["load_type" if "load_type" in data else "loadType"]
 
         if load_type in {"FAILED", "LOAD_FAILED"}:
@@ -356,6 +422,31 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         source: Source = Source.NONE,
         ctx: ContextT | None = None,
     ) -> Search[ContextT]:
+        """
+        Requests search results from this node's provider server, or other services like spotify.
+
+        Parameters
+        ----------
+        search: str
+            The search query.
+        source: :class:`~slate.objects.enums.Source`
+            The source to request results from.
+        ctx: :class:`~discord.ext.commands.Context`
+            Adds extra data such as :attr:`slate.Track.requester` to the returned objects
+
+        Returns
+        -------
+        :class:`slate.Search`
+
+        Raises
+        ------
+        :exc:`~slate.exceptions.NoResultsFound`
+            If no results were found.
+        :exc:`~slate.exceptions.SearchFailed`
+            If the search failed.
+        :exc:`~slate.exceptions.HTTPError`
+            If the HTTP request failed.
+        """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
             return await self._search_spotify(_id=match.group("id"), _type=match.group("type"), ctx=ctx)
