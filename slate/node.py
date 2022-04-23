@@ -37,7 +37,7 @@ __log__: logging.Logger = logging.getLogger("slate.node")
 
 class Node(Generic[BotT, ContextT, PlayerT]):
     """
-    A node handles interactions between your bot and the provider server (obsidian, lavalink, etc). This includes
+    A node handles interactions between your bot and a provider server (obsidian, lavalink, etc). This includes
     websocket connection, track searching, and player state.
     """
 
@@ -67,35 +67,35 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         """
         Parameters
         ----------
-        bot: :class:`~discord.ext.commands.Bot` | :class:`~discord.ext.commands.AutoShardedBot`
+        bot
             The bot instance that this node belongs to.
-        session: :class:`aiohttp.ClientSession` | :obj:`None`
+        session
             The aiohttp client session to use for websocket/rest communication. Optional, if :obj:`None` (default), a new one will be created.
-        provider: :class:`~slate.Provider`
-            An enum denoting which external application this node is connecting to, such as :class:`slate.Provider.OBSIDIAN`.
-        identifier: :class:`str`
+        provider
+            An enum denoting which external application this node is connecting to, such as :attr:`slate.Provider.OBSIDIAN`.
+        identifier
             A unique identifier for this node.
-        host: :class:`str`
+        host
             The hostname of the provider server.
-        port: :class:`str`
+        port
             The port of the provider server.
-        password: :class:`str`
+        password
             The password for the provider server.
-        secure: :class:`bool`
+        secure
             Whether to use secure connections for websocket/rest communication. Optional, defaults to :obj:`False`.
-        resume_key: :class:`str` | :obj:`None`
+        resume_key
             A resuming key which is passed to the provider server when connecting. Optional, defaults to :obj:`None`.
-        rest_url: :class:`str` | :obj:`None`
+        rest_url
             The URL to the provider server's REST API. Optional, if :obj:`None` (default), the URL will be constructed from the provided host and port.
-        ws_url: :class:`str` | :obj:`None`
+        ws_url
             The URL to the provider server's websocket. Optional, if :obj:`None` (default), the URL will be constructed from the provided host and port.
-        json_dumps: :class:`~slate.JSONDumps` | :obj:`None`
+        json_dumps
             A callable which will be used to serialize JSON data. Optional, if :obj:`None` (default), :func:`json.dumps` will be used.
-        json_loads: :class:`~slate.JSONLoads` | :obj:`None`
+        json_loads
             A callable which will be used to deserialize JSON data. Optional, if :obj:`None` (default), :func:`json.loads` will be used.
-        spotify_client_id: :class:`str` | :obj:`None`
+        spotify_client_id
             The client ID from a Spotify API application. Optional, if :obj:`None` (default), Spotify integration will be disabled.
-        spotify_client_secret: :class:`str` | :obj:`None`
+        spotify_client_secret
             The client secret from a Spotify API application. Optional, if :obj:`None` (default), Spotify integration will be disabled.
         """
 
@@ -172,7 +172,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         Returns
         -------
-        :class:`dict` [ :class:`int`, :class:`~slate.player.Player` ]
+        :class:`dict` [ :class:`int`, :class:`~slate.Player` ]
 
         """
         return self._players
@@ -459,9 +459,9 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         Parameters
         ----------
-        search: str
+        search: :class:`str`
             The search query.
-        source: :class:`~slate.objects.enums.Source`
+        source: :class:`~slate.Source`
             The source to request results from. Defaults to :attr:`Source.NONE`.
         ctx: :class:`~discord.ext.commands.Context`
             Adds extra data such as :attr:`Track.requester` to returned objects. Defaults to :obj:`None`.
@@ -472,11 +472,11 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         Raises
         ------
-        :exc:`~slate.exceptions.NoResultsFound`
+        :exc:`~slate.NoResultsFound`
             If no results were found.
-        :exc:`~slate.exceptions.SearchFailed`
+        :exc:`~slate.SearchFailed`
             If the search failed.
-        :exc:`~slate.exceptions.HTTPError`
+        :exc:`~slate.HTTPError`
             If the HTTP request failed.
         """
 

@@ -29,8 +29,8 @@ _GITHUB_SVG: str = """
 #######################
 
 project: str = "slate"
-author: str = "Axel#3456"
-copyright: str = "2020 - Present, Axelancerr"
+author: str = "Aaron Hennessey"
+copyright: str = "2020 - Present, Aaron Hennessey"
 
 with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../slate/__init__.py"))) as file:
 
@@ -67,6 +67,13 @@ needs_sphinx: str = "4.5.0"
 # Options for HTML output #
 ###########################
 
+html_static_path: list[str] = [
+    "static"
+]
+html_css_files: list[str] = [
+    "custom.css",
+]
+
 html_theme: str = "furo"
 html_theme_options: dict[str, Any] = {
     "footer_icons": [
@@ -97,13 +104,15 @@ autodoc_member_order: str = "bysource"
 autodoc_default_options: dict[str, Any] = {
     "undoc-members": True
 }
-autodoc_typehints: str = "both"
+autodoc_typehints: str = "signature"
+autodoc_typehints_description_target: str = "documented"
+autodoc_type_aliases: dict[str, str] = {}
+autodoc_typehints_format: str = "short"
 
 
 # napoleon
 napoleon_use_admonition_for_examples: bool = True
 napoleon_use_admonition_for_notes: bool = True
-napoleon_preprocess_types: bool = True
 
 
 # intersphinx
@@ -113,11 +122,13 @@ intersphinx_mapping: dict[str, tuple[str, None]] = {
     "discord": ("https://discordpy.readthedocs.io/en/master", None),
 }
 
+
 # ext links
 extlinks: dict[str, tuple[str, str]] = {
     "issue": (f"{_GITHUB}/issues/%s", "GH-"),
 }
 extlinks_detect_hardcoded_links: bool = True
+
 
 # resource links
 resource_links: dict[str, str] = {

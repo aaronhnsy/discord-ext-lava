@@ -1,0 +1,9 @@
+.sig-param::before {
+    content: "\a";
+    white-space: pre;
+}
+
+dt em.sig-param:last-of-type::after {
+    content: "\a";
+    white-space: pre;
+}
