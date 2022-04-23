@@ -23,4 +23,4 @@ VoiceChannel = discord.VoiceChannel | discord.StageChannel
 
 BotT = TypeVar("BotT", bound=discord.Client | discord.AutoShardedClient | commands.Bot | commands.AutoShardedBot)
 ContextT = TypeVar("ContextT", bound=commands.Context[Any])
-PlayerT = TypeVar("PlayerT", bound="Player[Any, Any, Any]")
+PlayerT = TypeVar("PlayerT", bound="Player[Any, Any]")

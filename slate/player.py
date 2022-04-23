@@ -17,7 +17,7 @@ from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
 from .objects.filters import Filter
 from .objects.track import Track
-from .types import BotT, ContextT, PlayerT, VoiceChannel
+from .types import BotT, ContextT, VoiceChannel
 from .utils import MISSING
 
 
@@ -45,7 +45,7 @@ LAVALINK_EVENT_MAPPING: dict[str, Any] = {
 }
 
 
-class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
+class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
 
     def __call__(
         self,
@@ -65,13 +65,13 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         client: BotT = MISSING,
         channel: VoiceChannel = MISSING,
         *,
-        node: Node[BotT, ContextT, PlayerT]
+        node: Node[BotT, ContextT, Self]
     ) -> None:
 
         self.client: BotT = client
         self.channel: VoiceChannel = channel
 
-        self._node: Node[BotT, ContextT, PlayerT] = node
+        self._node: Node[BotT, ContextT, Self] = node
 
         self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
         self._session_id: str | None = None
@@ -183,7 +183,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         return self.channel
 
     @property
-    def node(self) -> Node[BotT, ContextT, PlayerT]:
+    def node(self) -> Node[BotT, ContextT, Self]:
         return self._node
 
     @property
