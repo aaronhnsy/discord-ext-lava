@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Generic, TypeVar
+from typing import Generic
 
 # Packages
 import spotipy
-from discord.ext import commands
 
 # Local
+from ..types import ContextT
 from .collection import Collection
 from .enums import Source
 from .track import Track
@@ -18,8 +18,6 @@ __all__ = (
     "Search",
 )
 
-
-ContextT = TypeVar("ContextT", bound=commands.Context)
 Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | list[Track[ContextT]] | Collection[ContextT]
 
 

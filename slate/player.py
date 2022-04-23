@@ -4,27 +4,22 @@ from __future__ import annotations
 # Standard Library
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
+from typing import Any, Generic
 
 # Packages
 import discord
-from discord.ext import commands
+import discord.types.voice
+from typing_extensions import Self
 
 # Local
+from .node import Node
 from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
 from .objects.filters import Filter
 from .objects.track import Track
 from .pool import Pool
+from .types import BotT, ContextT, PlayerT, VoiceChannel
 from .utils import MISSING
-
-
-if TYPE_CHECKING:
-    # Packages
-    import discord.types.voice
-
-    # Local
-    from .node import Node
 
 
 __all__ = (
@@ -50,38 +45,37 @@ LAVALINK_EVENT_MAPPING: dict[str, Any] = {
     "TrackExceptionEvent":  TrackException,
 }
 
-BotT = TypeVar("BotT", bound=Union[discord.Client, discord.AutoShardedClient, commands.Bot, commands.AutoShardedBot])
-ContextT = TypeVar("ContextT", bound=commands.Context)
-PlayerT = TypeVar("PlayerT", bound="Player")
-VoiceChannel = discord.VoiceChannel | discord.StageChannel
-
 
 class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
     def __call__(
         self,
-        client: BotT,
-        channel: VoiceChannel
-    ) -> Player[BotT, ContextT, PlayerT]:
+        client: discord.Client,
+        channel: discord.abc.Connectable,
+    ) -> Self:
 
-        self.client: BotT = client
-        self.channel: VoiceChannel = channel
+        self.client = client
+        self.channel = channel  # type: ignore
 
-        self._node: Node[BotT, ContextT, PlayerT] = Pool.get_node()  # type: ignore
+        if self._node is MISSING:
+            self._node = Pool.get_node()  # type: ignore
+
         self._node._players[channel.guild.id] = self  # type: ignore
 
         return self
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        client: BotT = MISSING,
+        channel: VoiceChannel = MISSING,
+        *,
+        node: Node[BotT, ContextT, PlayerT] = MISSING
+    ) -> None:
 
-        super().__init__(
-            client=MISSING,
-            channel=MISSING
-        )
+        self.client: BotT = client
+        self.channel: VoiceChannel = channel
 
-        self.client: BotT = MISSING
-        self.channel: VoiceChannel = MISSING
-        self._node: Node[BotT, ContextT, PlayerT] = MISSING
+        self._node: Node[BotT, ContextT, PlayerT] = node
 
         self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
         self._session_id: str | None = None
@@ -106,7 +100,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         data: discord.types.voice.VoiceServerUpdate
     ) -> None:
 
-        __log__.debug(f"Player '{self.voice_channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
+        __log__.debug(f"Player '{self.channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
 
         self._voice_server_update_data = data
         await self._dispatch_voice_update()
@@ -116,7 +110,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         data: discord.types.voice.GuildVoiceState
     ) -> None:
 
-        __log__.debug(f"Player '{self.voice_channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
+        __log__.debug(f"Player '{self.channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
 
         self._session_id = data.get("session_id")
         await self._dispatch_voice_update()
@@ -140,7 +134,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         await self._node._send_payload(
             0,  # voiceUpdate
             data=data,
-            guild_id=str(self.voice_channel.guild.id)
+            guild_id=str(self.channel.guild.id)
         )
 
     # Websocket
@@ -232,7 +226,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
     @property
     def listeners(self) -> list[discord.Member]:
-        return [member for member in getattr(self.voice_channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
+        return [member for member in getattr(self.channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
 
     # Utility methods
 
@@ -256,8 +250,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         self_deaf: bool = True,
     ) -> None:
 
-        await self.channel.guild.change_voice_state(channel=self.voice_channel, self_mute=self_mute, self_deaf=self_deaf)
-        __log__.info(f"Player '{self.voice_channel.guild.id}' connected to voice channel '{self.voice_channel.id}'.")
+        await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
+        __log__.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
 
     async def disconnect(
         self,
@@ -265,7 +259,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         force: bool = False
     ) -> None:
 
-        __log__.info(f"Player '{self.voice_channel.guild.id}' disconnected from voice channel '{self.voice_channel.id}'.")
+        __log__.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
         await self.channel.guild.change_voice_state(channel=None)
 
         if self._node.is_connected():
@@ -273,7 +267,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
             await self.stop(force=force)
             await self._node._send_payload(
                 11,  # destroy
-                guild_id=str(self.voice_channel.guild.id)
+                guild_id=str(self.channel.guild.id)
             )
 
         try:
@@ -313,9 +307,9 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         await self._node._send_payload(
             6,  # play
             data=data,
-            guild_id=str(self.voice_channel.guild.id)
+            guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.voice_channel.guild.id}' started playing track '{track!r}'.")
+        __log__.info(f"Player '{self.channel.guild.id}' started playing track '{track!r}'.")
 
         self._current_track_id = track.id
         self._current = track
@@ -333,7 +327,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
 
         await self._node._send_payload(
             7,  # stop
-            guild_id=str(self.voice_channel.guild.id)
+            guild_id=str(self.channel.guild.id)
         )
         __log__.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
 
@@ -350,7 +344,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         await self._node._send_payload(
             8,  # pause
             data={"state": pause} if self._node.provider is Provider.OBSIDIAN else {"pause": pause},
-            guild_id=str(self.voice_channel.guild.id)
+            guild_id=str(self.channel.guild.id)
         )
         __log__.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
 
@@ -366,7 +360,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         await self._node._send_payload(
             9,  # filters
             data={"filters": filter._payload} if self._node.provider is Provider.OBSIDIAN else filter._payload,
-            guild_id=str(self.voice_channel.guild.id)
+            guild_id=str(self.channel.guild.id)
         )
         __log__.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
 
@@ -388,7 +382,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         await self._node._send_payload(
             10,  # seek
             data={"position": round(position)},
-            guild_id=str(self.voice_channel.guild.id)
+            guild_id=str(self.channel.guild.id)
         )
         __log__.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
 

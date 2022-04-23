@@ -3,34 +3,22 @@ from __future__ import annotations
 
 # Standard Library
 import logging
-from typing import TYPE_CHECKING, Generic, TypeVar, Union
+from typing import Generic
 
 # Packages
 import aiohttp
-import discord
-from discord.ext import commands
 
 # Local
 from .exceptions import NodeCreationError, NodeNotFound, NoNodesConnected
 from .node import Node
 from .objects.enums import Provider
-from .types import JSONDumps, JSONLoads
-
-
-if TYPE_CHECKING:
-    # Local
-    from .player import Player  # type: ignore
+from .types import BotT, ContextT, JSONDumps, JSONLoads, PlayerT
 
 
 __all__ = (
     "Pool",
 )
 __log__: logging.Logger = logging.getLogger("slate.pool")
-
-
-BotT = TypeVar("BotT", bound=Union[discord.Client, discord.AutoShardedClient, commands.Bot, commands.AutoShardedBot])
-ContextT = TypeVar("ContextT", bound=commands.Context)
-PlayerT = TypeVar("PlayerT", bound="Player")  # type: ignore
 
 
 class Pool(Generic[BotT, ContextT, PlayerT]):

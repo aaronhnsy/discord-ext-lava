@@ -42,6 +42,7 @@ from sphinx.util.typing import RoleFunction
 
 def make_link_role(resource_links: dict[str, str]) -> RoleFunction:
 
+    # noinspection PyUnusedLocal
     def role(
         typ: str,
         rawtext: str,

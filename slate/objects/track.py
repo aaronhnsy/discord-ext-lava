@@ -2,22 +2,19 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic
 
 # Packages
 import discord
-from discord.ext import commands
 
 # Local
+from ..types import ContextT
 from .enums import Source
 
 
 __all__ = (
     "Track",
 )
-
-
-ContextT = TypeVar("ContextT", bound=commands.Context)
 
 
 class Track(Generic[ContextT]):

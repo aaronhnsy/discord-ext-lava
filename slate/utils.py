@@ -15,7 +15,7 @@ __all__ = (
 
 
 SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
-    r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z0-9]+)(\?si=[a-zA-Z0-9]+)?(&dl_branch=[0-9]+)?"
+    r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z\s]+)(\?si=[a-zA-Z\d]+)?(&dl_branch=\d+)?"
 )
 
 

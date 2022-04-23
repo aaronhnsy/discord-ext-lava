@@ -5,13 +5,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, Union
+from typing import Any, Generic, Literal
 
 # Packages
 import aiohttp
-import discord
 import spotipy
-from discord.ext import commands
 
 # Local
 from .exceptions import (
@@ -27,24 +25,14 @@ from .objects.enums import Provider, Source
 from .objects.search import Search
 from .objects.stats import Stats
 from .objects.track import Track
-from .types import JSONDumps, JSONLoads
+from .types import BotT, ContextT, JSONDumps, JSONLoads, PlayerT
 from .utils import OBSIDIAN_TO_LAVALINK_OP_MAP, SPOTIFY_URL_REGEX, Backoff
-
-
-if TYPE_CHECKING:
-    # Local
-    from .player import Player  # type: ignore
 
 
 __all__ = (
     "Node",
 )
 __log__: logging.Logger = logging.getLogger("slate.node")
-
-
-BotT = TypeVar("BotT", bound=Union[discord.Client, discord.AutoShardedClient, commands.Bot, commands.AutoShardedBot])
-ContextT = TypeVar("ContextT", bound=commands.Context)
-PlayerT = TypeVar("PlayerT", bound="Player")  # type: ignore
 
 
 class Node(Generic[BotT, ContextT, PlayerT]):
@@ -76,6 +64,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         self._password: str = password
         self._resume_key: str | None = resume_key
 
+        # noinspection HttpUrlsUsage
         self._rest_url: str = rest_url or f"http://{host}:{port}"
         self._ws_url: str = ws_url or f"ws://{host}:{port}{'/magma' if provider is Provider.OBSIDIAN else ''}"
 
@@ -222,7 +211,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
                         "source_name": "spotify",
                         "artwork_url": (result.images[0].url if result.images else None)
                                        if isinstance(result, spotipy.Album)
-                                       else (track.album.images[0].url if track.album.images else None),
+                                       else (track.album.images[0].url if track.album.images else None),  # type: ignore
                         "isrc":        getattr(track, "external_ids", {}).get("isrc") or None,
                     },
                     ctx=ctx
