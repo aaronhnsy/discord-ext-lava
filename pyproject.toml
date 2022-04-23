@@ -83,7 +83,6 @@ combine_star                = true
 star_first                  = true
 include_trailing_comma      = true
 dedup_headings              = true
-src_paths                   = ["slate"]
 import_heading_future       = "Future"
 import_heading_stdlib       = "Standard Library"
 import_heading_thirdparty   = "Packages"
@@ -95,7 +94,7 @@ import_heading_localfolder  = "Local"
 include = [
     "slate",
     "slate/objects",
-    "slate/types",
+    "tests"
 ]
 pythonVersion               = "3.10"
 typeCheckingMode            = "strict"

@@ -17,7 +17,6 @@ from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
 from .objects.filters import Filter
 from .objects.track import Track
-from .pool import Pool
 from .types import BotT, ContextT, PlayerT, VoiceChannel
 from .utils import MISSING
 
@@ -57,9 +56,6 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         self.client = client
         self.channel = channel  # type: ignore
 
-        if self._node is MISSING:
-            self._node = Pool.get_node()  # type: ignore
-
         self._node._players[channel.guild.id] = self  # type: ignore
 
         return self
@@ -69,7 +65,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT, PlayerT]):
         client: BotT = MISSING,
         channel: VoiceChannel = MISSING,
         *,
-        node: Node[BotT, ContextT, PlayerT] = MISSING
+        node: Node[BotT, ContextT, PlayerT]
     ) -> None:
 
         self.client: BotT = client

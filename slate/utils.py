@@ -4,8 +4,13 @@ from __future__ import annotations
 # Standard Library
 import random
 import re
-from collections.abc import Callable
-from typing import Any, Literal
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    # Standard Library
+    from collections.abc import Callable
+    from typing import Any, Literal
 
 
 __all__ = (
@@ -13,11 +18,9 @@ __all__ = (
     "MISSING",
 )
 
-
 SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
     r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z\s]+)(\?si=[a-zA-Z\d]+)?(&dl_branch=\d+)?"
 )
-
 
 OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
     0:  "voiceUpdate",
@@ -33,7 +36,6 @@ OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
     10: "seek",
     11: "destroy"
 }
-
 
 """
 https://github.com/PythonistaGuild/Wavelink/blob/fe27c9175e03ce42ea55ad47a4cb7b02bd1324d7/wavelink/backoff.py#L29-L75
