@@ -29,8 +29,8 @@ _GITHUB_SVG: str = """
 #######################
 
 project: str = "slate"
-author: str = "Aaron Hennessey"
 copyright: str = "2020 - Present, Aaron Hennessey"
+author: str = "Aaron Hennessey"
 
 with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../slate/__init__.py"))) as file:
 
@@ -59,22 +59,22 @@ extensions: list[str] = [
     "sphinx_copybutton",
     "sphinx_inline_tabs"
 ]
+exclude_patters: list[str] = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store"
+]
 
 needs_sphinx: str = "4.5.0"
+nitpicky: bool = True
 
 
 ###########################
 # Options for HTML output #
 ###########################
 
-html_static_path: list[str] = [
-    "static"
-]
-html_css_files: list[str] = [
-    "custom.css",
-]
-
 html_theme: str = "furo"
+
 html_theme_options: dict[str, Any] = {
     "footer_icons": [
         {
@@ -93,6 +93,13 @@ html_theme_options: dict[str, Any] = {
 }
 html_title: str = "slate"
 
+html_css_files: list[str] = [
+    "custom.css",
+]
+html_static_path: list[str] = [
+    "static"
+]
+
 
 ##############
 # Extensions #
@@ -106,7 +113,11 @@ autodoc_default_options: dict[str, Any] = {
 }
 autodoc_typehints: str = "signature"
 autodoc_typehints_description_target: str = "documented"
-autodoc_type_aliases: dict[str, str] = {}
+autodoc_type_aliases: dict[str, str] = {
+    #"BotT": "~discord.ext.commands.Bot | ~discord.ext.commands.AutoShardedBot",
+    #"ContextT": "~discord.ext.commands.Context",
+    #"PlayerT": "~slate.Player",
+}
 autodoc_typehints_format: str = "short"
 
 

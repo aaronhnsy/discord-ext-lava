@@ -37,8 +37,8 @@ __log__: logging.Logger = logging.getLogger("slate.node")
 
 class Node(Generic[BotT, ContextT, PlayerT]):
     """
-    A node handles interactions between your bot and a provider server (obsidian, lavalink, etc). This includes
-    websocket connection, track searching, and player state.
+    Node's handle interactions between your bot and a provider server such as obsidian or lavalink. This includes
+    connecting to the websocket, searching for tracks, and managing player state.
     """
 
     def __init__(
@@ -70,7 +70,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         bot
             The bot instance that this node belongs to.
         session
-            The aiohttp client session to use for websocket/rest communication. Optional, if :obj:`None` (default), a new one will be created.
+            The aiohttp client session to use for websocket/rest communication. Optional, if :class:`None` (default), a new one will be created.
         provider
             An enum denoting which external application this node is connecting to, such as :attr:`slate.Provider.OBSIDIAN`.
         identifier
@@ -84,19 +84,19 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         secure
             Whether to use secure connections for websocket/rest communication. Optional, defaults to :obj:`False`.
         resume_key
-            A resuming key which is passed to the provider server when connecting. Optional, defaults to :obj:`None`.
+            A resuming key which is passed to the provider server when connecting. Optional, defaults to :class:`None`.
         rest_url
-            The URL to the provider server's REST API. Optional, if :obj:`None` (default), the URL will be constructed from the provided host and port.
+            The URL to the provider server's REST API. Optional, if :class:`None` (default), the URL will be constructed from the provided host and port.
         ws_url
-            The URL to the provider server's websocket. Optional, if :obj:`None` (default), the URL will be constructed from the provided host and port.
+            The URL to the provider server's websocket. Optional, if :class:`None` (default), the URL will be constructed from the provided host and port.
         json_dumps
-            A callable which will be used to serialize JSON data. Optional, if :obj:`None` (default), :func:`json.dumps` will be used.
+            A callable which will be used to serialize JSON data. Optional, if :class:`None` (default), :func:`json.dumps` will be used.
         json_loads
-            A callable which will be used to deserialize JSON data. Optional, if :obj:`None` (default), :func:`json.loads` will be used.
+            A callable which will be used to deserialize JSON data. Optional, if :class:`None` (default), :func:`json.loads` will be used.
         spotify_client_id
-            The client ID from a Spotify API application. Optional, if :obj:`None` (default), Spotify integration will be disabled.
+            The client ID from a Spotify API application. Optional, if :class:`None` (default), Spotify integration will be disabled.
         spotify_client_secret
-            The client secret from a Spotify API application. Optional, if :obj:`None` (default), Spotify integration will be disabled.
+            The client secret from a Spotify API application. Optional, if :class:`None` (default), Spotify integration will be disabled.
         """
 
         self._bot: BotT = bot
@@ -136,44 +136,27 @@ class Node(Generic[BotT, ContextT, PlayerT]):
     def bot(self) -> BotT:
         """
         The bot instance that this node belongs to.
-
-        Returns
-        -------
-        :class:`~discord.ext.commands.Bot` | :class:`~discord.ext.commands.AutoShardedBot`
         """
         return self._bot
 
     @property
     def rest_url(self) -> str:
         """
-        The URL that this node will use for REST requests.
-
-        Returns
-        -------
-        :class:`str`
+        The URL used for rest requests to the provider server.
         """
         return self._rest_url or f"http://{self.host}:{self.port}"
 
     @property
     def ws_url(self) -> str:
         """
-        The URL that this node will use for WebSocket connections.
-
-        Returns
-        -------
-        :class:`str`
+        The URL used to connect to the provider server's websocket.
         """
         return self._ws_url or f"ws://{self.host}:{self.port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
 
     @property
     def players(self) -> dict[int, PlayerT]:
         """
-        A mapping of guild id to player instance that this node is managing.
-
-        Returns
-        -------
-        :class:`dict` [ :class:`int`, :class:`~slate.Player` ]
-
+        A mapping of guild ID to player instance.
         """
         return self._players
 
@@ -181,11 +164,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
     def is_connected(self) -> bool:
         """
-        Checks if this node's websocket is connected to its provider server.
-
-        Returns
-        -------
-        :class:`bool`
+        Returns :obj:`True` if the node is connected to the provider server, :obj:`False` otherwise.
         """
         return self._websocket is not None and self._websocket.closed is False
 
@@ -203,10 +182,6 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         ---------
         raise_on_failure: bool
             Whether to raise an exception if the connection fails. Defaults to :obj:`False`.
-
-        Returns
-        -------
-        :obj:`None`
         """
 
         assert self._bot.user is not None
@@ -262,11 +237,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
         Parameters
         ----------
         force: bool
-            Passthrough argument for :meth:`Player.disconnect`. Defaults to :obj:`False`.
-
-        Returns
-        -------
-        :obj:`None`
+            Whether to force disconnect players with :meth:`Player.disconnect`. Defaults to :obj:`False`.
         """
 
         for player in self._players.copy().values():
@@ -459,16 +430,12 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         Parameters
         ----------
-        search: :class:`str`
+        search
             The search query.
-        source: :class:`~slate.Source`
+        source
             The source to request results from. Defaults to :attr:`Source.NONE`.
-        ctx: :class:`~discord.ext.commands.Context`
-            Adds extra data such as :attr:`Track.requester` to returned objects. Defaults to :obj:`None`.
-
-        Returns
-        -------
-        :class:`slate.Search`
+        ctx
+            Adds extra data such as :attr:`Track.requester` to returned objects. Defaults to :class:`None`.
 
         Raises
         ------

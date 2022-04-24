@@ -13,6 +13,7 @@ Player
 ------
 .. autoclass:: slate.Player
     :members:
+    :exclude-members: on_voice_server_update, on_voice_state_update
 
 Queue
 -----

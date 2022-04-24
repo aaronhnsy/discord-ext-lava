@@ -47,19 +47,6 @@ LAVALINK_EVENT_MAPPING: dict[str, Any] = {
 
 class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
 
-    def __call__(
-        self,
-        client: discord.Client,
-        channel: discord.abc.Connectable,
-    ) -> Self:
-
-        self.client = client
-        self.channel = channel  # type: ignore
-
-        self._node._players[channel.guild.id] = self  # type: ignore
-
-        return self
-
     def __init__(
         self,
         client: BotT = MISSING,
@@ -67,6 +54,18 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         *,
         node: Node[BotT, ContextT, Self]
     ) -> None:
+        """
+        Parameters
+        ----------
+        node
+            The node this player should be attached to.
+
+        Warnings
+        --------
+            To connect to a voice channel you must construct an instance of this class, setting the ``node`` argument
+            (and extras, if subclassing) but **not** the ``client`` or ``channel`` arguments. You can then pass it to the ``cls``
+            argument of :meth:`discord.abc.Connectable.connect`.
+        """
 
         self.client: BotT = client
         self.channel: VoiceChannel = channel
@@ -85,6 +84,19 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         self._timestamp: float = 0
 
         self._filter: Filter | None = None
+
+    def __call__(
+        self,
+        client: discord.Client,
+        channel: discord.abc.Connectable,
+    ) -> Self:
+
+        self.client = client
+        self.channel = channel  # type: ignore
+
+        self._node._players[channel.guild.id] = self  # type: ignore
+
+        return self
 
     def __repr__(self) -> str:
         return "<slate.Player>"
@@ -176,30 +188,51 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
 
     @property
     def bot(self) -> BotT:
+        """
+        The bot this player is attached to.
+        """
         return self.client
 
     @property
     def voice_channel(self) -> VoiceChannel:
+        """
+        The voice channel this player is connected to.
+        """
         return self.channel
 
     @property
     def node(self) -> Node[BotT, ContextT, Self]:
+        """
+        The node this player is attached to.
+        """
         return self._node
 
     @property
     def current_track_id(self) -> str | None:
+        """
+        The ID of the current track. This is :class:`None` if no track is playing.
+        """
         return self._current_track_id
 
     @property
     def current(self) -> Track[ContextT] | None:
+        """
+        The current track. This is :class:`None` if no track is playing.
+        """
         return self._current
 
     @property
     def paused(self) -> bool:
+        """
+        Whether the player is paused.
+        """
         return self._paused
 
     @property
     def position(self) -> float:
+        """
+        The position of the player. Returns 0 if no track is playing.
+        """
 
         if not self.is_playing():
             return 0
@@ -218,21 +251,40 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
 
     @property
     def filter(self) -> Filter | None:
+        """
+        The players current filter, if set.
+        """
         return self._filter
 
     @property
     def listeners(self) -> list[discord.Member]:
+        """
+        A list of members in the players voice channel.
+
+        Notes
+        -----
+        This only returns **non-bot** members who are **not** deafened.
+        """
         return [member for member in getattr(self.channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
 
     # Utility methods
 
     def is_connected(self) -> bool:
+        """
+        Returns :obj:`True` if the player is connected to its voice channel, :obj:`False` otherwise.
+        """
         return self.channel is not None
 
     def is_playing(self) -> bool:
+        """
+        Returns :obj:`True` if the player is playing a track, :obj:`False` otherwise.
+        """
         return self.is_connected() is True and self._current is not None
 
     def is_paused(self) -> bool:
+        """
+        Returns :obj:`True` if the player is paused, :obj:`False` otherwise.
+        """
         return self._paused is True
 
     # Player methods
@@ -245,6 +297,20 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         self_mute: bool = False,
         self_deaf: bool = True,
     ) -> None:
+        """
+        Connects the player to its voice channel.
+
+        Parameters
+        ----------
+        timeout
+            Unused parameter, does nothing.
+        reconnect
+            Unused parameter, does nothing.
+        self_mute
+            :obj:`True` if the player should be muted when connected. Defaults to :obj:`False`.
+        self_deaf
+            :obj:`True` if the player should be deafened when connected. Defaults to :obj:`True`.
+        """
 
         await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
         __log__.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
@@ -254,6 +320,15 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         *,
         force: bool = False
     ) -> None:
+        """
+        Disconnects the player from its voice channel and removed it from the node.
+
+        Parameters
+        ----------
+        force
+            :obj:`True` if the player should send a request to the provider server to stop the current track even if
+            one is not playing. Defaults to :obj:`False`.
+        """
 
         __log__.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
         await self.channel.guild.change_voice_state(channel=None)
@@ -281,6 +356,20 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         end_time: int | None = None,
         no_replace: bool = False
     ) -> None:
+        """
+        Plays the given track.
+
+        Parameters
+        ----------
+        track
+            The track to play.
+        start_time
+            The start time of the track in milliseconds. Defaults to :obj:`None`.
+        end_time
+            The end time of the track in milliseconds. Defaults to :obj:`None`.
+        no_replace
+            :obj:`True` if this track should not replace the current track, if any. Defaults to :obj:`False`.
+        """
 
         data: dict[str, Any] = {
             "track": track.id,
@@ -317,6 +406,15 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         *,
         force: bool = False
     ) -> None:
+        """
+        Stops the current track.
+
+        Parameters
+        ----------
+        force
+            :obj:`True` if the player should send the stop track request to the provider server even if this player's
+            :attr:`~Player.current` attribute is :class:`None`. Defaults to :obj:`False`.
+        """
 
         if self._current is None and not force:
             return
@@ -336,6 +434,14 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         self,
         pause: bool, /,
     ) -> None:
+        """
+        Sets the players pause state.
+
+        Parameters
+        ----------
+        pause
+            :obj:`True` if the player should be paused, :obj:`False` otherwise.
+        """
 
         await self._node._send_payload(
             8,  # pause
@@ -352,6 +458,17 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         *,
         set_position: bool = True
     ) -> None:
+        """
+        Sets the players filter.
+
+        Parameters
+        ----------
+        filter
+            The filter to set.
+        set_position
+            :obj:`True` if the player should set its position to the current position which applied filters instantly.
+            Defaults to :obj:`True`.
+        """
 
         await self._node._send_payload(
             9,  # filters
@@ -371,6 +488,17 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         *,
         force: bool = False
     ) -> None:
+        """
+        Sets the players position.
+
+        Parameters
+        ----------
+        position
+            The position to set, in milliseconds.
+        force
+            :obj:`True` if the player should send the set position request to the provider server even if this player's
+            :attr:`~Player.current` attribute is :class:`None`. Defaults to :obj:`False`.
+        """
 
         if (self._current is None or 0 > position > self._current.length) and not force:
             return
