@@ -1,28 +1,14 @@
-![](slate.jpg)
-
-A [lavalink](https://github.com/Frederikam/Lavalink/) and [obsidian](https://github.com/mixtape-bot/obsidian) python wrapper for use with [discord.py's](https://github.com/Rapptz/discord.py) command extension.
+# slate
+A [discord.py](https://github.com/Rapptz/discord.py) compatible wrapper for [lavalink](https://github.com/freyacodes/Lavalink)-like applications.
 
 ## Support
-Support for using slate can be found in my [discord server](https://discord.com/invite/w9f6NkQbde) or by opening an issue/discussion on this [GitHub](https://github.com/Axelware/slate).
+- [Documentation](https://slate-py.readthedocs.io/)
+- [GitHub](https://github.com/Axelware/slate)
+- [Discord](https://discord.com/invite/w9f6NkQbde)
 
 ## Installation
+**Python 3.10 or later is required.**
 
-#### pip
-- Latest:
 ```shell
 pip install -U git+https://github.com/Axelware/slate.git@main#egg=slate
-```
-- Specific version
-```shell
-pip install -U git+https://github.com/Axelware/slate.git@2021.10.27#egg=slate
-```
-
-#### requirements.txt
-- Latest:
-```text
-slate @ git+https://github.com/Axelware/slate.git@main#egg=slate
-```
-- Specific version:
-```text
-slate @ git+https://github.com/Axelware/slate.git@2021.10.27#egg=slate
 ```
