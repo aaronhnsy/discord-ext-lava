@@ -119,7 +119,7 @@ class Node(Generic[BotT, PlayerT]):
             client_id=spotify_client_id,
             client_secret=spotify_client_secret,
             session=self._session
-        ) if spotify_client_id and spotify_client_secret else None
+        ) if (spotify_client_id and spotify_client_secret) else None
 
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
