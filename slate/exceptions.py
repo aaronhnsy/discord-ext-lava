@@ -13,6 +13,9 @@ from .objects.enums import Source
 
 __all__ = (
     "SlateError",
+    "NodeAlreadyExists",
+    "NodeNotFound",
+    "NoNodesConnected",
     "NodeConnectionError",
     "InvalidNodePassword",
     "NodeNotConnected",
@@ -23,6 +26,18 @@ __all__ = (
 
 
 class SlateError(Exception):
+    pass
+
+
+class NodeAlreadyExists(SlateError):
+    pass
+
+
+class NodeNotFound(SlateError):
+    pass
+
+
+class NoNodesConnected(SlateError):
     pass
 
 

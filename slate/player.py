@@ -17,6 +17,7 @@ from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
 from .objects.filters import Filter
 from .objects.track import Track
+from .pool import Pool
 from .types import BotT, ContextT, VoiceChannel
 from .utils import MISSING
 
@@ -50,27 +51,28 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
     def __init__(
         self,
         client: BotT = MISSING,
-        channel: VoiceChannel = MISSING,
+        channel: VoiceChannel = MISSING, /,
         *,
-        node: Node[BotT, ContextT, Self]
+        node: Node[BotT, Self] | None = None,
     ) -> None:
         """
         Parameters
         ----------
         node
-            The node this player should be attached to.
+            The node this player should be attached to, if :obj:`None` the player will be attached to the first node
+            found from the pool.
 
         Warnings
         --------
             To connect to a voice channel you must construct an instance of this class, setting the ``node`` argument
-            (and extras, if subclassing) but **not** the ``client`` or ``channel`` arguments. You can then pass it to the ``cls``
-            argument of :meth:`discord.abc.Connectable.connect`.
+            (and extras, if subclassing) but **not** the ``client`` or ``channel`` arguments. You can then pass it to
+            the ``cls`` argument of :meth:`discord.abc.Connectable.connect`.
         """
 
         self.client: BotT = client
         self.channel: VoiceChannel = channel
 
-        self._node: Node[BotT, ContextT, Self] = node
+        self._node: Node[BotT, Self] = node or Pool.get_node()  # type: ignore
 
         self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
         self._session_id: str | None = None
@@ -88,7 +90,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
     def __call__(
         self,
         client: discord.Client,
-        channel: discord.abc.Connectable,
+        channel: discord.abc.Connectable, /,
     ) -> Self:
 
         self.client = client
@@ -201,7 +203,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         return self.channel
 
     @property
-    def node(self) -> Node[BotT, ContextT, Self]:
+    def node(self) -> Node[BotT, Self]:
         """
         The node this player is attached to.
         """

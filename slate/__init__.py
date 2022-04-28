@@ -10,6 +10,7 @@ from .exceptions import *
 from .node import *
 from .objects import *
 from .player import *
+from .pool import *
 from .queue import *
 from .utils import *
 

@@ -31,11 +31,10 @@ from .utils import MISSING, OBSIDIAN_TO_LAVALINK_OP_MAP, SPOTIFY_URL_REGEX, Back
 __all__ = (
     "Node",
 )
-
 __log__: logging.Logger = logging.getLogger("slate.node")
 
 
-class Node(Generic[BotT, ContextT, PlayerT]):
+class Node(Generic[BotT, PlayerT]):
     """
     Node's handle interactions between your bot and a provider server such as obsidian or lavalink. This includes
     connecting to the websocket, searching for tracks, and managing player state.
@@ -274,7 +273,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
         session = await self._get_session()
 
-        url = f"{self._rest_url}{path}"
+        url = f"{self.rest_url}{path}"
         headers = {
             "Authorization": self.password,
             "Client-Name":   "Slate"
@@ -419,8 +418,7 @@ class Node(Generic[BotT, ContextT, PlayerT]):
 
     async def search(
         self,
-        search: str,
-        /,
+        search: str, /,
         *,
         source: Source = Source.NONE,
         ctx: ContextT | None = None,
