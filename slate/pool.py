@@ -56,7 +56,7 @@ class Pool(Generic[BotT, PlayerT]):
         if identifier in cls.nodes:
             raise NodeAlreadyExists(f"A node with the identifier '{identifier}' already exists.")
 
-        node = Node(
+        node: Node[BotT, PlayerT] = Node(
             bot=bot,
             session=session,
             provider=provider,
