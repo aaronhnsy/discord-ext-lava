@@ -9,7 +9,6 @@ from typing import Any, Generic
 # Packages
 import discord
 import discord.types.voice
-from typing_extensions import Self
 
 # Local
 from .node import Node
@@ -18,7 +17,7 @@ from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, We
 from .objects.filters import Filter
 from .objects.track import Track
 from .pool import Pool
-from .types import BotT, ContextT, VoiceChannel
+from .types import BotT, PlayerT, VoiceChannel
 from .utils import MISSING
 
 
@@ -46,14 +45,14 @@ LAVALINK_EVENT_MAPPING: dict[str, Any] = {
 }
 
 
-class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
+class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     def __init__(
         self,
         client: BotT = MISSING,
         channel: VoiceChannel = MISSING, /,
         *,
-        node: Node[BotT, Self] | None = None,
+        node: Node[BotT, PlayerT] | None = None,
     ) -> None:
         """
         Parameters
@@ -72,13 +71,13 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         self.client: BotT = client
         self.channel: VoiceChannel = channel
 
-        self._node: Node[BotT, Self] = node or Pool.get_node()  # type: ignore
+        self._node: Node[BotT, PlayerT] = node or Pool.get_node()  # type: ignore
 
         self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
         self._session_id: str | None = None
 
         self._current_track_id: str | None = None
-        self._current: Track[ContextT] | None = None
+        self._current: Track | None = None
         self._paused: bool = False
 
         self._last_update: float = 0
@@ -91,14 +90,14 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         self,
         client: discord.Client,
         channel: discord.abc.Connectable, /,
-    ) -> Self:
+    ) -> PlayerT:
 
-        self.client = client
+        self.client = client  # type: ignore
         self.channel = channel  # type: ignore
 
         self._node._players[channel.guild.id] = self  # type: ignore
 
-        return self
+        return self  # type: ignore
 
     def __repr__(self) -> str:
         return "<slate.Player>"
@@ -203,7 +202,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         return self.channel
 
     @property
-    def node(self) -> Node[BotT, Self]:
+    def node(self) -> Node[BotT, PlayerT]:
         """
         The node this player is attached to.
         """
@@ -217,7 +216,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
         return self._current_track_id
 
     @property
-    def current(self) -> Track[ContextT] | None:
+    def current(self) -> Track | None:
         """
         The current track. This is :class:`None` if no track is playing.
         """
@@ -352,7 +351,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, ContextT]):
 
     async def play(
         self,
-        track: Track[ContextT], /,
+        track: Track, /,
         *,
         start_time: int | None = None,
         end_time: int | None = None,

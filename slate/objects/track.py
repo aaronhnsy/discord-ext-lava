@@ -2,13 +2,9 @@
 from __future__ import annotations
 
 # Standard Library
-from typing import Any, Generic
-
-# Packages
-import discord
+from typing import Any
 
 # Local
-from ..types import ContextT
 from .enums import Source
 
 
@@ -17,20 +13,16 @@ __all__ = (
 )
 
 
-class Track(Generic[ContextT]):
+class Track:
 
     def __init__(
         self,
         *,
         id: str,
         info: dict[str, Any],
-        ctx: ContextT | None = None
     ) -> None:
 
         self._id: str = id
-
-        self._ctx: ContextT | None = ctx
-        self._requester: discord.Member | discord.User | None = ctx.author if (ctx and ctx.author) else None
 
         self._title: str = info["title"]
         self._author: str = info["author"]
@@ -53,14 +45,6 @@ class Track(Generic[ContextT]):
     @property
     def id(self) -> str:
         return self._id
-
-    @property
-    def ctx(self) -> ContextT | None:
-        return self._ctx
-
-    @property
-    def requester(self) -> discord.Member | discord.User | None:
-        return self._requester
 
     @property
     def title(self) -> str:

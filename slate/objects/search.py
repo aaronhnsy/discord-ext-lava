@@ -1,14 +1,10 @@
 # Future
 from __future__ import annotations
 
-# Standard Library
-from typing import Generic
-
 # Packages
 import spotipy
 
 # Local
-from ..types import ContextT
 from .collection import Collection
 from .enums import Source
 from .track import Track
@@ -18,24 +14,24 @@ __all__ = (
     "Search",
 )
 
-Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | list[Track[ContextT]] | Collection[ContextT]
+Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | list[Track] | Collection
 
 
-class Search(Generic[ContextT]):
+class Search:
 
     def __init__(
         self,
         *,
         source: Source,
         type: str,
-        result: Result[ContextT],
-        tracks: list[Track[ContextT]]
+        result: Result,
+        tracks: list[Track]
     ) -> None:
 
         self._source: Source = source
         self._type: str = type
-        self._result: Result[ContextT] = result
-        self._tracks: list[Track[ContextT]] = tracks
+        self._result: Result = result
+        self._tracks: list[Track] = tracks
 
     def __repr__(self) -> str:
         return f"<slate.Result source={self._source}, type='{self._type}', result={type(self._result)}>"
@@ -51,9 +47,9 @@ class Search(Generic[ContextT]):
         return self._type
 
     @property
-    def result(self) -> Result[ContextT]:
+    def result(self) -> Result:
         return self._result
 
     @property
-    def tracks(self) -> list[Track[ContextT]]:
+    def tracks(self) -> list[Track]:
         return self._tracks

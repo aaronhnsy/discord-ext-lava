@@ -24,7 +24,7 @@ from .objects.collection import Collection
 from .objects.enums import Provider, Source
 from .objects.search import Search
 from .objects.track import Track
-from .types import BotT, ContextT, JSONDumps, JSONLoads, PlayerT
+from .types import BotT, JSONDumps, JSONLoads, PlayerT
 from .utils import MISSING, OBSIDIAN_TO_LAVALINK_OP_MAP, SPOTIFY_URL_REGEX, Backoff
 
 
@@ -313,10 +313,9 @@ class Node(Generic[BotT, PlayerT]):
         self,
         _id: str,
         _type: str,
-        ctx: ContextT | None = None,
-    ) -> Search[ContextT]:
+    ) -> Search:
 
-        assert self._spotify
+        assert self._spotify is not None
 
         try:
             if _type == "album":
@@ -366,7 +365,6 @@ class Node(Generic[BotT, PlayerT]):
                                        else (track.album.images[0].url if track.album.images else None),  # type: ignore
                         "isrc":        getattr(track, "external_ids", {}).get("isrc") or None,
                     },
-                    ctx=ctx
                 ) for track in tracks
             ]
         )
@@ -376,8 +374,7 @@ class Node(Generic[BotT, PlayerT]):
         search: str, /,
         *,
         source: Source = Source.NONE,
-        ctx: ContextT | None = None,
-    ) -> Search[ContextT]:
+    ) -> Search:
 
         if source is Source.YOUTUBE:
             identifier = f"ytsearch:{search}"
@@ -385,10 +382,14 @@ class Node(Generic[BotT, PlayerT]):
             identifier = f"ytmsearch:{search}"
         elif source is Source.SOUNDCLOUD:
             identifier = f"scsearch:{search}"
-        else:
+        else:  # source is Source.(X)
             identifier = search
 
-        data = await self._request("GET", path="/loadtracks", parameters={"identifier": identifier})
+        data = await self._request(
+            "GET",
+            path="/loadtracks",
+            parameters={"identifier": identifier}
+        )
         load_type = data["load_type" if "load_type" in data else "loadType"]
 
         if load_type in {"FAILED", "LOAD_FAILED"}:
@@ -399,8 +400,13 @@ class Node(Generic[BotT, PlayerT]):
 
         elif load_type in {"TRACK", "TRACK_LOADED", "SEARCH_RESULT"}:
 
-            tracks = [Track(id=track["track"], info=track["info"], ctx=ctx) for track in data["tracks"]]
-            return Search(source=tracks[0].source, type="track", result=tracks, tracks=tracks)
+            tracks = [Track(id=track["track"], info=track["info"]) for track in data["tracks"]]
+            return Search(
+                source=tracks[0].source,
+                type="track",
+                result=tracks,
+                tracks=tracks
+            )
 
         elif load_type in {"TRACK_COLLECTION", "PLAYLIST_LOADED"}:
 
@@ -410,8 +416,14 @@ class Node(Generic[BotT, PlayerT]):
                 info = data["playlistInfo"]
                 info["url"] = search
 
-            collection = Collection(info=info, tracks=data["tracks"], ctx=ctx)
-            return Search(source=collection.source, type="collection", result=collection, tracks=collection.tracks)
+            collection = Collection(info=info, tracks=data["tracks"])
+
+            return Search(
+                source=collection.source,
+                type="collection",
+                result=collection,
+                tracks=collection.tracks
+            )
 
         else:
             raise SearchFailed(data={"message": "Unknown '/loadtracks' load type.", "severity": "FAULT"})
@@ -421,8 +433,7 @@ class Node(Generic[BotT, PlayerT]):
         search: str, /,
         *,
         source: Source = Source.NONE,
-        ctx: ContextT | None = None,
-    ) -> Search[ContextT]:
+    ) -> Search:
         """
         Requests search results from this node's provider server, or other services like spotify.
 
@@ -432,8 +443,6 @@ class Node(Generic[BotT, PlayerT]):
             The search query.
         source
             The source to request results from. Defaults to :attr:`Source.NONE`.
-        ctx
-            Adds extra data such as :attr:`Track.requester` to returned objects. Defaults to :class:`None`.
 
         Raises
         ------
@@ -446,9 +455,9 @@ class Node(Generic[BotT, PlayerT]):
         """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
-            return await self._search_spotify(_id=match.group("id"), _type=match.group("type"), ctx=ctx)
+            return await self._search_spotify(_id=match.group("id"), _type=match.group("type"))
 
-        return await self._search_other(search, source=source, ctx=ctx)
+        return await self._search_other(search, source=source)
 
     # Websocket
 

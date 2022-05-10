@@ -76,7 +76,7 @@ class Pool(Generic[BotT, PlayerT]):
         await node.connect()
 
         cls.nodes[identifier] = node
-        __log__.info(f"Add node '{node.identifier}' to the pool.")
+        __log__.info(f"Added node '{node.identifier}' to the pool.")
 
         return node
 
