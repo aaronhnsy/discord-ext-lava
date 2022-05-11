@@ -471,9 +471,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             Defaults to :obj:`True`.
         """
 
+        _payload = filter._construct_payload(self._node.provider)
+
         await self._node._send_payload(
             9,  # filters
-            data={"filters": filter.payload} if self._node.provider is Provider.OBSIDIAN else filter.payload,
+            data={"filters": _payload} if self._node.provider is Provider.OBSIDIAN else _payload,
             guild_id=str(self.channel.guild.id)
         )
         __log__.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")

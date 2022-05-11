@@ -522,7 +522,7 @@ class Node(Generic[BotT, PlayerT]):
         self,
         op: int, /,
         *,
-        data: dict[str, Any] | None = None,
+        data: Any | None = None,
         guild_id: str | None = None
     ) -> None:
 
