@@ -23,13 +23,13 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-version_info: Final[VersionInfo] = VersionInfo(major=0, minor=2, micro=2, releaselevel="final", serial=0)
+version_info: Final[VersionInfo] = VersionInfo(major=0, minor=3, micro=0, releaselevel="final", serial=0)
 
 __title__: Final[str] = "slate"
 __author__: Final[str] = "Axelancerr"
 __copyright__: Final[str] = "Copyright 2020-present Axelancerr"
 __license__: Final[str] = "MIT"
-__version__: Final[str] = "0.2.2"
+__version__: Final[str] = "0.3.0"
 __maintainer__: Final[str] = "Aaron Hennessey"
 __source__: Final[str] = "https://github.com/Axelware/slate"
 
