@@ -4,6 +4,11 @@
 API Reference
 =============
 
+Pool
+----
+.. autoclass:: Pool
+    :members:
+
 Node
 ----
 .. autoclass:: slate.Node
@@ -77,19 +82,9 @@ WebsocketClosed
 Filters
 -------
 
-BaseFilter
+ChannelMix
 ~~~~~~~~~~
-.. autoclass:: slate.BaseFilter
-    :members:
-
-Tremolo
-~~~~~~~
-.. autoclass:: slate.Tremolo
-    :members:
-
-Equalizer
-~~~~~~~~~
-.. autoclass:: slate.Equalizer
+.. autoclass:: slate.ChannelMix
     :members:
 
 Distortion
@@ -97,9 +92,9 @@ Distortion
 .. autoclass:: slate.Distortion
     :members:
 
-Timescale
+Equalizer
 ~~~~~~~~~
-.. autoclass:: slate.Timescale
+.. autoclass:: slate.Equalizer
     :members:
 
 Karaoke
@@ -107,14 +102,9 @@ Karaoke
 .. autoclass:: slate.Karaoke
     :members:
 
-ChannelMix
-~~~~~~~~~~
-.. autoclass:: slate.ChannelMix
-    :members:
-
-Vibrato
+LowPass
 ~~~~~~~
-.. autoclass:: slate.Vibrato
+.. autoclass:: slate.LowPass
     :members:
 
 Rotation
@@ -122,9 +112,24 @@ Rotation
 .. autoclass:: slate.Rotation
     :members:
 
-LowPass
+Timescale
+~~~~~~~~~
+.. autoclass:: slate.Timescale
+    :members:
+
+Tremolo
 ~~~~~~~
-.. autoclass:: slate.LowPass
+.. autoclass:: slate.Tremolo
+    :members:
+
+Vibrato
+~~~~~~~
+.. autoclass:: slate.Vibrato
+    :members:
+
+Volume
+~~~~~~
+.. autoclass:: slate.Volume
     :members:
 
 Filter
@@ -158,6 +163,18 @@ Exceptions
 SlateError
 ~~~~~~~~~~
 .. autoexception:: slate.SlateError
+
+NodeAlreadyExists
+~~~~~~~~~~~~~~~~~
+.. autoexception:: slate.NodeAlreadyExists
+
+NodeNotFound
+~~~~~~~~~~~~
+.. autoexception:: slate.NodeNotFound
+
+NoNodesConnected
+~~~~~~~~~~~~~~~~
+.. autoexception:: slate.NoNodesConnected
 
 NodeConnectionError
 ~~~~~~~~~~~~~~~~~~~
