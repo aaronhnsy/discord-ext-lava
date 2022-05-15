@@ -324,6 +324,7 @@ class Node(Generic[BotT, PlayerT]):
         *,
         _id: str,
         _type: str,
+        extras: dict[str, Any] | None = None
     ) -> Search:
 
         assert self._spotify is not None
@@ -331,22 +332,22 @@ class Node(Generic[BotT, PlayerT]):
         try:
             if _type == "album":
                 result = await self._spotify.get_full_album(_id)
-                tracks = [Track._from_spotify_track(track, result) for track in result.tracks]
+                tracks = [Track._from_spotify_track(track, result, extras) for track in result.tracks]
 
             elif _type == "playlist":
                 result = await self._spotify.get_full_playlist(_id)
-                tracks = [Track._from_spotify_track(track, result) for track in result.tracks]
+                tracks = [Track._from_spotify_track(track, result, extras) for track in result.tracks]
 
             elif _type == "artist":
                 result = await self._spotify.get_artist(_id)
                 tracks = [
-                    Track._from_spotify_track(track, result)
+                    Track._from_spotify_track(track, result, extras)
                     for track in await self._spotify.get_artist_top_tracks(_id)
                 ]
 
             else:  # _type == "track":
                 result = await self._spotify.get_track(_id)
-                tracks = [Track._from_spotify_track(result, result)]
+                tracks = [Track._from_spotify_track(result, result, extras)]
 
         except spotipy.NotFound:
             raise NoResultsFound(search=_id, source=Source.SPOTIFY, type=_type)
@@ -365,6 +366,7 @@ class Node(Generic[BotT, PlayerT]):
         *,
         search: str,
         source: Source,
+        extras: dict[str, Any] | None = None
     ) -> Search:
 
         data = await self._request(
@@ -384,7 +386,7 @@ class Node(Generic[BotT, PlayerT]):
         elif load_type in TRACK_LOADED:
 
             tracks = [
-                Track(id=track["track"], info=track["info"])
+                Track(id=track["track"], info=track["info"], extras=extras)
                 for track in data["tracks"]
             ]
             return Search(
@@ -402,7 +404,7 @@ class Node(Generic[BotT, PlayerT]):
                 info = data["playlistInfo"]
                 info["url"] = search
 
-            collection = Collection(info=info, tracks=data["tracks"])
+            collection = Collection(info=info, tracks=data["tracks"], extras=extras)
 
             return Search(
                 source=collection.source,
@@ -419,6 +421,7 @@ class Node(Generic[BotT, PlayerT]):
         search: str,
         /, *,
         source: Source = Source.NONE,
+        **extras: Any
     ) -> Search:
         """
         Requests search results from this node's provider server, or other services like spotify.
@@ -441,9 +444,9 @@ class Node(Generic[BotT, PlayerT]):
         """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
-            return await self._spotify_search(_id=match.group("id"), _type=match.group("type"))
+            return await self._spotify_search(_id=match.group("id"), _type=match.group("type"), extras=extras)
 
-        return await self._source_search(search=search, source=source)
+        return await self._source_search(search=search, source=source, extras=extras)
 
     # Websocket
 

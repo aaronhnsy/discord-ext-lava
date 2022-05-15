@@ -24,6 +24,7 @@ class Track:
         *,
         id: str,
         info: dict[str, Any],
+        extras: dict[str, Any] | None = None,
     ) -> None:
 
         self.id: str = id
@@ -40,6 +41,8 @@ class Track:
 
         self._is_stream: bool = info.get("is_stream", info.get("isStream", False))
         self._is_seekable: bool = info.get("is_seekable", info.get("isSeekable", False))
+
+        self.extras: dict[str, Any] = extras or {}
 
     def __repr__(self) -> str:
         return f"<slate.Track title='{self.title}', author='{self.author}'>"
@@ -67,7 +70,11 @@ class Track:
     # Classmethods
 
     @staticmethod
-    def _from_spotify_track(track: SpotifySearchTrack, result: SpotifySearchResult) -> Track:
+    def _from_spotify_track(
+        track: SpotifySearchTrack,
+        result: SpotifySearchResult,
+        extras: dict[str, Any] | None = None
+    ) -> Track:
 
         title = track.name or "Unknown"
         author = ", ".join(artist.name for artist in track.artists) if track.artists else "Unknown"
@@ -99,5 +106,6 @@ class Track:
                 "isrc":        isrc,
                 "is_stream":   False,
                 "is_seekable": False,
-            }
+            },
+            extras=extras
         )

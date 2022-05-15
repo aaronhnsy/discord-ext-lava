@@ -21,13 +21,14 @@ class Collection:
         *,
         info: dict[str, Any],
         tracks: list[dict[str, Any]],
+        extras: dict[str, Any] | None = None,
     ) -> None:
 
         self._name: str = info["name"]
         self._url: str = info["url"]
         self._selected_track: int | None = info.get("selected_track") or info.get("selectedTrack")
 
-        self._tracks: list[Track] = [Track(id=track["track"], info=track["info"]) for track in tracks]
+        self._tracks: list[Track] = [Track(id=track["track"], info=track["info"], extras=extras) for track in tracks]
 
     def __repr__(self) -> str:
         return "<slate.Collection>"
