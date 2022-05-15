@@ -169,8 +169,7 @@ class Queue(Generic[Item]):
 
     def get_history(
         self,
-        position: int = 0,
-        /,
+        position: int = 0, /,
     ) -> Item | None:
 
         try:

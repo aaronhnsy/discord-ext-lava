@@ -25,7 +25,17 @@ from .objects.enums import Provider, Source
 from .objects.search import Search
 from .objects.track import Track
 from .types import BotT, JSONDumps, JSONLoads, PlayerT
-from .utils import MISSING, OBSIDIAN_TO_LAVALINK_OP_MAP, SPOTIFY_URL_REGEX, Backoff
+from .utils import (
+    LOAD_FAILED,
+    MISSING,
+    NO_MATCHES,
+    OBSIDIAN_TO_LAVALINK_OP_MAP,
+    PLAYLIST_LOADED,
+    SOURCE_MAP,
+    SPOTIFY_URL_REGEX,
+    TRACK_LOADED,
+    Backoff,
+)
 
 
 __all__ = (
@@ -127,7 +137,7 @@ class Node(Generic[BotT, PlayerT]):
         self._players: dict[int, PlayerT] = {}
 
     def __repr__(self) -> str:
-        return f"<slate.Node player_count={len(self.players)}>"
+        return f"<slate.Node player_count={len(self._players)}>"
 
     # Properties
 
@@ -265,8 +275,8 @@ class Node(Generic[BotT, PlayerT]):
 
     async def _request(
         self,
-        method: Literal["GET"], /,
-        *,
+        method: Literal["GET"],
+        /, *,
         path: str,
         parameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
@@ -309,8 +319,9 @@ class Node(Generic[BotT, PlayerT]):
         __log__.error(message)
         raise HTTPError(response, message=message)
 
-    async def _search_spotify(
+    async def _spotify_search(
         self,
+        *,
         _id: str,
         _type: str,
     ) -> Search:
@@ -320,19 +331,22 @@ class Node(Generic[BotT, PlayerT]):
         try:
             if _type == "album":
                 result = await self._spotify.get_full_album(_id)
-                tracks = result.tracks
+                tracks = [Track._from_spotify_track(track, result) for track in result.tracks]
 
             elif _type == "playlist":
                 result = await self._spotify.get_full_playlist(_id)
-                tracks = result.tracks
+                tracks = [Track._from_spotify_track(track, result) for track in result.tracks]
 
             elif _type == "artist":
                 result = await self._spotify.get_artist(_id)
-                tracks = await self._spotify.get_artist_top_tracks(_id)
+                tracks = [
+                    Track._from_spotify_track(track, result)
+                    for track in await self._spotify.get_artist_top_tracks(_id)
+                ]
 
-            else:  # _type == "track"
+            else:  # _type == "track":
                 result = await self._spotify.get_track(_id)
-                tracks = [result]
+                tracks = [Track._from_spotify_track(result, result)]
 
         except spotipy.NotFound:
             raise NoResultsFound(search=_id, source=Source.SPOTIFY, type=_type)
@@ -343,64 +357,36 @@ class Node(Generic[BotT, PlayerT]):
             source=Source.SPOTIFY,
             type=_type,
             result=result,
-            tracks=[
-                Track(
-                    id="",
-                    info={
-                        "title":       track.name or "Unknown",
-                        "author":      ", ".join(artist.name for artist in track.artists) if track.artists else "Unknown",
-                        "uri":         track.url or "Unknown",
-                        "identifier":  track.id or hash(
-                            f"{track.name or 'Unknown'} - "
-                            f"{', '.join(artist.name for artist in track.artists) if track.artists else 'Unknown'} - "
-                            f"{track.duration_ms or 0}"
-                        ),
-                        "length":      track.duration_ms or 0,
-                        "position":    0,
-                        "is_stream":   False,
-                        "is_seekable": False,
-                        "source_name": "spotify",
-                        "artwork_url": (result.images[0].url if result.images else None)
-                                       if isinstance(result, spotipy.Album)
-                                       else (track.album.images[0].url if track.album.images else None),  # type: ignore
-                        "isrc":        getattr(track, "external_ids", {}).get("isrc") or None,
-                    },
-                ) for track in tracks
-            ]
+            tracks=tracks
         )
 
-    async def _search_other(
+    async def _source_search(
         self,
-        search: str, /,
         *,
-        source: Source = Source.NONE,
+        search: str,
+        source: Source,
     ) -> Search:
-
-        if source is Source.YOUTUBE:
-            identifier = f"ytsearch:{search}"
-        elif source is Source.YOUTUBE_MUSIC:
-            identifier = f"ytmsearch:{search}"
-        elif source is Source.SOUNDCLOUD:
-            identifier = f"scsearch:{search}"
-        else:  # source is Source.(X)
-            identifier = search
 
         data = await self._request(
             "GET",
             path="/loadtracks",
-            parameters={"identifier": identifier}
+            parameters={
+                "identifier": f"{SOURCE_MAP.get(source, '')}{search}"
+            }
         )
-        load_type = data["load_type" if "load_type" in data else "loadType"]
+        load_type = data.get("load_type", data.get("loadType"))
 
-        if load_type in {"FAILED", "LOAD_FAILED"}:
+        if load_type in NO_MATCHES:
+            raise NoResultsFound(search=search, source=source, type="track")
+        elif load_type in LOAD_FAILED:
             raise SearchFailed(data["exception"])
 
-        elif load_type in {"NONE", "NO_MATCHES"}:
-            raise NoResultsFound(search=search, source=source, type="track")
+        elif load_type in TRACK_LOADED:
 
-        elif load_type in {"TRACK", "TRACK_LOADED", "SEARCH_RESULT"}:
-
-            tracks = [Track(id=track["track"], info=track["info"]) for track in data["tracks"]]
+            tracks = [
+                Track(id=track["track"], info=track["info"])
+                for track in data["tracks"]
+            ]
             return Search(
                 source=tracks[0].source,
                 type="track",
@@ -408,7 +394,7 @@ class Node(Generic[BotT, PlayerT]):
                 tracks=tracks
             )
 
-        elif load_type in {"TRACK_COLLECTION", "PLAYLIST_LOADED"}:
+        elif load_type in PLAYLIST_LOADED:
 
             if self.provider is Provider.OBSIDIAN:
                 info = data["collection_info"]
@@ -430,8 +416,8 @@ class Node(Generic[BotT, PlayerT]):
 
     async def search(
         self,
-        search: str, /,
-        *,
+        search: str,
+        /, *,
         source: Source = Source.NONE,
     ) -> Search:
         """
@@ -455,9 +441,9 @@ class Node(Generic[BotT, PlayerT]):
         """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
-            return await self._search_spotify(_id=match.group("id"), _type=match.group("type"))
+            return await self._spotify_search(_id=match.group("id"), _type=match.group("type"))
 
-        return await self._search_other(search, source=source)
+        return await self._source_search(search=search, source=source)
 
     # Websocket
 
@@ -487,8 +473,8 @@ class Node(Generic[BotT, PlayerT]):
 
     async def _receive_payload(
         self,
-        op: str | int, /,
-        *,
+        op: str | int,
+        /, *,
         data: dict[str, Any]
     ) -> None:
 
@@ -520,8 +506,8 @@ class Node(Generic[BotT, PlayerT]):
 
     async def _send_payload(
         self,
-        op: int, /,
-        *,
+        op: int,
+        /, *,
         data: Any | None = None,
         guild_id: str | None = None
     ) -> None:
@@ -537,7 +523,7 @@ class Node(Generic[BotT, PlayerT]):
                 data["guild_id"] = guild_id
             data = {
                 "op": op,
-                "d": data
+                "d":  data
             }
         else:
             if guild_id:

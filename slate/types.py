@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 # Packages
 import discord
+import spotipy
 from discord.ext import commands
 
 
@@ -20,6 +21,8 @@ __all__ = (
     "JSONDumps",
     "JSONLoads",
     "VoiceChannel",
+    "SpotifySearchTrack",
+    "SpotifySearchResult",
     "BotT",
     "PlayerT",
 )
@@ -29,6 +32,9 @@ JSONDumps = Callable[..., str]
 JSONLoads = Callable[..., dict[str, Any]]
 
 VoiceChannel = discord.VoiceChannel | discord.StageChannel
+
+SpotifySearchTrack = spotipy.SimpleTrack | spotipy.Track | spotipy.PlaylistTrack
+SpotifySearchResult = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track
 
 BotT = TypeVar("BotT", bound=commands.Bot | commands.AutoShardedBot)
 PlayerT = TypeVar("PlayerT", bound="Player[Any, Any]")

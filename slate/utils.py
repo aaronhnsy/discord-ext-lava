@@ -6,6 +6,9 @@ import random
 import re
 from typing import TYPE_CHECKING
 
+# Local
+from .objects.enums import Source
+
 
 if TYPE_CHECKING:
     # Standard Library
@@ -18,8 +21,14 @@ __all__ = (
     "MISSING",
 )
 
+
 SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
-    r"(https?://open.)?(spotify)(.com/|:)(?P<type>album|playlist|track|artist)([/:])(?P<id>[a-zA-Z0-9]+)(\?si=[a-zA-Z0-9]+)?(&dl_branch=[0-9]+)?"
+    r"(http(s)?://open.)?"
+    r"(spotify)"
+    r"(.com/|:)(?P<type>album|playlist|artist|track)"
+    r"([/:])(?P<id>[a-zA-Z0-9]+)"
+    r"([?&])(si=[a-zA-Z0-9]+)?"
+    r"([?&])(dl_branch=[0-9]+)?"
 )
 
 OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
@@ -36,6 +45,18 @@ OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
     10: "seek",
     11: "destroy"
 }
+
+SOURCE_MAP: dict[Source, str] = {
+    Source.YOUTUBE:       "ytsearch:",
+    Source.YOUTUBE_MUSIC: "ytmsearch:",
+    Source.SOUNDCLOUD:    "scsearch:",
+}
+
+NO_MATCHES: set[str] = {"NONE", "NO_MATCHES"}
+LOAD_FAILED: set[str] = {"FAILED", "LOAD_FAILED"}
+TRACK_LOADED: set[str] = {"TRACK", "TRACK_LOADED", "SEARCH_RESULT"}
+PLAYLIST_LOADED: set[str] = {"TRACK_COLLECTION", "PLAYLIST_LOADED"}
+
 
 """
 https://github.com/PythonistaGuild/Wavelink/blob/fe27c9175e03ce42ea55ad47a4cb7b02bd1324d7/wavelink/backoff.py#L29-L75

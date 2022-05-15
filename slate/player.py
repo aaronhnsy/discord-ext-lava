@@ -50,8 +50,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     def __init__(
         self,
         client: BotT = MISSING,
-        channel: VoiceChannel = MISSING, /,
-        *,
+        channel: VoiceChannel = MISSING,
+        /, *,
         node: Node[BotT, PlayerT] | None = None,
     ) -> None:
         """
@@ -351,8 +351,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     async def play(
         self,
-        track: Track, /,
-        *,
+        track: Track,
+        /, *,
         start_time: int | None = None,
         end_time: int | None = None,
         no_replace: bool = False
@@ -455,8 +455,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     async def set_filter(
         self,
-        filter: Filter, /,
-        *,
+        filter: Filter,
+        /, *,
         set_position: bool = True
     ) -> None:
         """
@@ -487,8 +487,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     async def set_position(
         self,
-        position: float, /,
-        *,
+        position: float,
+        /, *,
         force: bool = False
     ) -> None:
         """

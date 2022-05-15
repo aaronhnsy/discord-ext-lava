@@ -105,7 +105,7 @@ class Pool(Generic[BotT, PlayerT]):
         force: bool = False,
     ) -> None:
 
-        node = cls.get_node(identifier)
+        node: Node[BotT, PlayerT] = cls.get_node(identifier)
         await node.disconnect(force=force)
 
         del cls.nodes[node.identifier]
