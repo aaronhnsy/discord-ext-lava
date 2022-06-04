@@ -36,6 +36,7 @@ This installs the latest stable release of slate from github
 Installing Developement Version
 -------------------------------
 This installs the master branch from github
+
 .. admonition:: Warning
     :class: attention
 
