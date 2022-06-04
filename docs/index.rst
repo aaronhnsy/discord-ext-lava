@@ -1,11 +1,18 @@
 .. py:currentmodule:: slate
 
 
-Welcome to slate
+Slate
 ================
-slate is a discord.py compatible wrapper for lavalink-like applications.
+Slate is a discord.py compatible wrapper for lavalink-like applications.
 
 
 .. toctree::
+    :caption: Getting Started
+
+    pages/installing
+
+
+.. toctree::
+    :caption: API Reference
 
     pages/api_reference
