@@ -4,9 +4,6 @@ from __future__ import annotations
 # Standard Library
 from typing import TypedDict
 
-# Packages
-from typing_extensions import Self
-
 
 __all__ = (
     "ObsidianChannelMixData",
@@ -82,25 +79,25 @@ class ChannelMix:
     # classmethods
 
     @classmethod
-    def mono(cls) -> Self:
+    def mono(cls) -> ChannelMix:
         return cls(left_to_left=0.5, left_to_right=0.5, right_to_left=0.5, right_to_right=0.5)
 
     @classmethod
-    def only_left(cls) -> Self:
+    def only_left(cls) -> ChannelMix:
         return cls(left_to_left=1.0, left_to_right=0.0, right_to_left=0.0, right_to_right=0.0)
 
     @classmethod
-    def full_left(cls) -> Self:
+    def full_left(cls) -> ChannelMix:
         return cls(left_to_left=0.5, left_to_right=0.0, right_to_left=0.5, right_to_right=0.0)
 
     @classmethod
-    def only_right(cls) -> Self:
+    def only_right(cls) -> ChannelMix:
         return cls(left_to_left=0.0, left_to_right=0.0, right_to_left=0.0, right_to_right=1.0)
 
     @classmethod
-    def full_right(cls) -> Self:
+    def full_right(cls) -> ChannelMix:
         return cls(left_to_left=0.0, left_to_right=0.5, right_to_left=0.0, right_to_right=0.5)
 
     @classmethod
-    def switch(cls) -> Self:
+    def switch(cls) -> ChannelMix:
         return cls(left_to_left=0.0, left_to_right=1.0, right_to_left=1.0, right_to_right=0.0)
