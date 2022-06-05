@@ -417,6 +417,10 @@ class Node(Generic[BotT, PlayerT]):
             If the search failed.
         :exc:`~slate.HTTPError`
             If the HTTP request failed.
+
+        Returns
+        -------
+        :class:`~slate.Search`
         """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):

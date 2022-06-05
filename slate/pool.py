@@ -191,10 +191,6 @@ class Pool(Generic[BotT, PlayerT]):
         force
             See :meth:`Node.disconnect` and :meth:`Player.disconnect` for more information. Optional, defaults to
             ``False``.
-
-        Returns
-        -------
-        ``None``
         """
 
         node: Node[BotT, PlayerT] = cls.get_node(identifier)
