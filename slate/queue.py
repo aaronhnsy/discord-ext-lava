@@ -3,28 +3,31 @@ from __future__ import annotations
 
 # Standard Library
 import asyncio
+import contextlib
 import random
 from collections import deque
 from collections.abc import Iterator
 from typing import Any, Generic, TypeVar
 
 # Local
-from slate.objects.enums import QueueLoopMode
+from .objects.enums import QueueLoopMode
+from .objects.track import Track
 
 
 __all__ = (
     "Queue",
 )
 
-Item = TypeVar("Item")
+
+QueueItemT = TypeVar("QueueItemT", bound=Track)
 
 
-class Queue(Generic[Item]):
+class Queue(Generic[QueueItemT]):
 
     def __init__(self) -> None:
 
-        self._queue: list[Item] = []
-        self._history: list[Item] = []
+        self._queue: list[QueueItemT] = []
+        self._history: list[QueueItemT] = []
 
         self._loop_mode: QueueLoopMode = QueueLoopMode.DISABLED
 
@@ -42,22 +45,22 @@ class Queue(Generic[Item]):
     def __len__(self) -> int:
         return self._queue.__len__()
 
-    def __getitem__(self, index: Any) -> Item:
+    def __getitem__(self, index: Any) -> QueueItemT:
         return self._queue.__getitem__(index)
 
-    def __setitem__(self, index: Any, value: Item) -> None:
+    def __setitem__(self, index: Any, value: QueueItemT) -> None:
         self._queue.__setitem__(index, value)
 
     def __delitem__(self, index: Any) -> None:
         self._queue.__delitem__(index)
 
-    def __iter__(self) -> Iterator[Item]:
+    def __iter__(self) -> Iterator[QueueItemT]:
         return self._queue.__iter__()
 
-    def __reversed__(self) -> Iterator[Item]:
+    def __reversed__(self) -> Iterator[QueueItemT]:
         return self._queue.__reversed__()
 
-    def __contains__(self, item: Item) -> bool:
+    def __contains__(self, item: QueueItemT) -> bool:
         return self._queue.__contains__(item)
 
     # Properties
@@ -73,7 +76,11 @@ class Queue(Generic[Item]):
     def loop_mode(self) -> QueueLoopMode:
         return self._loop_mode
 
-    def set_loop_mode(self, mode: QueueLoopMode, /) -> None:
+    def set_loop_mode(
+        self,
+        mode: QueueLoopMode,
+        /
+    ) -> None:
         self._loop_mode = mode
 
     # Normal methods
@@ -83,7 +90,7 @@ class Queue(Generic[Item]):
         position: int = 0,
         /, *,
         put_history: bool = True
-    ) -> Item | None:
+    ) -> QueueItemT | None:
 
         try:
             item = self._queue.pop(position)
@@ -100,7 +107,7 @@ class Queue(Generic[Item]):
 
     def put(
         self,
-        item: Item,
+        item: QueueItemT,
         /, *,
         position: int | None = None
     ) -> None:
@@ -114,7 +121,7 @@ class Queue(Generic[Item]):
 
     def extend(
         self,
-        items: list[Item],
+        items: list[QueueItemT],
         /, *,
         position: int | None = None
     ) -> None:
@@ -137,7 +144,7 @@ class Queue(Generic[Item]):
                 waiter.set_result(None)
                 break
 
-    async def get_wait(self) -> Item:
+    async def get_wait(self) -> QueueItemT:
 
         while self.is_empty():
 
@@ -153,10 +160,8 @@ class Queue(Generic[Item]):
 
                 waiter.cancel()
 
-                try:
+                with contextlib.suppress(ValueError):
                     self._waiters.remove(waiter)
-                except ValueError:
-                    pass
 
                 if not self.is_empty() and not waiter.cancelled():
                     self._wakeup_next()
@@ -169,8 +174,9 @@ class Queue(Generic[Item]):
 
     def get_history(
         self,
-        position: int = 0, /,
-    ) -> Item | None:
+        position: int = 0,
+        /,
+    ) -> QueueItemT | None:
 
         try:
             item = list(reversed(self._history))[position]
@@ -181,7 +187,7 @@ class Queue(Generic[Item]):
 
     def put_history(
         self,
-        item: Item,
+        item: QueueItemT,
         /, *,
         position: int | None = None
     ) -> None:
@@ -193,7 +199,7 @@ class Queue(Generic[Item]):
 
     def extend_history(
         self,
-        items: list[Item],
+        items: list[QueueItemT],
         /, *,
         position: int | None = None
     ) -> None:
