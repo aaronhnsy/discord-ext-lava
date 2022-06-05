@@ -7,7 +7,7 @@ import contextlib
 import random
 from collections import deque
 from collections.abc import Iterator
-from typing import Generic, SupportsIndex, TypeVar
+from typing import Generic, SupportsIndex, TypeVar, overload
 
 # Local
 from .objects.enums import QueueLoopMode
@@ -42,13 +42,21 @@ class Queue(Generic[QueueItemT]):
     def __len__(self) -> int:
         return self._items.__len__()
 
+    @overload
     def __getitem__(self, index: SupportsIndex) -> QueueItemT:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[QueueItemT]:
+        ...
+
+    def __getitem__(self, index: SupportsIndex | slice) -> QueueItemT | list[QueueItemT]:
         return self._items.__getitem__(index)
 
     def __setitem__(self, index: SupportsIndex, value: QueueItemT) -> None:
         self._items.__setitem__(index, value)
 
-    def __delitem__(self, index: SupportsIndex | slice) -> None:
+    def __delitem__(self, index: SupportsIndex) -> None:
         self._items.__delitem__(index)
 
     def __iter__(self) -> Iterator[QueueItemT]:
@@ -264,9 +272,18 @@ class Queue(Generic[QueueItemT]):
 
         return item
 
-    async def wait_for_item(self) -> QueueItemT:
+    async def wait_for_item(
+        self,
+        *,
+        put_into_history: bool = True
+    ) -> QueueItemT:
         """
         Waits until an item has been added to the queue and returns it.
+
+        Parameters
+        ----------
+        put_into_history
+            Whether the item should be added to the queue history. Optional, defaults to ``True``.
         """
 
         while self.is_empty():
@@ -291,7 +308,7 @@ class Queue(Generic[QueueItemT]):
 
                 raise
 
-        return self.get_from_front()
+        return self.get_from_front(put_into_history=put_into_history)
 
     # PUT methods
 
@@ -395,7 +412,7 @@ class Queue(Generic[QueueItemT]):
         Parameters
         ----------
         position
-            The position of the item to get from the history.
+            The position of the item to get from the queue history.
 
         Raises
         ------
@@ -409,6 +426,36 @@ class Queue(Generic[QueueItemT]):
 
         try:
             item = self._history[-position]
+        except IndexError:
+            raise IndexError("There is no history item at the given position.")
+
+        return item
+
+    def pop_from_history(
+        self,
+        *,
+        position: int
+    ) -> QueueItemT:
+        """
+        Removes and returns the item at the given position from the queue history.
+
+        Parameters
+        ----------
+        position
+            The position of the item to remove and return from the queue history.
+
+        Raises
+        ------
+        :exc:`IndexError`
+            If there is no item at the given position.
+
+        Returns
+        -------
+        :class:`~slate.Track`
+        """
+
+        try:
+            item = self._history.pop(-position)
         except IndexError:
             raise IndexError("There is no history item at the given position.")
 
