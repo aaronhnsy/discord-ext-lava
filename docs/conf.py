@@ -114,9 +114,10 @@ autodoc_default_options: dict[str, Any] = {
 }
 autodoc_typehints: str = "signature"
 autodoc_type_aliases: dict[str, str] = {
-    "BotT": "discord.ext.commands.Bot | discord.ext.commands.AutoShardedBot",
+    "BotT": "~discord.ext.commands.Bot",
     "ContextT": "~discord.ext.commands.Context",
     "PlayerT": "~slate.Player",
+    "QueueItemT": "~slate.Track",
 }
 autodoc_typehints_format: str = "short"
 
