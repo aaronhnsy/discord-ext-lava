@@ -48,6 +48,39 @@ class Node(Generic[BotT, PlayerT]):
     """
     Node's handle interactions between your bot and a provider server such as obsidian or lavalink. This includes
     connecting to the websocket, searching for tracks, and managing player state.
+
+    Parameters
+    ----------
+    bot
+        The bot instance that this node belongs to.
+    session
+        The aiohttp client session to use for websocket/rest communication. Optional, if ``None`` (default), a new one will be created.
+    provider
+        An enum denoting which external application this node is connecting to, such as :attr:`slate.Provider.OBSIDIAN`.
+    identifier
+        A unique identifier for this node.
+    host
+        The hostname of the provider server.
+    port
+        The port of the provider server.
+    password
+        The password for the provider server.
+    secure
+        Whether to use secure connections for websocket/rest communication. Optional, defaults to ``False``.
+    resume_key
+        A resuming key which is passed to the provider server when connecting. Optional, defaults to ``None``.
+    rest_url
+        The URL to the provider server's REST API. Optional, if ``None`` (default), the URL will be constructed from the provided host and port.
+    ws_url
+        The URL to the provider server's websocket. Optional, if ``None`` (default), the URL will be constructed from the provided host and port.
+    json_dumps
+        A callable which will be used to serialize JSON data. Optional, if ``None`` (default), :func:`json.dumps` will be used.
+    json_loads
+        A callable which will be used to deserialize JSON data. Optional, if ``None`` (default), :func:`json.loads` will be used.
+    spotify_client_id
+        The client ID from a Spotify API application. Optional, if ``None`` (default), Spotify integration will be disabled.
+    spotify_client_secret
+        The client secret from a Spotify API application. Optional, if ``None`` (default), Spotify integration will be disabled.
     """
 
     def __init__(
@@ -73,40 +106,6 @@ class Node(Generic[BotT, PlayerT]):
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
     ) -> None:
-        """
-        Parameters
-        ----------
-        bot
-            The bot instance that this node belongs to.
-        session
-            The aiohttp client session to use for websocket/rest communication. Optional, if :class:`None` (default), a new one will be created.
-        provider
-            An enum denoting which external application this node is connecting to, such as :attr:`slate.Provider.OBSIDIAN`.
-        identifier
-            A unique identifier for this node.
-        host
-            The hostname of the provider server.
-        port
-            The port of the provider server.
-        password
-            The password for the provider server.
-        secure
-            Whether to use secure connections for websocket/rest communication. Optional, defaults to :obj:`False`.
-        resume_key
-            A resuming key which is passed to the provider server when connecting. Optional, defaults to :class:`None`.
-        rest_url
-            The URL to the provider server's REST API. Optional, if :class:`None` (default), the URL will be constructed from the provided host and port.
-        ws_url
-            The URL to the provider server's websocket. Optional, if :class:`None` (default), the URL will be constructed from the provided host and port.
-        json_dumps
-            A callable which will be used to serialize JSON data. Optional, if :class:`None` (default), :func:`json.dumps` will be used.
-        json_loads
-            A callable which will be used to deserialize JSON data. Optional, if :class:`None` (default), :func:`json.loads` will be used.
-        spotify_client_id
-            The client ID from a Spotify API application. Optional, if :class:`None` (default), Spotify integration will be disabled.
-        spotify_client_secret
-            The client secret from a Spotify API application. Optional, if :class:`None` (default), Spotify integration will be disabled.
-        """
 
         self._bot: BotT = bot
         self._session: aiohttp.ClientSession | None = session
@@ -173,7 +172,7 @@ class Node(Generic[BotT, PlayerT]):
 
     def is_connected(self) -> bool:
         """
-        Returns :obj:`True` if the node is connected to the provider server, :obj:`False` otherwise.
+        Returns ``True`` if the node is connected to the provider server, ``False`` otherwise.
         """
         return self._websocket is not None and self._websocket.closed is False
 
@@ -190,7 +189,7 @@ class Node(Generic[BotT, PlayerT]):
         Arguments
         ---------
         raise_on_failure: bool
-            Whether to raise an exception if the connection fails. Defaults to :obj:`False`.
+            Whether to raise an exception if the connection fails. Defaults to ``False``.
         """
 
         assert self._bot.user is not None
@@ -246,7 +245,7 @@ class Node(Generic[BotT, PlayerT]):
         Parameters
         ----------
         force: bool
-            Whether to force disconnect players with :meth:`Player.disconnect`. Defaults to :obj:`False`.
+            Whether to force disconnect players with :meth:`Player.disconnect`. Defaults to ``False``.
         """
 
         for player in self._players.copy().values():

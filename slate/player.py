@@ -58,7 +58,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         Parameters
         ----------
         node
-            The node this player should be attached to, if :obj:`None` the player will be attached to the first node
+            The node this player should be attached to, if ``None`` the player will be attached to the first node
             found from the pool.
 
         Warnings
@@ -211,14 +211,14 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def current_track_id(self) -> str | None:
         """
-        The ID of the current track. This is :class:`None` if no track is playing.
+        The ID of the current track. This is ``None`` if no track is playing.
         """
         return self._current_track_id
 
     @property
     def current(self) -> Track | None:
         """
-        The current track. This is :class:`None` if no track is playing.
+        The current track. This is ``None`` if no track is playing.
         """
         return self._current
 
@@ -272,19 +272,19 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     def is_connected(self) -> bool:
         """
-        Returns :obj:`True` if the player is connected to its voice channel, :obj:`False` otherwise.
+        Returns ``True`` if the player is connected to its voice channel, ``False`` otherwise.
         """
         return self.channel is not None
 
     def is_playing(self) -> bool:
         """
-        Returns :obj:`True` if the player is playing a track, :obj:`False` otherwise.
+        Returns ``True`` if the player is playing a track, ``False`` otherwise.
         """
         return self.is_connected() is True and self._current is not None
 
     def is_paused(self) -> bool:
         """
-        Returns :obj:`True` if the player is paused, :obj:`False` otherwise.
+        Returns ``True`` if the player is paused, ``False`` otherwise.
         """
         return self._paused is True
 
@@ -308,9 +308,9 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         reconnect
             Unused parameter, does nothing.
         self_mute
-            :obj:`True` if the player should be muted when connected. Defaults to :obj:`False`.
+            ``True`` if the player should be muted when connected. Defaults to ``False``.
         self_deaf
-            :obj:`True` if the player should be deafened when connected. Defaults to :obj:`True`.
+            ``True`` if the player should be deafened when connected. Defaults to ``True``.
         """
 
         await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
@@ -327,8 +327,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         Parameters
         ----------
         force
-            :obj:`True` if the player should send a request to the provider server to stop the current track even if
-            one is not playing. Defaults to :obj:`False`.
+            ``True`` if the player should send a request to the provider server to stop the current track even if
+            one is not playing. Defaults to ``False``.
         """
 
         __log__.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
@@ -365,11 +365,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         track
             The track to play.
         start_time
-            The start time of the track in milliseconds. Defaults to :obj:`None`.
+            The start time of the track in milliseconds. Defaults to ``None``.
         end_time
-            The end time of the track in milliseconds. Defaults to :obj:`None`.
+            The end time of the track in milliseconds. Defaults to ``None``.
         no_replace
-            :obj:`True` if this track should not replace the current track, if any. Defaults to :obj:`False`.
+            ``True`` if this track should not replace the current track, if any. Defaults to ``False``.
         """
 
         data: dict[str, Any] = {
@@ -413,8 +413,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         Parameters
         ----------
         force
-            :obj:`True` if the player should send the stop track request to the provider server even if this player's
-            :attr:`~Player.current` attribute is :class:`None`. Defaults to :obj:`False`.
+            ``True`` if the player should send the stop track request to the provider server even if this player's
+            :attr:`~Player.current` attribute is ``None``. Defaults to ``False``.
         """
 
         if self._current is None and not force:
@@ -441,7 +441,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         Parameters
         ----------
         pause
-            :obj:`True` if the player should be paused, :obj:`False` otherwise.
+            ``True`` if the player should be paused, ``False`` otherwise.
         """
 
         await self._node._send_payload(
@@ -467,8 +467,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         filter
             The filter to set.
         set_position
-            :obj:`True` if the player should set its position to the current position which applied filters instantly.
-            Defaults to :obj:`True`.
+            ``True`` if the player should set its position to the current position which applied filters instantly.
+            Defaults to ``True``.
         """
 
         _payload = filter._construct_payload(self._node.provider)
@@ -499,8 +499,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         position
             The position to set, in milliseconds.
         force
-            :obj:`True` if the player should send the set position request to the provider server even if this player's
-            :attr:`~Player.current` attribute is :class:`None`. Defaults to :obj:`False`.
+            ``True`` if the player should send the set position request to the provider server even if this player's
+            :attr:`~Player.current` attribute is ``None``. Defaults to ``False``.
         """
 
         if (self._current is None or 0 > position > self._current.length) and not force:
