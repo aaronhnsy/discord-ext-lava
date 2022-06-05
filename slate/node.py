@@ -46,41 +46,10 @@ __log__: logging.Logger = logging.getLogger("slate.node")
 
 class Node(Generic[BotT, PlayerT]):
     """
-    Node's handle interactions between your bot and a provider server such as obsidian or lavalink. This includes
+    A Node handles interactions between your bot and a provider server such as obsidian or lavalink. This includes
     connecting to the websocket, searching for tracks, and managing player state.
 
-    Parameters
-    ----------
-    bot
-        The bot instance that this node belongs to.
-    session
-        The aiohttp client session to use for websocket/rest communication. Optional, if ``None`` (default), a new one will be created.
-    provider
-        An enum denoting which external application this node is connecting to, such as :attr:`slate.Provider.OBSIDIAN`.
-    identifier
-        A unique identifier for this node.
-    host
-        The hostname of the provider server.
-    port
-        The port of the provider server.
-    password
-        The password for the provider server.
-    secure
-        Whether to use secure connections for websocket/rest communication. Optional, defaults to ``False``.
-    resume_key
-        A resuming key which is passed to the provider server when connecting. Optional, defaults to ``None``.
-    rest_url
-        The URL to the provider server's REST API. Optional, if ``None`` (default), the URL will be constructed from the provided host and port.
-    ws_url
-        The URL to the provider server's websocket. Optional, if ``None`` (default), the URL will be constructed from the provided host and port.
-    json_dumps
-        A callable which will be used to serialize JSON data. Optional, if ``None`` (default), :func:`json.dumps` will be used.
-    json_loads
-        A callable which will be used to deserialize JSON data. Optional, if ``None`` (default), :func:`json.loads` will be used.
-    spotify_client_id
-        The client ID from a Spotify API application. Optional, if ``None`` (default), Spotify integration will be disabled.
-    spotify_client_secret
-        The client secret from a Spotify API application. Optional, if ``None`` (default), Spotify integration will be disabled.
+    See :meth:`Pool.create_node` for more information about creating a node.
     """
 
     def __init__(
@@ -143,28 +112,36 @@ class Node(Generic[BotT, PlayerT]):
     @property
     def bot(self) -> BotT:
         """
-        The bot instance that this node belongs to.
+        The bot instance that this node is attached to.
         """
         return self._bot
 
     @property
+    def session(self) -> aiohttp.ClientSession | None:
+        """
+        The aiohttp client session that this node is using for HTTP requests and WebSocket connections. Could be
+        ``None`` in some cases.
+        """
+        return self._session
+
+    @property
     def rest_url(self) -> str:
         """
-        The URL used for rest requests to the provider server.
+        The url used to make HTTP requests to the provider server.
         """
         return self._rest_url or f"http://{self.host}:{self.port}"
 
     @property
     def ws_url(self) -> str:
         """
-        The URL used to connect to the provider server's websocket.
+        The url used for WebSocket connections with the provider server.
         """
         return self._ws_url or f"ws://{self.host}:{self.port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
 
     @property
     def players(self) -> dict[int, PlayerT]:
         """
-        A mapping of guild ID to player instance.
+        A mapping of guild id to player instance that this node is managing.
         """
         return self._players
 
@@ -245,7 +222,7 @@ class Node(Generic[BotT, PlayerT]):
         Parameters
         ----------
         force: bool
-            Whether to force disconnect players with :meth:`Player.disconnect`. Defaults to ``False``.
+            Passed through to :meth:`Player.disconnect`. Optional, defaults to ``False``.
         """
 
         for player in self._players.copy().values():
@@ -427,9 +404,9 @@ class Node(Generic[BotT, PlayerT]):
 
         Parameters
         ----------
-        search
+        search: :class:`str`
             The search query.
-        source
+        source: :class:`~slate.Source`
             The source to request results from. Defaults to :attr:`Source.NONE`.
 
         Raises
