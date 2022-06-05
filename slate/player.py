@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
+import contextlib
 import logging
 import time
 from typing import Any, Generic
@@ -54,19 +55,6 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         /, *,
         node: Node[BotT, PlayerT] | None = None,
     ) -> None:
-        """
-        Parameters
-        ----------
-        node
-            The node this player should be attached to, if ``None`` the player will be attached to the first node
-            found from the pool.
-
-        Warnings
-        --------
-            To connect to a voice channel you must construct an instance of this class, setting the ``node`` argument
-            (and extras, if subclassing) but **not** the ``client`` or ``channel`` arguments. You can then pass it to
-            the ``cls`` argument of :meth:`discord.abc.Connectable.connect`.
-        """
 
         self.client: BotT = client
         self.channel: VoiceChannel = channel
@@ -89,7 +77,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     def __call__(
         self,
         client: discord.Client,
-        channel: discord.abc.Connectable, /,
+        channel: discord.abc.Connectable,
+        /,
     ) -> PlayerT:
 
         self.client = client  # type: ignore
@@ -190,28 +179,28 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def bot(self) -> BotT:
         """
-        The bot this player is attached to.
+        The bot instance that this player is attached to.
         """
         return self.client
 
     @property
     def voice_channel(self) -> VoiceChannel:
         """
-        The voice channel this player is connected to.
+        The voice channel that this player is connected to.
         """
         return self.channel
 
     @property
     def node(self) -> Node[BotT, PlayerT]:
         """
-        The node this player is attached to.
+        The node that this player is attached to.
         """
         return self._node
 
     @property
     def current_track_id(self) -> str | None:
         """
-        The ID of the current track. This is ``None`` if no track is playing.
+        The id of the current track. This is ``None`` if no track is playing.
         """
         return self._current_track_id
 
@@ -225,14 +214,14 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def paused(self) -> bool:
         """
-        Whether the player is paused.
+        Whether the player is paused. ``True`` if paused, ``False`` if not.
         """
         return self._paused
 
     @property
     def position(self) -> float:
         """
-        The position of the player. Returns 0 if no track is playing.
+        The position of the player. Returns ``0.0`` if no track is playing.
         """
 
         if not self.is_playing():
@@ -253,38 +242,37 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def filter(self) -> Filter | None:
         """
-        The players current filter, if set.
+        The players current filter. This is ``None`` if no filter has been set yet.
         """
         return self._filter
 
     @property
     def listeners(self) -> list[discord.Member]:
         """
-        A list of members in the players voice channel.
-
-        Notes
-        -----
-        This only returns **non-bot** members who are **not** deafened.
+        Returns a list of non bot members in the players voice channel who are also not deafened.
         """
-        return [member for member in getattr(self.channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
+        return [
+            member for member in getattr(self.voice_channel, "members", [])
+            if not member.bot and not member.voice.deaf and not member.voice.self_deaf
+        ]
 
     # Utility methods
 
     def is_connected(self) -> bool:
         """
-        Returns ``True`` if the player is connected to its voice channel, ``False`` otherwise.
+        Whether the player is connected to a voice channel. ``True`` if connected, ``False`` if not.
         """
         return self.channel is not None
 
     def is_playing(self) -> bool:
         """
-        Returns ``True`` if the player is playing a track, ``False`` otherwise.
+        Whether the player is playing a track. ``True`` if playing, ``False`` otherwise.
         """
         return self.is_connected() is True and self._current is not None
 
     def is_paused(self) -> bool:
         """
-        Returns ``True`` if the player is paused, ``False`` otherwise.
+        Whether the player is paused. ``True`` if paused, ``False`` otherwise.
         """
         return self._paused is True
 
@@ -322,7 +310,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         force: bool = False
     ) -> None:
         """
-        Disconnects the player from its voice channel and removed it from the node.
+        Disconnects the player from its voice channel and removes it from the node.
 
         Parameters
         ----------
@@ -342,10 +330,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
                 guild_id=str(self.channel.guild.id)
             )
 
-        try:
+        with contextlib.suppress(KeyError):
             del self._node._players[self.channel.guild.id]
-        except KeyError:
-            pass
 
         self.cleanup()
 
@@ -433,7 +419,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     async def set_pause(
         self,
-        pause: bool, /,
+        pause: bool,
+        /,
     ) -> None:
         """
         Sets the players pause state.
@@ -467,7 +454,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         filter
             The filter to set.
         set_position
-            ``True`` if the player should set its position to the current position which applied filters instantly.
+            ``True`` if the player should set its position to the current position which applies filters instantly.
             Defaults to ``True``.
         """
 

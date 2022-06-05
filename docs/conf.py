@@ -114,6 +114,7 @@ autodoc_default_options: dict[str, Any] = {
 }
 autodoc_typehints: str = "signature"
 autodoc_type_aliases: dict[str, str] = {
+    "VoiceChannel": "~discord.VoiceChannel | ~discord.StageChannel",
     "BotT": "~discord.ext.commands.Bot",
     "ContextT": "~discord.ext.commands.Context",
     "PlayerT": "~slate.Player",
