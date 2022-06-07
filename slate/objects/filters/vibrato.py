@@ -18,6 +18,8 @@ class VibratoData(TypedDict):
 
 class Vibrato:
 
+    __slots__ = ("frequency", "depth",)
+
     def __init__(
         self,
         *,

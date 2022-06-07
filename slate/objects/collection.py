@@ -16,6 +16,8 @@ __all__ = (
 
 class Collection:
 
+    __slots__ = ("_name", "_url", "_selected_track", "_tracks",)
+
     def __init__(
         self,
         *,

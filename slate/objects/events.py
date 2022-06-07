@@ -20,6 +20,8 @@ __all__ = (
 
 class BaseEvent:
 
+    __slots__ = ("_type", "_guild_id",)
+
     def __init__(self, data: dict[str, Any]) -> None:
         self._type: str = MISSING
         self._guild_id: int = int(data.get("guild_id", data.get("guildId")))
@@ -38,6 +40,8 @@ class BaseEvent:
 
 class TrackStart(BaseEvent):
 
+    __slots__ = ("_track_id",)
+
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)
 
@@ -54,6 +58,8 @@ class TrackStart(BaseEvent):
 
 
 class TrackEnd(BaseEvent):
+
+    __slots__ = ("_track_id", "_reason",)
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)
@@ -77,6 +83,8 @@ class TrackEnd(BaseEvent):
 
 class TrackStuck(BaseEvent):
 
+    __slots__ = ("_track_id", "_threshold_ms",)
+
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)
 
@@ -98,6 +106,8 @@ class TrackStuck(BaseEvent):
 
 
 class TrackException(BaseEvent):
+
+    __slots__ = ("_track_id", "_message", "_cause", "_severity",)
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)
@@ -134,6 +144,8 @@ class TrackException(BaseEvent):
 
 class WebsocketOpen(BaseEvent):
 
+    __slots__ = ("_target", "_ssrc",)
+
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)
 
@@ -155,6 +167,8 @@ class WebsocketOpen(BaseEvent):
 
 
 class WebsocketClosed(BaseEvent):
+
+    __slots__ = ("_code", "_reason", "_by_remote",)
 
     def __init__(self, data: dict[str, Any]) -> None:
         super().__init__(data)

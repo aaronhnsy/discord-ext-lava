@@ -21,6 +21,8 @@ class LavalinkLowPassData(TypedDict):
 
 class LowPass:
 
+    __slots__ = ("smoothing",)
+
     def __init__(
         self,
         *,

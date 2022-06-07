@@ -19,6 +19,8 @@ class TimescaleData(TypedDict):
 
 class Timescale:
 
+    __slots__ = ("pitch", "speed", "rate",)
+
     def __init__(
         self,
         *,

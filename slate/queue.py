@@ -24,6 +24,8 @@ QueueItemT = TypeVar("QueueItemT", bound=Track)
 
 class Queue(Generic[QueueItemT]):
 
+    __slots__ = ("_items", "_history", "_loop_mode", "_waiters", "_finished",)
+
     def __init__(self) -> None:
 
         self._items: list[QueueItemT] = []

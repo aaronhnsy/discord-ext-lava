@@ -28,6 +28,8 @@ class LavalinkKaraokeData(TypedDict):
 
 class Karaoke:
 
+    __slots__ = ("level", "mono_level", "band", "band_width",)
+
     def __init__(
         self,
         *,

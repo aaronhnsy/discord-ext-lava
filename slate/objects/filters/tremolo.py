@@ -18,6 +18,8 @@ class TremoloData(TypedDict):
 
 class Tremolo:
 
+    __slots__ = ("frequency", "depth",)
+
     def __init__(
         self,
         *,

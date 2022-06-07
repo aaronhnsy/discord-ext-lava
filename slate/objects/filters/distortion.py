@@ -36,6 +36,17 @@ class LavalinkDistortionData(TypedDict):
 
 class Distortion:
 
+    __slots__ = (
+        "sin_offset",
+        "sin_scale",
+        "cos_offset",
+        "cos_scale",
+        "tan_offset",
+        "tan_scale",
+        "offset",
+        "scale",
+    )
+
     def __init__(
         self,
         *,

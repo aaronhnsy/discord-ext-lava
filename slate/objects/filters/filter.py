@@ -53,6 +53,20 @@ class LavalinkFilterPayload(TypedDict, total=False):
 
 class Filter:
 
+    __slots__ = (
+        "filter",
+        "channel_mix",
+        "distortion",
+        "equalizer",
+        "karaoke",
+        "low_pass",
+        "rotation",
+        "timescale",
+        "tremolo",
+        "vibrato",
+        "volume",
+    )
+
     def __init__(
         self,
         filter: Filter | None = None,
