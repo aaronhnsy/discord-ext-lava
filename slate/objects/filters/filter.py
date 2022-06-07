@@ -87,7 +87,7 @@ class Filter:
 
     def _construct_obsidian_payload(self) -> ObsidianFilterPayload:
 
-        payload: ObsidianFilterPayload = self.filter._construct_obsidian_payload() if self.filter else {}
+        payload: ObsidianFilterPayload = self.filter._construct_payload(Provider.OBSIDIAN) if self.filter else {}  # type: ignore
 
         if self.channel_mix:
             payload["channel_mix"] = self.channel_mix._construct_obsidian_payload()
@@ -104,7 +104,7 @@ class Filter:
 
     def _construct_lavalink_payload(self) -> LavalinkFilterPayload:
 
-        payload: LavalinkFilterPayload = self.filter._construct_lavalink_payload() if self.filter else {}
+        payload: LavalinkFilterPayload = self.filter._construct_payload(Provider.LAVALINK) if self.filter else {}  # type: ignore
 
         if self.channel_mix:
             payload["channelMix"] = self.channel_mix._construct_lavalink_payload()
