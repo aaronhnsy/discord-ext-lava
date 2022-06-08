@@ -30,18 +30,17 @@ jobs:
 
       - name: "Install Poetry"
         run: |
-          pipx install poetry
+          pipx install poetry==1.2.0b2
 
       - name: "Install Python v${{ matrix.python-version }}"
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
 
       - name: "Install project dependencies"
         run: |
           poetry env use ${{ matrix.python-version }}
-          poetry install -E dev --no-dev
+          poetry install -E docs
 
       - name: "Install Node v17"
         uses: actions/setup-node@v3
