@@ -58,19 +58,16 @@ class Node(Generic[BotT, PlayerT]):
         self,
         *,
         bot: BotT,
-        session: aiohttp.ClientSession | None = None,
-        # Connection information
         provider: Provider,
         identifier: str,
         host: str,
         port: str,
         password: str,
-        secure: bool = False,
         resume_key: str | None = None,
         # URLs
         rest_url: str | None = None,
         ws_url: str | None = None,
-        # JSON callables
+        # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
         # Spotify
@@ -79,15 +76,13 @@ class Node(Generic[BotT, PlayerT]):
     ) -> None:
 
         self._bot: BotT = bot
-        self._session: aiohttp.ClientSession | None = session
 
-        self.provider: Provider = provider
-        self.identifier: str = identifier
-        self.host: str = host
-        self.port: str = port
-        self.password: str = password
-        self.secure: bool = secure
-        self.resume_key: str | None = resume_key
+        self._provider: Provider = provider
+        self._identifier: str = identifier
+        self._host: str = host
+        self._port: str = port
+        self._password: str = password
+        self._resume_key: str | None = resume_key
 
         self._rest_url: str | None = rest_url
         self._ws_url: str | None = ws_url
@@ -98,9 +93,9 @@ class Node(Generic[BotT, PlayerT]):
         self._spotify: spotipy.Client | None = spotipy.Client(
             client_id=spotify_client_id,
             client_secret=spotify_client_secret,
-            session=self._session
         ) if (spotify_client_id and spotify_client_secret) else None
 
+        self._session: aiohttp.ClientSession = MISSING
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
 
@@ -119,26 +114,32 @@ class Node(Generic[BotT, PlayerT]):
         return self._bot
 
     @property
-    def session(self) -> aiohttp.ClientSession | None:
+    def provider(self) -> Provider:
         """
-        The aiohttp client session that this node is using for HTTP requests and WebSocket connections. Could be
-        ``None`` in some cases.
+        An enum value indicating which external application this node is attached to.
         """
-        return self._session
+        return self._provider
+
+    @property
+    def identifier(self) -> str:
+        """
+        A unique identifier for this node.
+        """
+        return self._identifier
 
     @property
     def rest_url(self) -> str:
         """
         The url used to make HTTP requests to the provider server.
         """
-        return self._rest_url or f"http://{self.host}:{self.port}"
+        return self._rest_url or f"http://{self._host}:{self._port}"
 
     @property
     def ws_url(self) -> str:
         """
         The url used for WebSocket connections with the provider server.
         """
-        return self._ws_url or f"ws://{self.host}:{self.port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
+        return self._ws_url or f"ws://{self._host}:{self._port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
 
     @property
     def players(self) -> dict[int, PlayerT]:
@@ -174,12 +175,12 @@ class Node(Generic[BotT, PlayerT]):
         assert self._bot.user is not None
 
         headers = {
-            "Authorization": self.password,
+            "Authorization": self._password,
             "User-Id":       str(self._bot.user.id),
             "Client-Name":   "Slate",
         }
-        if self.resume_key:
-            headers["Resume-Key"] = self.resume_key
+        if self._resume_key:
+            headers["Resume-Key"] = self._resume_key
 
         session = await self._get_session()
 
@@ -202,11 +203,11 @@ class Node(Generic[BotT, PlayerT]):
             if self._task is None:
                 self._task = asyncio.create_task(self._listen())
 
-            if self.resume_key:
+            if self._resume_key:
                 await self._send_payload(
                     2,  # configureResuming
                     data={
-                        "key": self.resume_key,
+                        "key": self._resume_key,
                         "timeout": 120
                     }
                 )
@@ -263,7 +264,7 @@ class Node(Generic[BotT, PlayerT]):
 
         url = f"{self.rest_url}{path}"
         headers = {
-            "Authorization": self.password,
+            "Authorization": self._password,
             "Client-Name":   "Slate"
         }
 

@@ -5,9 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Generic
 
-# Packages
-import aiohttp
-
 # Local
 from .exceptions import NodeAlreadyExists, NodeNotFound, NoNodesConnected
 from .node import Node
@@ -38,19 +35,16 @@ class Pool(Generic[BotT, PlayerT]):
         cls,
         *,
         bot: BotT,
-        session: aiohttp.ClientSession | None = None,
-        # Connection information
         provider: Provider,
         identifier: str,
         host: str,
         port: str,
         password: str,
-        secure: bool = False,
         resume_key: str | None = None,
         # URLs
         rest_url: str | None = None,
         ws_url: str | None = None,
-        # JSON callables
+        # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
         # Spotify
@@ -64,9 +58,6 @@ class Pool(Generic[BotT, PlayerT]):
         ----------
         bot
             The bot that this node should be attached to.
-        session
-            The session that this node will use for HTTP requests and WebSocket connections. Optional, if ``None``,
-            a new session will be created and used.
         provider
             An enum value indicating which external application this node is connecting to.
         identifier
@@ -77,8 +68,6 @@ class Pool(Generic[BotT, PlayerT]):
             The port that this node will connect with.
         password
             The password to use for HTTP requests and WebSocket connections with the provider server.
-        secure
-            Whether to use secure HTTP requests and WebSocket connections. Optional, defaults to ``False``.
         resume_key
             The resuming key to use when connecting to the provider server. Optional, defaults to ``None``.
         rest_url
@@ -117,13 +106,11 @@ class Pool(Generic[BotT, PlayerT]):
 
         node: Node[BotT, PlayerT] = Node(
             bot=bot,
-            session=session,
             provider=provider,
             identifier=identifier,
             host=host,
             port=port,
             password=password,
-            secure=secure,
             resume_key=resume_key,
             rest_url=rest_url,
             ws_url=ws_url,
