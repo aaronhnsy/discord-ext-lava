@@ -145,7 +145,8 @@ class Queue(Generic[QueueItemT]):
 
     def set_loop_mode(
         self,
-        mode: QueueLoopMode, /
+        mode: QueueLoopMode,
+        /
     ) -> None:
         """
         Sets the queue loop mode.
@@ -241,8 +242,8 @@ class Queue(Generic[QueueItemT]):
 
     def get_from_position(
         self,
-        position: int, /,
-        *,
+        position: int,
+        /, *,
         put_into_history: bool = True
     ) -> QueueItemT:
         """
@@ -344,8 +345,8 @@ class Queue(Generic[QueueItemT]):
 
     def put_at_position(
         self,
-        position: int, /,
-        *,
+        position: int,
+        /, *,
         item: QueueItemT | None = None,
         items: list[QueueItemT] | None = None
     ) -> None:
