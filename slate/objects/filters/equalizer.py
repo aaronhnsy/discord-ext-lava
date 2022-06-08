@@ -23,6 +23,8 @@ EqualizerData = list[EqualizerBandData]
 
 class Equalizer:
 
+    __slots__ = ("name", "bands",)
+
     def __init__(
         self,
         *,

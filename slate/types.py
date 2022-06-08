@@ -10,9 +10,11 @@ import discord
 import spotipy
 from discord.ext import commands
 
+# Local
+from .objects.track import Track
+
 
 if TYPE_CHECKING:
-    # noinspection PyUnresolvedReferences
     # Local
     from .player import Player
 
@@ -25,6 +27,7 @@ __all__ = (
     "SpotifySearchResult",
     "BotT",
     "PlayerT",
+    "QueueItemT"
 )
 
 
@@ -38,3 +41,4 @@ SpotifySearchResult = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotip
 
 BotT = TypeVar("BotT", bound=commands.Bot | commands.AutoShardedBot)
 PlayerT = TypeVar("PlayerT", bound="Player[Any, Any]")
+QueueItemT = TypeVar("QueueItemT", bound=Track)

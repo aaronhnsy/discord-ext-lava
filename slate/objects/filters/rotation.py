@@ -20,11 +20,14 @@ class LavalinkRotationData(TypedDict):
 
 class Rotation:
 
+    __slots__ = ("speed",)
+
     def __init__(
         self,
         *,
         speed: float = 5.0
     ) -> None:
+
         self.speed: float = speed
 
     def __repr__(self) -> str:

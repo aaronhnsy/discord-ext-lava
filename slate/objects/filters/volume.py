@@ -12,7 +12,13 @@ VolumeData = float
 
 class Volume:
 
-    def __init__(self, *, level: float = 100.0) -> None:
+    __slots__ = ("level",)
+
+    def __init__(
+        self,
+        *,
+        level: float = 100.0
+    ) -> None:
 
         if level < 0.0 or level > 500.0:
             raise ValueError("'level' must be more than or equal to 0.0 and less than or equal to 500.0.")

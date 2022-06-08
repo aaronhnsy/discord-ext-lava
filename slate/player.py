@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 # Standard Library
+import contextlib
 import logging
 import time
 from typing import Any, Generic
@@ -24,7 +25,9 @@ from .utils import MISSING
 __all__ = (
     "Player",
 )
-__log__: logging.Logger = logging.getLogger("slate.player")
+
+
+LOGGER: logging.Logger = logging.getLogger("slate.player")
 
 
 OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
@@ -54,19 +57,6 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         /, *,
         node: Node[BotT, PlayerT] | None = None,
     ) -> None:
-        """
-        Parameters
-        ----------
-        node
-            The node this player should be attached to, if :obj:`None` the player will be attached to the first node
-            found from the pool.
-
-        Warnings
-        --------
-            To connect to a voice channel you must construct an instance of this class, setting the ``node`` argument
-            (and extras, if subclassing) but **not** the ``client`` or ``channel`` arguments. You can then pass it to
-            the ``cls`` argument of :meth:`discord.abc.Connectable.connect`.
-        """
 
         self.client: BotT = client
         self.channel: VoiceChannel = channel
@@ -89,7 +79,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     def __call__(
         self,
         client: discord.Client,
-        channel: discord.abc.Connectable, /,
+        channel: discord.abc.Connectable,
+        /,
     ) -> PlayerT:
 
         self.client = client  # type: ignore
@@ -109,7 +100,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         data: discord.types.voice.VoiceServerUpdate
     ) -> None:
 
-        __log__.debug(f"Player '{self.channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
+        LOGGER.debug(f"Player '{self.channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
 
         self._voice_server_update_data = data
         await self._dispatch_voice_update()
@@ -119,7 +110,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         data: discord.types.voice.GuildVoiceState
     ) -> None:
 
-        __log__.debug(f"Player '{self.channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
+        LOGGER.debug(f"Player '{self.channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
 
         self._session_id = data.get("session_id")
         await self._dispatch_voice_update()
@@ -156,12 +147,12 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         _type = data["type"]
 
         if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node.provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
-            __log__.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
+            LOGGER.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
             return
 
         event = event(data)
 
-        __log__.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
+        LOGGER.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
         self.bot.dispatch(f"slate_{event.type.lower()}", self, event)
 
     def _update_state(
@@ -190,49 +181,49 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def bot(self) -> BotT:
         """
-        The bot this player is attached to.
+        The bot instance that this player is attached to.
         """
         return self.client
 
     @property
     def voice_channel(self) -> VoiceChannel:
         """
-        The voice channel this player is connected to.
+        The voice channel that this player is connected to.
         """
         return self.channel
 
     @property
     def node(self) -> Node[BotT, PlayerT]:
         """
-        The node this player is attached to.
+        The node that this player is attached to.
         """
         return self._node
 
     @property
     def current_track_id(self) -> str | None:
         """
-        The ID of the current track. This is :class:`None` if no track is playing.
+        The id of the current track. This is ``None`` if no track is playing.
         """
         return self._current_track_id
 
     @property
     def current(self) -> Track | None:
         """
-        The current track. This is :class:`None` if no track is playing.
+        The current track. This is ``None`` if no track is playing.
         """
         return self._current
 
     @property
     def paused(self) -> bool:
         """
-        Whether the player is paused.
+        Whether the player is paused. ``True`` if paused, ``False`` if not.
         """
         return self._paused
 
     @property
     def position(self) -> float:
         """
-        The position of the player. Returns 0 if no track is playing.
+        The position of the player. Returns ``0.0`` if no track is playing.
         """
 
         if not self.is_playing():
@@ -253,38 +244,37 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def filter(self) -> Filter | None:
         """
-        The players current filter, if set.
+        The players current filter. This is ``None`` if no filter has been set yet.
         """
         return self._filter
 
     @property
     def listeners(self) -> list[discord.Member]:
         """
-        A list of members in the players voice channel.
-
-        Notes
-        -----
-        This only returns **non-bot** members who are **not** deafened.
+        Returns a list of non bot members in the players voice channel who are also not deafened.
         """
-        return [member for member in getattr(self.channel, "members", []) if not member.bot and (not member.voice.deaf or not member.voice.self_deaf)]
+        return [
+            member for member in getattr(self.voice_channel, "members", [])
+            if not member.bot and not member.voice.deaf and not member.voice.self_deaf
+        ]
 
     # Utility methods
 
     def is_connected(self) -> bool:
         """
-        Returns :obj:`True` if the player is connected to its voice channel, :obj:`False` otherwise.
+        Whether the player is connected to a voice channel. ``True`` if connected, ``False`` if not.
         """
         return self.channel is not None
 
     def is_playing(self) -> bool:
         """
-        Returns :obj:`True` if the player is playing a track, :obj:`False` otherwise.
+        Whether the player is playing a track. ``True`` if playing, ``False`` otherwise.
         """
         return self.is_connected() is True and self._current is not None
 
     def is_paused(self) -> bool:
         """
-        Returns :obj:`True` if the player is paused, :obj:`False` otherwise.
+        Whether the player is paused. ``True`` if paused, ``False`` otherwise.
         """
         return self._paused is True
 
@@ -308,13 +298,13 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         reconnect
             Unused parameter, does nothing.
         self_mute
-            :obj:`True` if the player should be muted when connected. Defaults to :obj:`False`.
+            ``True`` if the player should be muted when connected. Defaults to ``False``.
         self_deaf
-            :obj:`True` if the player should be deafened when connected. Defaults to :obj:`True`.
+            ``True`` if the player should be deafened when connected. Defaults to ``True``.
         """
 
         await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
-        __log__.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
 
     async def disconnect(
         self,
@@ -322,16 +312,16 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         force: bool = False
     ) -> None:
         """
-        Disconnects the player from its voice channel and removed it from the node.
+        Disconnects the player from its voice channel and removes it from the node.
 
         Parameters
         ----------
         force
-            :obj:`True` if the player should send a request to the provider server to stop the current track even if
-            one is not playing. Defaults to :obj:`False`.
+            ``True`` if the player should send a request to the provider server to stop the current track even if
+            one is not playing. Defaults to ``False``.
         """
 
-        __log__.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
         await self.channel.guild.change_voice_state(channel=None)
 
         if self._node.is_connected():
@@ -342,10 +332,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
                 guild_id=str(self.channel.guild.id)
             )
 
-        try:
+        with contextlib.suppress(KeyError):
             del self._node._players[self.channel.guild.id]
-        except KeyError:
-            pass
 
         self.cleanup()
 
@@ -365,11 +353,11 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         track
             The track to play.
         start_time
-            The start time of the track in milliseconds. Defaults to :obj:`None`.
+            The start time of the track in milliseconds. Defaults to ``None``.
         end_time
-            The end time of the track in milliseconds. Defaults to :obj:`None`.
+            The end time of the track in milliseconds. Defaults to ``None``.
         no_replace
-            :obj:`True` if this track should not replace the current track, if any. Defaults to :obj:`False`.
+            ``True`` if this track should not replace the current track, if any. Defaults to ``False``.
         """
 
         data: dict[str, Any] = {
@@ -395,7 +383,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data=data,
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' started playing track '{track!r}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' started playing track '{track!r}'.")
 
         self._current_track_id = track.id
         self._current = track
@@ -413,8 +401,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         Parameters
         ----------
         force
-            :obj:`True` if the player should send the stop track request to the provider server even if this player's
-            :attr:`~Player.current` attribute is :class:`None`. Defaults to :obj:`False`.
+            ``True`` if the player should send the stop track request to the provider server even if this player's
+            :attr:`~Player.current` attribute is ``None``. Defaults to ``False``.
         """
 
         if self._current is None and not force:
@@ -424,7 +412,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             7,  # stop
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
 
         self._current_track_id = None
         self._current = None
@@ -433,7 +421,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
     async def set_pause(
         self,
-        pause: bool, /,
+        pause: bool,
+        /,
     ) -> None:
         """
         Sets the players pause state.
@@ -441,7 +430,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         Parameters
         ----------
         pause
-            :obj:`True` if the player should be paused, :obj:`False` otherwise.
+            ``True`` if the player should be paused, ``False`` otherwise.
         """
 
         await self._node._send_payload(
@@ -449,7 +438,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data={"state": pause} if self._node.provider is Provider.OBSIDIAN else {"pause": pause},
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
 
         self._paused = pause
 
@@ -467,8 +456,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         filter
             The filter to set.
         set_position
-            :obj:`True` if the player should set its position to the current position which applied filters instantly.
-            Defaults to :obj:`True`.
+            ``True`` if the player should set its position to the current position which applies filters instantly.
+            Defaults to ``True``.
         """
 
         _payload = filter._construct_payload(self._node.provider)
@@ -478,7 +467,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data={"filters": _payload} if self._node.provider is Provider.OBSIDIAN else _payload,
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
 
         self._filter = filter
 
@@ -499,8 +488,8 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         position
             The position to set, in milliseconds.
         force
-            :obj:`True` if the player should send the set position request to the provider server even if this player's
-            :attr:`~Player.current` attribute is :class:`None`. Defaults to :obj:`False`.
+            ``True`` if the player should send the set position request to the provider server even if this player's
+            :attr:`~Player.current` attribute is ``None``. Defaults to ``False``.
         """
 
         if (self._current is None or 0 > position > self._current.length) and not force:
@@ -511,7 +500,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data={"position": round(position)},
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
 
         self._last_update = time.time() * 1000
         self._position = position

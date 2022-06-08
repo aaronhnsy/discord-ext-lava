@@ -19,6 +19,8 @@ Result = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track | lis
 
 class Search:
 
+    __slots__ = ("_source", "_type", "_result", "_tracks",)
+
     def __init__(
         self,
         *,

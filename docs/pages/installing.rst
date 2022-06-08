@@ -33,14 +33,14 @@ This installs the latest stable release of slate from github
 
         python3 -m pip install -U git+https://github.com/Axelware/slate.git@v0.3.1
 
-Installing Developement Version
+Installing Development Version
 -------------------------------
 This installs the master branch from github
 
 .. admonition:: Warning
     :class: attention
 
-    Installing the developement version is not recommended as the it might have bugs.
+    Installing the development version is not recommended as the it might have bugs.
 
 .. tab:: Windows
 
