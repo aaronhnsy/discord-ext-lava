@@ -2,7 +2,7 @@
 name = "aiohttp"
 version = "3.8.1"
 description = "Async http client/server framework (asyncio)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -22,7 +22,7 @@ speedups = ["aiodns", "brotli", "cchardet"]
 name = "aiosignal"
 version = "1.2.0"
 description = "aiosignal: a list of registered asynchronous callbacks"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -33,7 +33,7 @@ frozenlist = ">=1.1.0"
 name = "alabaster"
 version = "0.7.12"
 description = "A configurable sidebar-enabled Sphinx theme"
-category = "dev"
+category = "main"
 optional = true
 python-versions = "*"
 
@@ -41,7 +41,7 @@ python-versions = "*"
 name = "async-timeout"
 version = "4.0.2"
 description = "Timeout context manager for asyncio programs"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -49,7 +49,7 @@ python-versions = ">=3.6"
 name = "attrs"
 version = "21.4.0"
 description = "Classes Without Boilerplate"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -63,7 +63,7 @@ tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>
 name = "babel"
 version = "2.10.1"
 description = "Internationalization utilities"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -74,7 +74,7 @@ pytz = ">=2015.7"
 name = "beautifulsoup4"
 version = "4.11.1"
 description = "Screen-scraping library"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6.0"
 
@@ -89,7 +89,7 @@ lxml = ["lxml"]
 name = "certifi"
 version = "2022.5.18.1"
 description = "Python package for providing Mozilla's CA Bundle."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -97,7 +97,7 @@ python-versions = ">=3.6"
 name = "charset-normalizer"
 version = "2.0.12"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5.0"
 
@@ -108,16 +108,16 @@ unicode_backport = ["unicodedata2"]
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "discord.py"
-version = "2.0.0a4329+g75d57ab3"
+version = "2.0.0a4335+gae51d584"
 description = "A Python wrapper for the Discord API"
-category = "dev"
-optional = true
+category = "main"
+optional = false
 python-versions = ">=3.8.0"
 develop = false
 
@@ -125,7 +125,7 @@ develop = false
 aiohttp = ">=3.7.4,<4"
 
 [package.extras]
-docs = ["sphinx (==4.4.0)", "sphinxcontrib-trio (==1.1.2)", "sphinxcontrib-websupport", "typing-extensions"]
+docs = ["sphinx (==4.4.0)", "sphinxcontrib_trio (==1.1.2)", "sphinxcontrib-websupport", "typing-extensions"]
 speed = ["orjson (>=3.5.4)", "aiodns (>=1.1)", "brotli", "cchardet"]
 test = ["coverage", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock"]
 voice = ["PyNaCl (>=1.3.0,<1.6)"]
@@ -134,13 +134,13 @@ voice = ["PyNaCl (>=1.3.0,<1.6)"]
 type = "git"
 url = "https://github.com/Rapptz/discord.py"
 reference = "HEAD"
-resolved_reference = "75d57ab3cee640a5960d4a9c78ee5003c14d11a1"
+resolved_reference = "be6db2025580fd9e6298e5ad2bc0b93919f6c6a9"
 
 [[package]]
 name = "docutils"
 version = "0.18.1"
 description = "Docutils -- Python Documentation Utilities"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -148,7 +148,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 name = "frozenlist"
 version = "1.3.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -156,7 +156,7 @@ python-versions = ">=3.7"
 name = "furo"
 version = "2022.6.4.1"
 description = "A clean customisable Sphinx documentation theme."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.7"
 
@@ -170,7 +170,7 @@ sphinx-basic-ng = "*"
 name = "idna"
 version = "3.3"
 description = "Internationalized Domain Names in Applications (IDNA)"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 
@@ -178,7 +178,7 @@ python-versions = ">=3.5"
 name = "imagesize"
 version = "1.3.0"
 description = "Getting image size from png/jpeg/jpeg2000/gif file"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -200,7 +200,7 @@ plugins = ["setuptools"]
 name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.7"
 
@@ -214,7 +214,7 @@ i18n = ["Babel (>=2.7)"]
 name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.7"
 
@@ -222,7 +222,7 @@ python-versions = ">=3.7"
 name = "multidict"
 version = "6.0.2"
 description = "multidict implementation"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -230,7 +230,7 @@ python-versions = ">=3.7"
 name = "packaging"
 version = "21.3"
 description = "Core utilities for Python packages"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -241,7 +241,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 name = "pygments"
 version = "2.12.0"
 description = "Pygments is a syntax highlighting package written in Python."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -249,7 +249,7 @@ python-versions = ">=3.6"
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6.8"
 
@@ -260,33 +260,33 @@ diagrams = ["railroad-diagrams", "jinja2"]
 name = "pytz"
 version = "2022.1"
 description = "World timezone definitions, modern and historical"
-category = "dev"
+category = "main"
 optional = true
 python-versions = "*"
 
 [[package]]
 name = "requests"
-version = "2.27.1"
+version = "2.28.0"
 description = "Python HTTP for Humans."
-category = "dev"
+category = "main"
 optional = true
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.7, <4"
 
 [package.dependencies]
 certifi = ">=2017.4.17"
-charset-normalizer = {version = ">=2.0.0,<2.1.0", markers = "python_version >= \"3\""}
-idna = {version = ">=2.5,<4", markers = "python_version >= \"3\""}
+charset-normalizer = ">=2.0.0,<2.1.0"
+idna = ">=2.5,<4"
 urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
-socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
+socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
 name = "snowballstemmer"
 version = "2.2.0"
 description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
-category = "dev"
+category = "main"
 optional = true
 python-versions = "*"
 
@@ -294,7 +294,7 @@ python-versions = "*"
 name = "soupsieve"
 version = "2.3.2.post1"
 description = "A modern CSS selector implementation for Beautiful Soup."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -302,7 +302,7 @@ python-versions = ">=3.6"
 name = "sphinx"
 version = "5.0.1"
 description = "Python documentation generator"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -333,7 +333,7 @@ test = ["pytest (>=4.6)", "html5lib", "cython", "typed-ast"]
 name = "sphinx-basic-ng"
 version = "0.0.1a11"
 description = "A modern skeleton for Sphinx themes."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.7"
 
@@ -347,7 +347,7 @@ docs = ["furo", "myst-parser", "sphinx-copybutton", "sphinx-inline-tabs", "ipyth
 name = "sphinx-copybutton"
 version = "0.5.0"
 description = "Add a copy button to each of your code cells."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -362,7 +362,7 @@ rtd = ["sphinx", "ipython", "myst-nb", "sphinx-book-theme"]
 name = "sphinx-inline-tabs"
 version = "2022.1.2b11"
 description = "Add inline tabbed content to your Sphinx documentation."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.8"
 
@@ -377,7 +377,7 @@ test = ["pytest", "pytest-cov", "pytest-xdist"]
 name = "sphinxcontrib-applehelp"
 version = "1.0.2"
 description = "sphinxcontrib-applehelp is a sphinx extension which outputs Apple help books"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.5"
 
@@ -389,7 +389,7 @@ test = ["pytest"]
 name = "sphinxcontrib-devhelp"
 version = "1.0.2"
 description = "sphinxcontrib-devhelp is a sphinx extension which outputs Devhelp document."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.5"
 
@@ -401,7 +401,7 @@ test = ["pytest"]
 name = "sphinxcontrib-htmlhelp"
 version = "2.0.0"
 description = "sphinxcontrib-htmlhelp is a sphinx extension which renders HTML help files"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.6"
 
@@ -413,7 +413,7 @@ test = ["pytest", "html5lib"]
 name = "sphinxcontrib-jsmath"
 version = "1.0.1"
 description = "A sphinx extension which renders display math in HTML via JavaScript"
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.5"
 
@@ -424,7 +424,7 @@ test = ["pytest", "flake8", "mypy"]
 name = "sphinxcontrib-qthelp"
 version = "1.0.3"
 description = "sphinxcontrib-qthelp is a sphinx extension which outputs QtHelp document."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.5"
 
@@ -436,7 +436,7 @@ test = ["pytest"]
 name = "sphinxcontrib-serializinghtml"
 version = "1.1.5"
 description = "sphinxcontrib-serializinghtml is a sphinx extension which outputs \"serialized\" HTML files (json and pickle)."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=3.5"
 
@@ -448,7 +448,7 @@ test = ["pytest"]
 name = "sphinxcontrib-trio"
 version = "1.1.2"
 description = "Make Sphinx better at documenting Python functions and methods"
-category = "dev"
+category = "main"
 optional = true
 python-versions = "*"
 
@@ -459,7 +459,7 @@ sphinx = ">=1.7"
 name = "spoti-py"
 version = "0.1.3"
 description = "An async wrapper for the Spotify Web API."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.10.0,<4.0.0"
 
@@ -474,7 +474,7 @@ docs = ["sphinx (>=4.3.1,<5.0.0)", "sphinxcontrib-trio (>=1.1.2,<2.0.0)", "sphin
 name = "typing-extensions"
 version = "4.2.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -482,7 +482,7 @@ python-versions = ">=3.7"
 name = "urllib3"
 version = "1.26.9"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
-category = "dev"
+category = "main"
 optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
@@ -495,7 +495,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 name = "yarl"
 version = "1.7.2"
 description = "Yet another URL library"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -504,13 +504,12 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [extras]
-dev = ["discord.py"]
 docs = ["sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinx-inline-tabs", "furo"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10.0"
-content-hash = "ab9fea188324dcea57b4c1225ba1a91de5e97cea933a38af3b4076d90e2b740d"
+content-hash = "d3af34fb4f38303c40f3d833085f4e3bde15f700e39e473b539fa11c1f530a0e"
 
 [metadata.files]
 aiohttp = [
@@ -829,8 +828,8 @@ pytz = [
     {file = "pytz-2022.1.tar.gz", hash = "sha256:1e760e2fe6a8163bc0b3d9a19c4f84342afa0a2affebfaa84b01b978a02ecaa7"},
 ]
 requests = [
-    {file = "requests-2.27.1-py2.py3-none-any.whl", hash = "sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d"},
-    {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
+    {file = "requests-2.28.0-py3-none-any.whl", hash = "sha256:bc7861137fbce630f17b03d3ad02ad0bf978c844f3536d0edda6499dafce2b6f"},
+    {file = "requests-2.28.0.tar.gz", hash = "sha256:d568723a7ebd25875d8d1eaf5dfa068cd2fc8194b2e483d7b1f7c81918dbec6b"},
 ]
 snowballstemmer = [
     {file = "snowballstemmer-2.2.0-py2.py3-none-any.whl", hash = "sha256:c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a"},
