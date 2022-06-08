@@ -7,19 +7,16 @@ import contextlib
 import random
 from collections import deque
 from collections.abc import Iterator
-from typing import Generic, SupportsIndex, TypeVar, overload
+from typing import Generic, SupportsIndex, overload
 
 # Local
 from .objects.enums import QueueLoopMode
-from .objects.track import Track
+from .types import QueueItemT
 
 
 __all__ = (
     "Queue",
 )
-
-
-QueueItemT = TypeVar("QueueItemT", bound=Track)
 
 
 class Queue(Generic[QueueItemT]):

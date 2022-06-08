@@ -4,16 +4,11 @@ from __future__ import annotations
 # Standard Library
 import random
 import re
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, Literal
 
 # Local
 from .objects.enums import Source
-
-
-if TYPE_CHECKING:
-    # Standard Library
-    from collections.abc import Callable
-    from typing import Any, Literal
 
 
 __all__ = (
