@@ -204,7 +204,7 @@ class Node(Generic[BotT, PlayerT]):
                 await self._send_payload(
                     2,  # configureResuming
                     data={
-                        "key":     self.resume_key,
+                        "key": self.resume_key,
                         "timeout": 120
                     }
                 )

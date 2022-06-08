@@ -27,6 +27,7 @@ class Rotation:
         *,
         speed: float = 5.0
     ) -> None:
+
         self.speed: float = speed
 
     def __repr__(self) -> str:

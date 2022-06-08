@@ -115,18 +115,16 @@ autodoc_default_options: dict[str, Any] = {
 autodoc_typehints: str = "signature"
 autodoc_type_aliases: dict[str, str] = {
     "VoiceChannel": "~discord.VoiceChannel | ~discord.StageChannel",
-    "BotT": "~discord.ext.commands.Bot",
-    "ContextT": "~discord.ext.commands.Context",
-    "PlayerT": "~slate.Player",
-    "QueueItemT": "~slate.Track",
+    "BotT":         "~discord.ext.commands.Bot",
+    "ContextT":     "~discord.ext.commands.Context",
+    "PlayerT":      "~slate.Player",
+    "QueueItemT":   "~slate.Track",
 }
 autodoc_typehints_format: str = "short"
-
 
 # napoleon
 napoleon_use_admonition_for_examples: bool = True
 napoleon_use_admonition_for_notes: bool = True
-
 
 # intersphinx
 intersphinx_mapping: dict[str, tuple[str, None]] = {
@@ -135,13 +133,11 @@ intersphinx_mapping: dict[str, tuple[str, None]] = {
     "discord": ("https://discordpy.readthedocs.io/en/latest", None),
 }
 
-
 # ext links
 extlinks: dict[str, tuple[str, str]] = {
     "issue": (f"{_GITHUB}/issues/%s", "GH-"),
 }
 extlinks_detect_hardcoded_links: bool = True
-
 
 # resource links
 resource_links: dict[str, str] = {

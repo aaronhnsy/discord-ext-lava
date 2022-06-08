@@ -1,19 +1,19 @@
 [build-system]
-requires        = ["poetry_core>=1.0.0"]
-build-backend   = "poetry.core.masonry.api"
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry]
-name            = "slate"
-version         = "0.3.1"
-description     = "A discord.py compatible wrapper for lavalink-like applications."
-authors         = ["Axel <axelancerr@gmail.com>"]
-license         = "MIT"
-readme          = "README.md"
-homepage        = "https://github.com/Axelware/slate"
-repository      = "https://github.com/Axelware/slate"
-documentation   = "https://slate-py.readthedocs.io/en/latest/"
-keywords        = ["obsidian", "lavalink", "api", "wrapper", "async"]
+name = "slate"
+version = "0.3.1"
+description = "A discord.py compatible wrapper for lavalink-like applications."
+authors = ["Axel <axelancerr@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/Axelware/slate"
+repository = "https://github.com/Axelware/slate"
+documentation = "https://slate-py.readthedocs.io/en/latest/"
+keywords = ["obsidian", "lavalink", "api", "wrapper", "async"]
 classifiers = [
     "Framework :: AsyncIO",
     "Topic :: Software Development",
@@ -38,19 +38,19 @@ include = [
 
 
 [tool.poetry.dependencies]
-python              = "^3.10.0"
+python = "^3.10.0"
 
-aiohttp             = { version = "^3.8.0" }
-typing_extensions   = { version = "^4.2.0" }
-"spoti.py"          = { version = "^0.1.0" }
+aiohttp = { version = "^3.8.0" }
+typing_extensions = { version = "^4.2.0" }
+"spoti.py" = { version = "^0.1.0" }
 
-"discord.py"        = { git = "https://github.com/Rapptz/discord.py", optional = true }
+"discord.py" = { git = "https://github.com/Rapptz/discord.py", optional = true }
 
-sphinx              = { version = "^5.0.0", optional = true }
-sphinxcontrib-trio  = { version = "*",      optional = true }
-sphinx-copybutton   = { version = "*",      optional = true }
-sphinx-inline-tabs  = { version = "*",      optional = true }
-furo                = { version = "*",      optional = true }
+sphinx = { version = "^5.0.0", optional = true }
+sphinxcontrib-trio = { version = "*", optional = true }
+sphinx-copybutton = { version = "*", optional = true }
+sphinx-inline-tabs = { version = "*", optional = true }
+furo = { version = "*", optional = true }
 
 
 [tool.poetry.dev-dependencies]
@@ -72,22 +72,22 @@ docs = [
 
 [tool.poetry.urls]
 "Issue Tracker" = "https://github.com/Axelware/slate/issues"
-"Discord"       = "https://discord.com/invite/w9f6NkQbde"
+"Discord" = "https://discord.com/invite/w9f6NkQbde"
 
 
 [tool.isort]
-line_length                 = 120
-multi_line_output           = 3
-lines_after_imports         = 2
-combine_star                = true
-star_first                  = true
-include_trailing_comma      = true
-dedup_headings              = true
-import_heading_future       = "Future"
-import_heading_stdlib       = "Standard Library"
-import_heading_thirdparty   = "Packages"
-import_heading_firstparty   = "Local"
-import_heading_localfolder  = "Local"
+line_length = 120
+multi_line_output = 3
+lines_after_imports = 2
+combine_star = true
+star_first = true
+include_trailing_comma = true
+dedup_headings = true
+import_heading_future = "Future"
+import_heading_stdlib = "Standard Library"
+import_heading_thirdparty = "Packages"
+import_heading_firstparty = "Local"
+import_heading_localfolder = "Local"
 
 
 [tool.pyright]
@@ -95,8 +95,8 @@ include = [
     "slate",
     "tests"
 ]
-pythonVersion               = "3.10"
-typeCheckingMode            = "strict"
-useLibraryCodeForTypes      = true
-reportUnknownMemberType     = false
-reportPrivateUsage          = false
+pythonVersion = "3.10"
+typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
+reportUnknownMemberType = false
+reportPrivateUsage = false

@@ -28,6 +28,7 @@ class LowPass:
         *,
         smoothing: float = 20.0
     ) -> None:
+
         self.smoothing: float = smoothing
 
     def __repr__(self) -> str:

@@ -47,5 +47,5 @@ class Timescale:
         return {
             "pitch": self.pitch,
             "speed": self.speed,
-            "rate": self.rate,
+            "rate":  self.rate,
         }

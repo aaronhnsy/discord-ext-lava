@@ -59,6 +59,7 @@ class Distortion:
         offset: float = 0.0,
         scale: float = 1.0
     ) -> None:
+
         self.sin_offset: float = sin_offset
         self.sin_scale: float = sin_scale
         self.cos_offset: float = cos_offset
