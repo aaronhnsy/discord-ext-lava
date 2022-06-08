@@ -18,7 +18,9 @@ from .types import BotT, JSONDumps, JSONLoads, PlayerT
 __all__ = (
     "Pool",
 )
-__log__: logging.Logger = logging.getLogger("slate.pool")
+
+
+LOGGER: logging.Logger = logging.getLogger("slate.pool")
 
 
 class Pool(Generic[BotT, PlayerT]):
@@ -133,7 +135,7 @@ class Pool(Generic[BotT, PlayerT]):
         await node.connect()
 
         cls.nodes[identifier] = node
-        __log__.info(f"Added node '{node.identifier}' to the pool.")
+        LOGGER.info(f"Added node '{node.identifier}' to the pool.")
 
         return node
 
@@ -197,4 +199,4 @@ class Pool(Generic[BotT, PlayerT]):
         await node.disconnect(force=force)
 
         del cls.nodes[node.identifier]
-        __log__.info(f"Removed node '{identifier}' from the pool.")
+        LOGGER.info(f"Removed node '{identifier}' from the pool.")

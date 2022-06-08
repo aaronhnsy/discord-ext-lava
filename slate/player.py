@@ -25,7 +25,9 @@ from .utils import MISSING
 __all__ = (
     "Player",
 )
-__log__: logging.Logger = logging.getLogger("slate.player")
+
+
+LOGGER: logging.Logger = logging.getLogger("slate.player")
 
 
 OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
@@ -98,7 +100,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         data: discord.types.voice.VoiceServerUpdate
     ) -> None:
 
-        __log__.debug(f"Player '{self.channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
+        LOGGER.debug(f"Player '{self.channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
 
         self._voice_server_update_data = data
         await self._dispatch_voice_update()
@@ -108,7 +110,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         data: discord.types.voice.GuildVoiceState
     ) -> None:
 
-        __log__.debug(f"Player '{self.channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
+        LOGGER.debug(f"Player '{self.channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
 
         self._session_id = data.get("session_id")
         await self._dispatch_voice_update()
@@ -145,12 +147,12 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         _type = data["type"]
 
         if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node.provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
-            __log__.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
+            LOGGER.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
             return
 
         event = event(data)
 
-        __log__.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
+        LOGGER.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
         self.bot.dispatch(f"slate_{event.type.lower()}", self, event)
 
     def _update_state(
@@ -302,7 +304,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         """
 
         await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
-        __log__.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
 
     async def disconnect(
         self,
@@ -319,7 +321,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             one is not playing. Defaults to ``False``.
         """
 
-        __log__.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
         await self.channel.guild.change_voice_state(channel=None)
 
         if self._node.is_connected():
@@ -381,7 +383,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data=data,
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' started playing track '{track!r}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' started playing track '{track!r}'.")
 
         self._current_track_id = track.id
         self._current = track
@@ -410,7 +412,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             7,  # stop
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
 
         self._current_track_id = None
         self._current = None
@@ -436,7 +438,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data={"state": pause} if self._node.provider is Provider.OBSIDIAN else {"pause": pause},
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
 
         self._paused = pause
 
@@ -465,7 +467,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data={"filters": _payload} if self._node.provider is Provider.OBSIDIAN else _payload,
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
 
         self._filter = filter
 
@@ -498,7 +500,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             data={"position": round(position)},
             guild_id=str(self.channel.guild.id)
         )
-        __log__.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
+        LOGGER.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
 
         self._last_update = time.time() * 1000
         self._position = position

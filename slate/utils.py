@@ -22,8 +22,7 @@ SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
     r"(spotify)"
     r"(.com/|:)(?P<type>album|playlist|artist|track)"
     r"([/:])(?P<id>[a-zA-Z0-9]+)"
-    r"([?&]si=[a-zA-Z0-9]+)?"
-    r"([?&]dl_branch=[0-9]+)?"
+    r"([?&]si=[a-zA-Z0-9]+)?([?&]dl_branch=[0-9]+)?"
 )
 
 OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {

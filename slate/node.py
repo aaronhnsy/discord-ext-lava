@@ -41,7 +41,9 @@ from .utils import (
 __all__ = (
     "Node",
 )
-__log__: logging.Logger = logging.getLogger("slate.node")
+
+
+LOGGER: logging.Logger = logging.getLogger("slate.node")
 
 
 class Node(Generic[BotT, PlayerT]):
@@ -189,7 +191,7 @@ class Node(Generic[BotT, PlayerT]):
             if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
                 raise InvalidNodePassword(f"Node '{self.identifier}' failed to connect due to an invalid password.")
 
-            __log__.error((message := f"Node '{self.identifier}' failed to connect."))
+            LOGGER.error((message := f"Node '{self.identifier}' failed to connect."))
             if raise_on_failure:
                 raise NodeConnectionError(message)
 
@@ -209,7 +211,7 @@ class Node(Generic[BotT, PlayerT]):
                     }
                 )
 
-            __log__.info(f"Node '{self.identifier}' connected.")
+            LOGGER.info(f"Node '{self.identifier}' connected.")
 
     async def disconnect(
         self,
@@ -238,7 +240,7 @@ class Node(Generic[BotT, PlayerT]):
 
         self._websocket = None
 
-        __log__.info(f"Node '{self.identifier}' disconnected.")
+        LOGGER.info(f"Node '{self.identifier}' disconnected.")
 
     # Rest
 
@@ -278,7 +280,7 @@ class Node(Generic[BotT, PlayerT]):
                 ) as response:
 
                     if 200 <= response.status < 300:
-                        __log__.info(f"'{method}' @ '{response.url}' -> '{response.status}'")
+                        LOGGER.info(f"'{method}' @ '{response.url}' -> '{response.status}'")
                         return await response.json(loads=self._json_loads)
 
             except OSError as error:
@@ -287,12 +289,12 @@ class Node(Generic[BotT, PlayerT]):
 
             delay = 1 + tries * 2
 
-            __log__.warning(f"'{method}' @ '{response.url}' -> '{response.status}', retrying in {delay}s.")
+            LOGGER.warning(f"'{method}' @ '{response.url}' -> '{response.status}', retrying in {delay}s.")
             await asyncio.sleep(delay)
 
         message = f"'{method}' @ '{response.url}' -> '{response.status}', all five retries used."
 
-        __log__.error(message)
+        LOGGER.error(message)
         raise HTTPError(response, message=message)
 
     async def _spotify_search(
@@ -442,7 +444,7 @@ class Node(Generic[BotT, PlayerT]):
             if message.type is aiohttp.WSMsgType.CLOSED:
 
                 delay = backoff.calculate()
-                __log__.warning(f"Node '{self.identifier}'s websocket was closed, attempting reconnection in {round(delay)} seconds.")
+                LOGGER.warning(f"Node '{self.identifier}'s websocket was closed, attempting reconnection in {round(delay)} seconds.")
 
                 await asyncio.sleep(delay)
 
@@ -461,7 +463,7 @@ class Node(Generic[BotT, PlayerT]):
         data: dict[str, Any]
     ) -> None:
 
-        __log__.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
+        LOGGER.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
 
         if op in (1, "stats"):
             self._stats = None  # Stats(data)
@@ -472,7 +474,7 @@ class Node(Generic[BotT, PlayerT]):
         if op in (4, "event"):
 
             if not player:
-                __log__.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
+                LOGGER.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
             else:
                 player._dispatch_event(data)
             return
@@ -480,12 +482,12 @@ class Node(Generic[BotT, PlayerT]):
         if op in (5, "playerUpdate"):
 
             if not player:
-                __log__.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
+                LOGGER.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
             else:
                 player._update_state(data)
             return
 
-        __log__.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
+        LOGGER.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
 
     async def _send_payload(
         self,
@@ -521,4 +523,4 @@ class Node(Generic[BotT, PlayerT]):
             _json = _json.decode("utf-8")
 
         await self._websocket.send_str(_json)
-        __log__.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
+        LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
