@@ -28,6 +28,8 @@ class LavalinkChannelMixData(TypedDict):
 
 class ChannelMix:
 
+    __slots__ = ("left_to_left", "left_to_right", "right_to_left", "right_to_right",)
+
     def __init__(
         self,
         *,
@@ -47,9 +49,9 @@ class ChannelMix:
             )
 
         self.left_to_left: float = left_to_left
-        self.right_to_right: float = right_to_right
         self.left_to_right: float = left_to_right
         self.right_to_left: float = right_to_left
+        self.right_to_right: float = right_to_right
 
     def __repr__(self) -> str:
         return f"<slate.ChannelMix " \

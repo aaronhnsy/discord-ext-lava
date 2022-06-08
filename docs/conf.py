@@ -106,40 +106,38 @@ html_static_path: list[str] = [
 ##############
 
 # autodoc
-autodoc_class_signature: str = "separated"
+autoclass_content: str = "class"
+autodoc_class_signature: str = "mixed"
 autodoc_member_order: str = "bysource"
 autodoc_default_options: dict[str, Any] = {
     "undoc-members": True
 }
 autodoc_typehints: str = "signature"
-autodoc_typehints_description_target: str = "documented"
 autodoc_type_aliases: dict[str, str] = {
-    # "BotT": "~discord.ext.commands.Bot | ~discord.ext.commands.AutoShardedBot",
-    # "ContextT": "~discord.ext.commands.Context",
-    # "PlayerT": "~slate.Player",
+    "VoiceChannel": "~discord.VoiceChannel | ~discord.StageChannel",
+    "BotT":         "~discord.ext.commands.Bot",
+    "ContextT":     "~discord.ext.commands.Context",
+    "PlayerT":      "~slate.Player",
+    "QueueItemT":   "~slate.Track",
 }
 autodoc_typehints_format: str = "short"
-
 
 # napoleon
 napoleon_use_admonition_for_examples: bool = True
 napoleon_use_admonition_for_notes: bool = True
 
-
 # intersphinx
 intersphinx_mapping: dict[str, tuple[str, None]] = {
     "aiohttp": ("https://docs.aiohttp.org/en/stable/", None),
     "python":  ("https://docs.python.org/3.10", None),
-    "discord": ("https://discordpy.readthedocs.io/en/master", None),
+    "discord": ("https://discordpy.readthedocs.io/en/latest", None),
 }
-
 
 # ext links
 extlinks: dict[str, tuple[str, str]] = {
     "issue": (f"{_GITHUB}/issues/%s", "GH-"),
 }
 extlinks_detect_hardcoded_links: bool = True
-
 
 # resource links
 resource_links: dict[str, str] = {

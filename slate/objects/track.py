@@ -19,6 +19,22 @@ __all__ = (
 
 class Track:
 
+    __slots__ = (
+        "id",
+        "title",
+        "author",
+        "uri",
+        "identifier",
+        "length",
+        "position",
+        "source",
+        "_artwork_url",
+        "isrc",
+        "_is_stream",
+        "_is_seekable",
+        "extras",
+    )
+
     def __init__(
         self,
         *,

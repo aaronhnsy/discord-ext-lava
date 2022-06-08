@@ -53,6 +53,20 @@ class LavalinkFilterPayload(TypedDict, total=False):
 
 class Filter:
 
+    __slots__ = (
+        "filter",
+        "channel_mix",
+        "distortion",
+        "equalizer",
+        "karaoke",
+        "low_pass",
+        "rotation",
+        "timescale",
+        "tremolo",
+        "vibrato",
+        "volume",
+    )
+
     def __init__(
         self,
         filter: Filter | None = None,
@@ -87,7 +101,7 @@ class Filter:
 
     def _construct_obsidian_payload(self) -> ObsidianFilterPayload:
 
-        payload: ObsidianFilterPayload = {}
+        payload: ObsidianFilterPayload = self.filter._construct_payload(Provider.OBSIDIAN) if self.filter else {}  # type: ignore
 
         if self.channel_mix:
             payload["channel_mix"] = self.channel_mix._construct_obsidian_payload()
@@ -104,7 +118,7 @@ class Filter:
 
     def _construct_lavalink_payload(self) -> LavalinkFilterPayload:
 
-        payload: LavalinkFilterPayload = {}
+        payload: LavalinkFilterPayload = self.filter._construct_payload(Provider.LAVALINK) if self.filter else {}  # type: ignore
 
         if self.channel_mix:
             payload["channelMix"] = self.channel_mix._construct_lavalink_payload()

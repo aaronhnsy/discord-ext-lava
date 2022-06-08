@@ -41,83 +41,48 @@ from .utils import (
 __all__ = (
     "Node",
 )
-__log__: logging.Logger = logging.getLogger("slate.node")
+
+
+LOGGER: logging.Logger = logging.getLogger("slate.node")
 
 
 class Node(Generic[BotT, PlayerT]):
     """
-    Node's handle interactions between your bot and a provider server such as obsidian or lavalink. This includes
+    A Node handles interactions between your bot and a provider server such as obsidian or lavalink. This includes
     connecting to the websocket, searching for tracks, and managing player state.
+
+    See :meth:`Pool.create_node` for more information about creating a node.
     """
 
     def __init__(
         self,
         *,
         bot: BotT,
-        session: aiohttp.ClientSession | None = None,
-        # Connection information
         provider: Provider,
         identifier: str,
         host: str,
         port: str,
         password: str,
-        secure: bool = False,
         resume_key: str | None = None,
         # URLs
         rest_url: str | None = None,
         ws_url: str | None = None,
-        # JSON callables
+        # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
         # Spotify
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
     ) -> None:
-        """
-        Parameters
-        ----------
-        bot
-            The bot instance that this node belongs to.
-        session
-            The aiohttp client session to use for websocket/rest communication. Optional, if :class:`None` (default), a new one will be created.
-        provider
-            An enum denoting which external application this node is connecting to, such as :attr:`slate.Provider.OBSIDIAN`.
-        identifier
-            A unique identifier for this node.
-        host
-            The hostname of the provider server.
-        port
-            The port of the provider server.
-        password
-            The password for the provider server.
-        secure
-            Whether to use secure connections for websocket/rest communication. Optional, defaults to :obj:`False`.
-        resume_key
-            A resuming key which is passed to the provider server when connecting. Optional, defaults to :class:`None`.
-        rest_url
-            The URL to the provider server's REST API. Optional, if :class:`None` (default), the URL will be constructed from the provided host and port.
-        ws_url
-            The URL to the provider server's websocket. Optional, if :class:`None` (default), the URL will be constructed from the provided host and port.
-        json_dumps
-            A callable which will be used to serialize JSON data. Optional, if :class:`None` (default), :func:`json.dumps` will be used.
-        json_loads
-            A callable which will be used to deserialize JSON data. Optional, if :class:`None` (default), :func:`json.loads` will be used.
-        spotify_client_id
-            The client ID from a Spotify API application. Optional, if :class:`None` (default), Spotify integration will be disabled.
-        spotify_client_secret
-            The client secret from a Spotify API application. Optional, if :class:`None` (default), Spotify integration will be disabled.
-        """
 
         self._bot: BotT = bot
-        self._session: aiohttp.ClientSession | None = session
 
-        self.provider: Provider = provider
-        self.identifier: str = identifier
-        self.host: str = host
-        self.port: str = port
-        self.password: str = password
-        self.secure: bool = secure
-        self.resume_key: str | None = resume_key
+        self._provider: Provider = provider
+        self._identifier: str = identifier
+        self._host: str = host
+        self._port: str = port
+        self._password: str = password
+        self._resume_key: str | None = resume_key
 
         self._rest_url: str | None = rest_url
         self._ws_url: str | None = ws_url
@@ -128,9 +93,9 @@ class Node(Generic[BotT, PlayerT]):
         self._spotify: spotipy.Client | None = spotipy.Client(
             client_id=spotify_client_id,
             client_secret=spotify_client_secret,
-            session=self._session
         ) if (spotify_client_id and spotify_client_secret) else None
 
+        self._session: aiohttp.ClientSession = MISSING
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
 
@@ -144,28 +109,42 @@ class Node(Generic[BotT, PlayerT]):
     @property
     def bot(self) -> BotT:
         """
-        The bot instance that this node belongs to.
+        The bot instance that this node is attached to.
         """
         return self._bot
 
     @property
+    def provider(self) -> Provider:
+        """
+        An enum value indicating which external application this node is attached to.
+        """
+        return self._provider
+
+    @property
+    def identifier(self) -> str:
+        """
+        A unique identifier for this node.
+        """
+        return self._identifier
+
+    @property
     def rest_url(self) -> str:
         """
-        The URL used for rest requests to the provider server.
+        The url used to make HTTP requests to the provider server.
         """
-        return self._rest_url or f"http://{self.host}:{self.port}"
+        return self._rest_url or f"http://{self._host}:{self._port}"
 
     @property
     def ws_url(self) -> str:
         """
-        The URL used to connect to the provider server's websocket.
+        The url used for WebSocket connections with the provider server.
         """
-        return self._ws_url or f"ws://{self.host}:{self.port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
+        return self._ws_url or f"ws://{self._host}:{self._port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
 
     @property
     def players(self) -> dict[int, PlayerT]:
         """
-        A mapping of guild ID to player instance.
+        A mapping of guild id to player instance that this node is managing.
         """
         return self._players
 
@@ -173,7 +152,7 @@ class Node(Generic[BotT, PlayerT]):
 
     def is_connected(self) -> bool:
         """
-        Returns :obj:`True` if the node is connected to the provider server, :obj:`False` otherwise.
+        Returns ``True`` if the node is connected to the provider server, ``False`` otherwise.
         """
         return self._websocket is not None and self._websocket.closed is False
 
@@ -190,18 +169,18 @@ class Node(Generic[BotT, PlayerT]):
         Arguments
         ---------
         raise_on_failure: bool
-            Whether to raise an exception if the connection fails. Defaults to :obj:`False`.
+            Whether to raise an exception if the connection fails. Defaults to ``False``.
         """
 
         assert self._bot.user is not None
 
         headers = {
-            "Authorization": self.password,
+            "Authorization": self._password,
             "User-Id":       str(self._bot.user.id),
             "Client-Name":   "Slate",
         }
-        if self.resume_key:
-            headers["Resume-Key"] = self.resume_key
+        if self._resume_key:
+            headers["Resume-Key"] = self._resume_key
 
         session = await self._get_session()
 
@@ -213,7 +192,7 @@ class Node(Generic[BotT, PlayerT]):
             if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
                 raise InvalidNodePassword(f"Node '{self.identifier}' failed to connect due to an invalid password.")
 
-            __log__.error((message := f"Node '{self.identifier}' failed to connect."))
+            LOGGER.error((message := f"Node '{self.identifier}' failed to connect."))
             if raise_on_failure:
                 raise NodeConnectionError(message)
 
@@ -224,16 +203,16 @@ class Node(Generic[BotT, PlayerT]):
             if self._task is None:
                 self._task = asyncio.create_task(self._listen())
 
-            if self.resume_key:
+            if self._resume_key:
                 await self._send_payload(
                     2,  # configureResuming
                     data={
-                        "key":     self.resume_key,
+                        "key": self._resume_key,
                         "timeout": 120
                     }
                 )
 
-            __log__.info(f"Node '{self.identifier}' connected.")
+            LOGGER.info(f"Node '{self.identifier}' connected.")
 
     async def disconnect(
         self,
@@ -246,7 +225,7 @@ class Node(Generic[BotT, PlayerT]):
         Parameters
         ----------
         force: bool
-            Whether to force disconnect players with :meth:`Player.disconnect`. Defaults to :obj:`False`.
+            Passed through to :meth:`Player.disconnect`. Optional, defaults to ``False``.
         """
 
         for player in self._players.copy().values():
@@ -262,7 +241,7 @@ class Node(Generic[BotT, PlayerT]):
 
         self._websocket = None
 
-        __log__.info(f"Node '{self.identifier}' disconnected.")
+        LOGGER.info(f"Node '{self.identifier}' disconnected.")
 
     # Rest
 
@@ -285,7 +264,7 @@ class Node(Generic[BotT, PlayerT]):
 
         url = f"{self.rest_url}{path}"
         headers = {
-            "Authorization": self.password,
+            "Authorization": self._password,
             "Client-Name":   "Slate"
         }
 
@@ -302,7 +281,7 @@ class Node(Generic[BotT, PlayerT]):
                 ) as response:
 
                     if 200 <= response.status < 300:
-                        __log__.info(f"'{method}' @ '{response.url}' -> '{response.status}'")
+                        LOGGER.info(f"'{method}' @ '{response.url}' -> '{response.status}'")
                         return await response.json(loads=self._json_loads)
 
             except OSError as error:
@@ -311,12 +290,12 @@ class Node(Generic[BotT, PlayerT]):
 
             delay = 1 + tries * 2
 
-            __log__.warning(f"'{method}' @ '{response.url}' -> '{response.status}', retrying in {delay}s.")
+            LOGGER.warning(f"'{method}' @ '{response.url}' -> '{response.status}', retrying in {delay}s.")
             await asyncio.sleep(delay)
 
         message = f"'{method}' @ '{response.url}' -> '{response.status}', all five retries used."
 
-        __log__.error(message)
+        LOGGER.error(message)
         raise HTTPError(response, message=message)
 
     async def _spotify_search(
@@ -428,9 +407,9 @@ class Node(Generic[BotT, PlayerT]):
 
         Parameters
         ----------
-        search
+        search: :class:`str`
             The search query.
-        source
+        source: :class:`~slate.Source`
             The source to request results from. Defaults to :attr:`Source.NONE`.
 
         Raises
@@ -441,6 +420,10 @@ class Node(Generic[BotT, PlayerT]):
             If the search failed.
         :exc:`~slate.HTTPError`
             If the HTTP request failed.
+
+        Returns
+        -------
+        :class:`~slate.Search`
         """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):
@@ -462,7 +445,7 @@ class Node(Generic[BotT, PlayerT]):
             if message.type is aiohttp.WSMsgType.CLOSED:
 
                 delay = backoff.calculate()
-                __log__.warning(f"Node '{self.identifier}'s websocket was closed, attempting reconnection in {round(delay)} seconds.")
+                LOGGER.warning(f"Node '{self.identifier}'s websocket was closed, attempting reconnection in {round(delay)} seconds.")
 
                 await asyncio.sleep(delay)
 
@@ -481,7 +464,7 @@ class Node(Generic[BotT, PlayerT]):
         data: dict[str, Any]
     ) -> None:
 
-        __log__.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
+        LOGGER.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
 
         if op in (1, "stats"):
             self._stats = None  # Stats(data)
@@ -492,7 +475,7 @@ class Node(Generic[BotT, PlayerT]):
         if op in (4, "event"):
 
             if not player:
-                __log__.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
+                LOGGER.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
             else:
                 player._dispatch_event(data)
             return
@@ -500,12 +483,12 @@ class Node(Generic[BotT, PlayerT]):
         if op in (5, "playerUpdate"):
 
             if not player:
-                __log__.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
+                LOGGER.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
             else:
                 player._update_state(data)
             return
 
-        __log__.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
+        LOGGER.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
 
     async def _send_payload(
         self,
@@ -541,4 +524,4 @@ class Node(Generic[BotT, PlayerT]):
             _json = _json.decode("utf-8")
 
         await self._websocket.send_str(_json)
-        __log__.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
+        LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")

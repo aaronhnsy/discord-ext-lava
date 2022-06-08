@@ -4,16 +4,11 @@ from __future__ import annotations
 # Standard Library
 import random
 import re
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, Literal
 
 # Local
 from .objects.enums import Source
-
-
-if TYPE_CHECKING:
-    # Standard Library
-    from collections.abc import Callable
-    from typing import Any, Literal
 
 
 __all__ = (
@@ -27,8 +22,7 @@ SPOTIFY_URL_REGEX: re.Pattern[str] = re.compile(
     r"(spotify)"
     r"(.com/|:)(?P<type>album|playlist|artist|track)"
     r"([/:])(?P<id>[a-zA-Z0-9]+)"
-    r"([?&]si=[a-zA-Z0-9]+)?"
-    r"([?&]dl_branch=[0-9]+)?"
+    r"([?&]si=[a-zA-Z0-9]+)?([?&]dl_branch=[0-9]+)?"
 )
 
 OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
