@@ -55,7 +55,7 @@ class Queue(Generic[QueueItemT]):
     def __setitem__(self, index: SupportsIndex, value: QueueItemT) -> None:
         self._items.__setitem__(index, value)
 
-    def __delitem__(self, index: SupportsIndex) -> None:
+    def __delitem__(self, index: SupportsIndex | slice) -> None:
         self._items.__delitem__(index)
 
     def __iter__(self) -> Iterator[QueueItemT]:
