@@ -10,13 +10,11 @@ import discord
 import spotipy
 from discord.ext import commands
 
-# Local
-from .objects.track import Track
-
 
 if TYPE_CHECKING:
     # Local
     from .player import Player
+    from .objects.track import Track
 
 
 __all__ = (
