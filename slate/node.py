@@ -3,6 +3,7 @@ from __future__ import annotations
 
 # Standard Library
 import asyncio
+import contextlib
 import json
 import logging
 from typing import Any, Generic, Literal
@@ -14,7 +15,8 @@ import spotipy
 # Local
 from .exceptions import (
     HTTPError,
-    InvalidNodePassword,
+    InvalidPassword,
+    NodeAlreadyConnected,
     NodeConnectionError,
     NodeNotConnected,
     NoResultsFound,
@@ -48,8 +50,8 @@ LOGGER: logging.Logger = logging.getLogger("slate.node")
 
 class Node(Generic[BotT, PlayerT]):
     """
-    A Node handles interactions between your bot and a provider server such as obsidian or lavalink. This includes
-    connecting to the websocket, searching for tracks, and managing player state.
+    A Node handles the interactions between your bot and a provider server such as obsidian or lavalink. These
+    interactions include connecting to the websocket, searching for tracks, and managing player state.
 
     See :meth:`Pool.create_node` for more information about creating a node.
     """
@@ -60,13 +62,12 @@ class Node(Generic[BotT, PlayerT]):
         bot: BotT,
         provider: Provider,
         identifier: str,
-        host: str,
-        port: str,
-        password: str,
-        resume_key: str | None = None,
-        # URLs
-        rest_url: str | None = None,
+        host: str | None = None,
+        port: str | None = None,
         ws_url: str | None = None,
+        rest_url: str | None = None,
+        password: str | None = None,
+        resume_key: str | None = None,
         # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
@@ -75,17 +76,18 @@ class Node(Generic[BotT, PlayerT]):
         spotify_client_secret: str | None = None,
     ) -> None:
 
+        if (host is None or port is None) and (ws_url is None or rest_url is None):
+            raise ValueError("You must set either the host and port or ws_url and rest_url parameters.")
+
         self._bot: BotT = bot
 
         self._provider: Provider = provider
         self._identifier: str = identifier
-        self._host: str = host
-        self._port: str = port
-        self._password: str = password
-        self._resume_key: str | None = resume_key
-
-        self._rest_url: str | None = rest_url
+        self._host: str | None = host
+        self._port: str | None = port
         self._ws_url: str | None = ws_url
+        self._rest_url: str | None = rest_url
+        self._password: str | None = password
 
         self._json_dumps: JSONDumps = json_dumps or json.dumps
         self._json_loads: JSONLoads = json_loads or json.loads
@@ -95,9 +97,10 @@ class Node(Generic[BotT, PlayerT]):
             client_secret=spotify_client_secret,
         ) if (spotify_client_id and spotify_client_secret) else None
 
-        self._session: aiohttp.ClientSession = MISSING
+        self._session: aiohttp.ClientSession = aiohttp.ClientSession()
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
+        self._backoff: Backoff = MISSING
 
         self._players: dict[int, PlayerT] = {}
 
@@ -150,107 +153,186 @@ class Node(Generic[BotT, PlayerT]):
 
     # Utilities
 
+    def is_listening(self) -> bool:
+        return self._task is not None and not self._task.done()
+
     def is_connected(self) -> bool:
         """
         Returns ``True`` if the node is connected to the provider server, ``False`` otherwise.
         """
-        return self._websocket is not None and self._websocket.closed is False
+        return self._websocket is not None and not self._websocket.closed
 
     # Connection
 
-    async def connect(
-        self,
-        *,
-        raise_on_failure: bool = False
-    ) -> None:
+    async def connect(self) -> None:
         """
         Connects this node to its provider server.
-
-        Arguments
-        ---------
-        raise_on_failure: bool
-            Whether to raise an exception if the connection fails. Defaults to ``False``.
         """
 
+        if self.is_connected():
+            raise NodeAlreadyConnected(f"Node '{self.identifier}' is already connected.")
+
+        # Local
+        from . import __version__
         assert self._bot.user is not None
 
         headers = {
-            "Authorization": self._password,
-            "User-Id":       str(self._bot.user.id),
-            "Client-Name":   "Slate",
+            "Client-Name": f"Slate/{__version__}",
+            "User-Id": str(self._bot.user.id),
         }
-        if self._resume_key:
-            headers["Resume-Key"] = self._resume_key
-
-        session = await self._get_session()
+        if self._password:
+            headers["Authorization"] = self._password
 
         try:
-            websocket = await session.ws_connect(url=self.ws_url, headers=headers)
+            websocket = await self._session.ws_connect(
+                self.ws_url,
+                headers=headers
+            )
 
         except Exception as error:
 
-            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status in (401, 4001):
-                raise InvalidNodePassword(f"Node '{self.identifier}' failed to connect due to an invalid password.")
+            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status == 401:
+                LOGGER.error((message := f"Node '{self.identifier}' failed to connect due to an invalid password."))
+                raise InvalidPassword(message)
 
             LOGGER.error((message := f"Node '{self.identifier}' failed to connect."))
-            if raise_on_failure:
-                raise NodeConnectionError(message)
+            raise NodeConnectionError(message)
 
         else:
 
             self._websocket = websocket
+            self._backoff = Backoff(base=3, max_time=60, max_tries=5)
 
-            if self._task is None:
+            if not self.is_listening():
                 self._task = asyncio.create_task(self._listen())
 
-            if self._resume_key:
-                await self._send_payload(
-                    2,  # configureResuming
-                    data={
-                        "key": self._resume_key,
-                        "timeout": 120
-                    }
-                )
+            self.bot.dispatch("node_connected", self)
+            LOGGER.info(f"Node '{self.identifier}' has connected to its websocket.")
 
-            LOGGER.info(f"Node '{self.identifier}' connected.")
-
-    async def disconnect(
-        self,
-        *,
-        force: bool = False
-    ) -> None:
+    async def disconnect(self) -> None:
         """
         Disconnects this node from its provider server.
-
-        Parameters
-        ----------
-        force: bool
-            Passed through to :meth:`Player.disconnect`. Optional, defaults to ``False``.
         """
 
-        for player in self._players.copy().values():
-            await player.disconnect(force=force)
-
-        if self._task and not self._task.done():
+        if self.is_listening():
+            assert isinstance(self._task, asyncio.Task)
             self._task.cancel()
 
         self._task = None
 
-        if self._websocket and not self._websocket.closed:
+        if self.is_connected():
+            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
             await self._websocket.close()
 
         self._websocket = None
 
-        LOGGER.info(f"Node '{self.identifier}' disconnected.")
+        self.bot.dispatch("node_disconnected", self)
+        LOGGER.info(f"Node '{self.identifier}' has disconnected from its websocket.")
 
-    # Rest
+    # WebSocket
 
-    async def _get_session(self) -> aiohttp.ClientSession:
+    async def _listen(self) -> None:
 
-        if not self._session:
-            self._session = aiohttp.ClientSession()
+        while True:
 
-        return self._session
+            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
+            message = await self._websocket.receive()
+
+            if message.type is aiohttp.WSMsgType.CLOSED:
+
+                with contextlib.suppress(NodeConnectionError):
+                    await self.connect()
+
+                if self.is_connected():
+                    continue
+
+                LOGGER.warning(
+                    f"Node '{self.identifier}'s websocket was closed, attempting "
+                    f"reconnection in {(delay := self._backoff.calculate()):.2f} seconds."
+                )
+                await asyncio.sleep(delay)
+
+            else:
+                payload = message.json(loads=self._json_loads)
+                asyncio.create_task(
+                    self._receive_payload(
+                        payload["op"],
+                        data=payload["d"] if "d" in payload else payload
+                    )
+                )
+
+    async def _receive_payload(
+        self,
+        op: str | int,
+        /, *,
+        data: dict[str, Any]
+    ) -> None:
+
+        LOGGER.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
+
+        if op in (1, "stats"):
+            self._stats = None  # Stats(data)
+            return
+
+        player = self._players.get(int(data["guild_id"] if self.provider is Provider.OBSIDIAN else data["guildId"]))
+
+        if op in (4, "event"):
+
+            if not player:
+                LOGGER.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
+            else:
+                player._dispatch_event(data)
+            return
+
+        if op in (5, "playerUpdate"):
+
+            if not player:
+                LOGGER.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
+            else:
+                player._update_state(data)
+            return
+
+        LOGGER.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
+
+    async def _send_payload(
+        self,
+        op: int,
+        /, *,
+        data: Any | None = None,
+        guild_id: str | None = None
+    ) -> None:
+
+        if not self.is_connected():
+            raise NodeNotConnected(f"Node '{self.identifier}' is not connected.")
+
+        assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
+
+        if not data:
+            data = {}
+
+        if self.provider is Provider.OBSIDIAN:
+            if guild_id:
+                data["guild_id"] = guild_id
+            data = {
+                "op": op,
+                "d":  data
+            }
+        else:
+            if guild_id:
+                data["guildId"] = guild_id
+            data = {
+                "op": OBSIDIAN_TO_LAVALINK_OP_MAP[op],
+                **data
+            }
+
+        _json = self._json_dumps(data)
+        if isinstance(_json, bytes):
+            _json = _json.decode("utf-8")
+
+        await self._websocket.send_str(_json)
+        LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
+
+    # REST
 
     async def _request(
         self,
@@ -259,8 +341,6 @@ class Node(Generic[BotT, PlayerT]):
         path: str,
         parameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-
-        session = await self._get_session()
 
         url = f"{self.rest_url}{path}"
         headers = {
@@ -273,7 +353,7 @@ class Node(Generic[BotT, PlayerT]):
         for tries in range(5):
 
             try:
-                async with session.request(
+                async with self._session.request(
                         method,
                         url=url,
                         headers=headers,
@@ -430,98 +510,3 @@ class Node(Generic[BotT, PlayerT]):
             return await self._spotify_search(_id=match.group("id"), _type=match.group("type"), extras=extras)
 
         return await self._source_search(search=search, source=source, extras=extras)
-
-    # Websocket
-
-    async def _listen(self) -> None:
-
-        backoff = Backoff(max_time=60, max_tries=5)
-
-        while True:
-
-            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
-            message = await self._websocket.receive()
-
-            if message.type is aiohttp.WSMsgType.CLOSED:
-
-                delay = backoff.calculate()
-                LOGGER.warning(f"Node '{self.identifier}'s websocket was closed, attempting reconnection in {round(delay)} seconds.")
-
-                await asyncio.sleep(delay)
-
-                if not self._websocket or self._websocket.closed:
-                    await self.connect()
-
-                continue
-
-            payload = message.json(loads=self._json_loads)
-            asyncio.create_task(self._receive_payload(payload["op"], data=payload["d"] if "d" in payload else payload))
-
-    async def _receive_payload(
-        self,
-        op: str | int,
-        /, *,
-        data: dict[str, Any]
-    ) -> None:
-
-        LOGGER.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
-
-        if op in (1, "stats"):
-            self._stats = None  # Stats(data)
-            return
-
-        player = self._players.get(int(data["guild_id"] if self.provider is Provider.OBSIDIAN else data["guildId"]))
-
-        if op in (4, "event"):
-
-            if not player:
-                LOGGER.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
-            else:
-                player._dispatch_event(data)
-            return
-
-        if op in (5, "playerUpdate"):
-
-            if not player:
-                LOGGER.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
-            else:
-                player._update_state(data)
-            return
-
-        LOGGER.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
-
-    async def _send_payload(
-        self,
-        op: int,
-        /, *,
-        data: Any | None = None,
-        guild_id: str | None = None
-    ) -> None:
-
-        if not self._websocket or self._websocket.closed:
-            raise NodeNotConnected(f"Node '{self.identifier}' is not connected.")
-
-        if not data:
-            data = {}
-
-        if self.provider is Provider.OBSIDIAN:
-            if guild_id:
-                data["guild_id"] = guild_id
-            data = {
-                "op": op,
-                "d":  data
-            }
-        else:
-            if guild_id:
-                data["guildId"] = guild_id
-            data = {
-                "op": OBSIDIAN_TO_LAVALINK_OP_MAP[op],
-                **data
-            }
-
-        _json = self._json_dumps(data)
-        if isinstance(_json, bytes):
-            _json = _json.decode("utf-8")
-
-        await self._websocket.send_str(_json)
-        LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")

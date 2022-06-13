@@ -37,13 +37,11 @@ class Pool(Generic[BotT, PlayerT]):
         bot: BotT,
         provider: Provider,
         identifier: str,
-        host: str,
-        port: str,
-        password: str,
-        resume_key: str | None = None,
-        # URLs
-        rest_url: str | None = None,
+        host: str | None = None,
+        port: str | None = None,
         ws_url: str | None = None,
+        rest_url: str | None = None,
+        password: str | None = None,
         # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
@@ -54,32 +52,40 @@ class Pool(Generic[BotT, PlayerT]):
         """
         Creates a new node, connects it to its provider server, and adds it to the pool.
 
+        .. note::
+
+            You must set either the host and port or ws_url and rest_url parameters.
+
+
         Parameters
         ----------
         bot
-            The bot that this node should be attached to.
+            The bot instance that this node should be attached to.
         provider
-            An enum value indicating which external application this node is connecting to.
+            An enum value representing which provider server this node is connecting to.
         identifier
             A unique identifier for this node.
         host
-            The host (ip address, in most cases) that this node will connect to.
+            The host that this node will use for WebSocket connections and HTTP requests. If you want to construct a
+            ``ws_url`` and ``rest_url`` yourself, you can pass ``None`` for this parameter.
         port
-            The port that this node will connect with.
-        password
-            The password to use for HTTP requests and WebSocket connections with the provider server.
-        resume_key
-            The resuming key to use when connecting to the provider server. Optional, defaults to ``None``.
-        rest_url
-            The url used to make HTTP requests to the provider server. Optional, if ``None``, the url will be
-            constructed from the host and port.
+            The port that this node will use for WebSocket connections and HTTP requests. If you want to construct a
+            ``ws_url`` and ``rest_url`` yourself, you can pass ``None`` for this parameter.
         ws_url
-            The url used for WebSocket connections with the provider server. Optional, if ``None``, the url will be
-            constructed from the host and port.
+            The url that will be used to connect to the websocket. Constructing this url manually is optional and will
+            override the ``host`` and ``port`` parameters.
+        rest_url
+            The url that will be used to make HTTP requests. Constructing this url manually is optional and will
+            override the ``host`` and ``port`` parameters.
+        password
+            The password to use for connections with the provider server. If the provider server does not require a
+            password you can omit this parameter by passing ``None``.
         json_dumps
-            The callable used to serialize JSON data. Optional, if ``None``, the built-in ``json.dumps`` will be used.
+            The callable that will be used to serialize JSON data. Optional, if ``None``, the built-in ``json.dumps``
+            will be used.
         json_loads
-            The callable used to deserialize JSON data. Optional, if ``None``, the built-in ``json.loads`` will be used.
+            The callable that will be used to deserialize JSON data. Optional, if ``None``, the built-in ``json.loads``
+            will be used.
         spotify_client_id
             The spotify client ID to use for the builtin spotify integration. Optional, if ``None``, spotify
             support will be disabled.
@@ -89,6 +95,8 @@ class Pool(Generic[BotT, PlayerT]):
 
         Raises
         ------
+        :exc:`ValueError`
+            If you don't provide either ``host`` and ``port`` or ``ws_url`` and ``rest_url``.
         :exc:`~slate.NodeAlreadyExists`
             If a node with the given identifier already exists.
         :exc:`~slate.InvalidNodePassword`
@@ -111,7 +119,6 @@ class Pool(Generic[BotT, PlayerT]):
             host=host,
             port=port,
             password=password,
-            resume_key=resume_key,
             rest_url=rest_url,
             ws_url=ws_url,
             json_dumps=json_dumps,
@@ -122,7 +129,7 @@ class Pool(Generic[BotT, PlayerT]):
         await node.connect()
 
         cls.nodes[identifier] = node
-        LOGGER.info(f"Added node '{node.identifier}' to the pool.")
+        LOGGER.info(f"Node '{node.identifier}' has been added to the pool.")
 
         return node
 
@@ -166,8 +173,6 @@ class Pool(Generic[BotT, PlayerT]):
     async def remove_node(
         cls,
         identifier: str,
-        *,
-        force: bool = False,
     ) -> None:
         """
         Removes the node with the given identifier from the pool. This also calls the nodes :meth:`Node.disconnect`
@@ -177,13 +182,10 @@ class Pool(Generic[BotT, PlayerT]):
         ----------
         identifier
             The identifier of the node to remove.
-        force
-            See :meth:`Node.disconnect` and :meth:`Player.disconnect` for more information. Optional, defaults to
-            ``False``.
         """
 
         node: Node[BotT, PlayerT] = cls.get_node(identifier)
-        await node.disconnect(force=force)
+        await node.disconnect()
 
         del cls.nodes[node.identifier]
-        LOGGER.info(f"Removed node '{identifier}' from the pool.")
+        LOGGER.info(f"Node '{identifier}' has been removed from the pool.")

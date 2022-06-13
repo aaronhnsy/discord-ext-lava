@@ -13,8 +13,8 @@ from discord.ext import commands
 
 if TYPE_CHECKING:
     # Local
-    from .player import Player
     from .objects.track import Track
+    from .player import Player
 
 
 __all__ = (

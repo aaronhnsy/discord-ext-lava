@@ -16,8 +16,9 @@ __all__ = (
     "NodeAlreadyExists",
     "NodeNotFound",
     "NoNodesConnected",
+    "NodeAlreadyConnected",
     "NodeConnectionError",
-    "InvalidNodePassword",
+    "InvalidPassword",
     "NodeNotConnected",
     "HTTPError",
     "NoResultsFound",
@@ -41,11 +42,15 @@ class NoNodesConnected(SlateError):
     pass
 
 
+class NodeAlreadyConnected(SlateError):
+    pass
+
+
 class NodeConnectionError(SlateError):
     pass
 
 
-class InvalidNodePassword(NodeConnectionError):
+class InvalidPassword(NodeConnectionError):
     pass
 
 

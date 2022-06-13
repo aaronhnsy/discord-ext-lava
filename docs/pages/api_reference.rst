@@ -176,13 +176,17 @@ NoNodesConnected
 ~~~~~~~~~~~~~~~~
 .. autoexception:: slate.NoNodesConnected
 
+NodeAlreadyConnected
+~~~~~~~~~~~~~~~~
+.. autoexception:: slate.NodeAlreadyConnected
+
 NodeConnectionError
 ~~~~~~~~~~~~~~~~~~~
 .. autoexception:: slate.NodeConnectionError
 
-InvalidNodePassword
+InvalidPassword
 ~~~~~~~~~~~~~~~~~~~
-.. autoexception:: slate.InvalidNodePassword
+.. autoexception:: slate.InvalidPassword
 
 NodeNotConnected
 ~~~~~~~~~~~~~~~~
