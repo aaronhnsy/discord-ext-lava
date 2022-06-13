@@ -97,3 +97,4 @@ typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
 reportUnknownMemberType = false
 reportPrivateUsage = false
+reportImportCycles = false
