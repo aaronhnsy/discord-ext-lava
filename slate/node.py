@@ -178,7 +178,7 @@ class Node(Generic[BotT, PlayerT]):
 
         headers = {
             "Client-Name": f"Slate/{__version__}",
-            "User-Id": str(self._bot.user.id),
+            "User-Id":     str(self._bot.user.id),
         }
         if self._password:
             headers["Authorization"] = self._password
