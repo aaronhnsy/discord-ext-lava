@@ -65,27 +65,27 @@ class Node(Generic[BotT, PlayerT]):
         host: str | None = None,
         port: str | None = None,
         ws_url: str | None = None,
+        ws_path: str | None = None,
         rest_url: str | None = None,
         password: str | None = None,
-        resume_key: str | None = None,
-        # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
-        # Spotify
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
+        session: aiohttp.ClientSession | None = None,
     ) -> None:
 
         if (host is None or port is None) and (ws_url is None or rest_url is None):
             raise ValueError("You must set either the host and port or ws_url and rest_url parameters.")
 
         self._bot: BotT = bot
-
         self._provider: Provider = provider
         self._identifier: str = identifier
+
         self._host: str | None = host
         self._port: str | None = port
         self._ws_url: str | None = ws_url
+        self._ws_path: str | None = ws_path
         self._rest_url: str | None = rest_url
         self._password: str | None = password
 
@@ -97,7 +97,8 @@ class Node(Generic[BotT, PlayerT]):
             client_secret=spotify_client_secret,
         ) if (spotify_client_id and spotify_client_secret) else None
 
-        self._session: aiohttp.ClientSession = aiohttp.ClientSession()
+        self._session: aiohttp.ClientSession | None = session
+
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
         self._backoff: Backoff = MISSING
@@ -119,30 +120,16 @@ class Node(Generic[BotT, PlayerT]):
     @property
     def provider(self) -> Provider:
         """
-        An enum value indicating which external application this node is attached to.
+        An enum representing which external application this node is using, such as obsidian or lavalink.
         """
         return self._provider
 
     @property
     def identifier(self) -> str:
         """
-        A unique identifier for this node.
+        This node's unique identifier.
         """
         return self._identifier
-
-    @property
-    def rest_url(self) -> str:
-        """
-        The url used to make HTTP requests to the provider server.
-        """
-        return self._rest_url or f"http://{self._host}:{self._port}"
-
-    @property
-    def ws_url(self) -> str:
-        """
-        The url used for WebSocket connections with the provider server.
-        """
-        return self._ws_url or f"ws://{self._host}:{self._port}{'/magma' if self.provider is Provider.OBSIDIAN else ''}"
 
     @property
     def players(self) -> dict[int, PlayerT]:
@@ -153,16 +140,13 @@ class Node(Generic[BotT, PlayerT]):
 
     # Utilities
 
-    def is_listening(self) -> bool:
-        return self._task is not None and not self._task.done()
-
     def is_connected(self) -> bool:
         """
-        Returns ``True`` if the node is connected to the provider server, ``False`` otherwise.
+        Returns ``True`` if this node is connected to its websocket, ``False`` if it is not.
         """
-        return self._websocket is not None and not self._websocket.closed
+        return self._websocket is not None and self._websocket.closed is False
 
-    # Connection
+    # WebSocket
 
     async def connect(self) -> None:
         """
@@ -176,6 +160,11 @@ class Node(Generic[BotT, PlayerT]):
         from . import __version__
         assert self._bot.user is not None
 
+        if not self._session:
+            self._session = aiohttp.ClientSession()
+
+        path = self._ws_path or "/magma" if self._provider is Provider.OBSIDIAN else ""
+        url = self._ws_url or f"ws://{self._host}:{self._port}{path}"
         headers = {
             "Client-Name": f"Slate/{__version__}",
             "User-Id":     str(self._bot.user.id),
@@ -184,10 +173,7 @@ class Node(Generic[BotT, PlayerT]):
             headers["Authorization"] = self._password
 
         try:
-            websocket = await self._session.ws_connect(
-                self.ws_url,
-                headers=headers
-            )
+            websocket = await self._session.ws_connect(url, headers=headers)
 
         except Exception as error:
 
@@ -201,10 +187,11 @@ class Node(Generic[BotT, PlayerT]):
         else:
 
             self._websocket = websocket
-            self._backoff = Backoff(base=3, max_time=60, max_tries=5)
 
-            if not self.is_listening():
+            if self._task is None or self._task.done():
                 self._task = asyncio.create_task(self._listen())
+
+            self._backoff = Backoff(base=3, max_time=60, max_tries=5)
 
             self.bot.dispatch("node_connected", self)
             LOGGER.info(f"Node '{self.identifier}' has connected to its websocket.")
@@ -214,22 +201,18 @@ class Node(Generic[BotT, PlayerT]):
         Disconnects this node from its provider server.
         """
 
-        if self.is_listening():
-            assert isinstance(self._task, asyncio.Task)
+        if self._task is not None and self._task.done() is False:
             self._task.cancel()
 
         self._task = None
 
-        if self.is_connected():
-            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
+        if self._websocket is not None and self._websocket.closed is False:
             await self._websocket.close()
 
         self._websocket = None
 
         self.bot.dispatch("node_disconnected", self)
         LOGGER.info(f"Node '{self.identifier}' has disconnected from its websocket.")
-
-    # WebSocket
 
     async def _listen(self) -> None:
 
@@ -342,11 +325,18 @@ class Node(Generic[BotT, PlayerT]):
         parameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
 
-        url = f"{self.rest_url}{path}"
+        # Local
+        from . import __version__
+
+        if not self._session:
+            self._session = aiohttp.ClientSession()
+
+        url = f"{self._rest_url or f'http://{self._host}:{self._port}'}{path}"
         headers = {
-            "Authorization": self._password,
-            "Client-Name":   "Slate"
+            "Client-Name": f"Slate/{__version__}"
         }
+        if self._password:
+            headers["Authorization"] = self._password
 
         response: aiohttp.ClientResponse = MISSING
 

@@ -5,6 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Generic
 
+# Packages
+import aiohttp
+
 # Local
 from .exceptions import NodeAlreadyExists, NodeNotFound, NoNodesConnected
 from .node import Node
@@ -40,14 +43,14 @@ class Pool(Generic[BotT, PlayerT]):
         host: str | None = None,
         port: str | None = None,
         ws_url: str | None = None,
+        ws_path: str | None = None,
         rest_url: str | None = None,
         password: str | None = None,
-        # JSON Callables
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
-        # Spotify
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
+        session: aiohttp.ClientSession | None = None,
     ) -> Node[BotT, PlayerT]:
         """
         Creates a new node, connects it to its provider server, and adds it to the pool.
@@ -62,7 +65,7 @@ class Pool(Generic[BotT, PlayerT]):
         bot
             The bot instance that this node should be attached to.
         provider
-            An enum value representing which provider server this node is connecting to.
+            An enum representing which external application this node will use, such as obsidian or lavalink.
         identifier
             A unique identifier for this node.
         host
@@ -74,12 +77,15 @@ class Pool(Generic[BotT, PlayerT]):
         ws_url
             The url that will be used to connect to the websocket. Constructing this url manually is optional and will
             override the ``host`` and ``port`` parameters.
+        ws_path
+            The path that will be used to connect to the websocket. Optional, if ``None``, the default path for the
+            selected ``provider`` will be used.
         rest_url
             The url that will be used to make HTTP requests. Constructing this url manually is optional and will
             override the ``host`` and ``port`` parameters.
         password
-            The password to use for connections with the provider server. If the provider server does not require a
-            password you can omit this parameter by passing ``None``.
+            The password to use for connections with the provider server. Optional, if the provider does not require
+            a password you can omit this parameter or pass ``None``.
         json_dumps
             The callable that will be used to serialize JSON data. Optional, if ``None``, the built-in ``json.dumps``
             will be used.
@@ -87,11 +93,14 @@ class Pool(Generic[BotT, PlayerT]):
             The callable that will be used to deserialize JSON data. Optional, if ``None``, the built-in ``json.loads``
             will be used.
         spotify_client_id
-            The spotify client ID to use for the builtin spotify integration. Optional, if ``None``, spotify
+            The spotify client ID to use with the builtin spotify integration. Optional, if ``None``, spotify
             support will be disabled.
         spotify_client_secret
-            The spotify client secret to use for the builtin spotify integration. Optional, if ``None``, spotify
+            The spotify client secret to use with the builtin spotify integration. Optional, if ``None``, spotify
             support will be disabled.
+        session
+            The aiohttp session to use for WebSocket connections and HTTP requests. Optional, if ``None``, a new
+            session will be created.
 
         Raises
         ------
@@ -118,13 +127,15 @@ class Pool(Generic[BotT, PlayerT]):
             identifier=identifier,
             host=host,
             port=port,
-            password=password,
-            rest_url=rest_url,
             ws_url=ws_url,
+            ws_path=ws_path,
+            rest_url=rest_url,
+            password=password,
             json_dumps=json_dumps,
             json_loads=json_loads,
             spotify_client_id=spotify_client_id,
             spotify_client_secret=spotify_client_secret,
+            session=session,
         )
         await node.connect()
 
