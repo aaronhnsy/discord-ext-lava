@@ -40,7 +40,7 @@ This installs the master branch from github
 .. admonition:: Warning
     :class: attention
 
-    Installing the development version is not recommended as the it might have bugs.
+    Installing the development version is not recommended as it may contain bugs.
 
 .. tab:: Windows
 
