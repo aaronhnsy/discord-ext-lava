@@ -260,8 +260,8 @@ class Node(Generic[BotT, PlayerT]):
                 payload = self._json_loads(message.data)
                 asyncio.create_task(
                     self._receive_payload(
-                        payload.pop("op", "missing-op"),
-                        data=payload.get("d", payload),
+                        payload.get("op") or "missing-op-code",
+                        data=payload.get("d") or payload,
                     )
                 )
 
@@ -274,35 +274,37 @@ class Node(Generic[BotT, PlayerT]):
 
         LOGGER.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
 
-        if op in (1, "stats"):
-            self._stats = None  # TODO: Implement
-            return
+        match op:
 
-        guild_id = int(data.get("guild_id", data.get("guildId")))
-        player = self._players.get(guild_id)
+            case 1 | "stats":
+                self._stats = None  # TODO: Implement
 
-        if op in (4, "event"):
+            case 4 | "event":
 
-            if not player:
-                LOGGER.warning(
-                    f"Node '{self.identifier}' received an event for guild '{guild_id}' which does not "
-                    f"have a player."
-                )
-            else:
-                player._dispatch_event(data)
+                player = self._players.get(guild_id := int(data.get("guild_id") or data.get("guildId")))
 
-        elif op in (5, "playerUpdate"):
+                if not player:
+                    LOGGER.warning(
+                        f"Node '{self.identifier}' received an event for guild '{guild_id}' which does not have a "
+                        f"player."
+                    )
+                else:
+                    player._dispatch_event(data)
 
-            if not player:
-                LOGGER.warning(
-                    f"Node '{self.identifier}' received an update for guild '{guild_id}' which does not "
-                    f"have a player."
-                )
-            else:
-                player._update_state(data)
+            case 5 | "playerUpdate":
 
-        else:
-            LOGGER.warning(f"Node '{self.identifier}' received a payload with an unhandled op code: '{op}'.")
+                player = self._players.get(guild_id := int(data.get("guild_id") or data.get("guildId")))
+
+                if not player:
+                    LOGGER.warning(
+                        f"Node '{self.identifier}' received an update for guild '{guild_id}' which does not have a "
+                        f"player."
+                    )
+                else:
+                    player._update_state(data)
+
+            case _:
+                LOGGER.warning(f"Node '{self.identifier}' received a payload with an unhandled op code: '{op}'.")
 
     async def _send_payload(
         self,
