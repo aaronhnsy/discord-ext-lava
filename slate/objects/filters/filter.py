@@ -95,13 +95,18 @@ class Filter:
         self.volume: Volume | None = volume
 
     def __repr__(self) -> str:
-        return "<slate.Filter>"
+        return f"<slate.Filter channel_mix={self.channel_mix}, distortion={self.distortion}, " \
+               f"equalizer={self.equalizer}, karaoke={self.karaoke}, low_pass={self.low_pass}, " \
+               f"rotation={self.rotation}, timescale={self.timescale}, tremolo={self.tremolo}, " \
+               f"vibrato={self.vibrato}, volume={self.volume}>"
 
     # payload
 
     def _construct_obsidian_payload(self) -> ObsidianFilterPayload:
 
-        payload: ObsidianFilterPayload = self.filter._construct_payload(Provider.OBSIDIAN) if self.filter else {}  # type: ignore
+        payload: ObsidianFilterPayload = self.filter._construct_payload(
+            Provider.OBSIDIAN
+        ) if self.filter else {}  # type: ignore
 
         if self.channel_mix:
             payload["channel_mix"] = self.channel_mix._construct_obsidian_payload()
@@ -118,7 +123,9 @@ class Filter:
 
     def _construct_lavalink_payload(self) -> LavalinkFilterPayload:
 
-        payload: LavalinkFilterPayload = self.filter._construct_payload(Provider.LAVALINK) if self.filter else {}  # type: ignore
+        payload: LavalinkFilterPayload = self.filter._construct_payload(
+            Provider.LAVALINK
+        ) if self.filter else {}  # type: ignore
 
         if self.channel_mix:
             payload["channelMix"] = self.channel_mix._construct_lavalink_payload()
