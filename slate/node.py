@@ -257,11 +257,11 @@ class Node(Generic[BotT, PlayerT]):
                     break
 
             else:
-                payload = message.json(loads=self._json_loads)
+                payload = self._json_loads(message.data)
                 asyncio.create_task(
                     self._receive_payload(
-                        payload["op"],
-                        data=payload["d"] if "d" in payload else payload
+                        payload.pop("op", "missing-op"),
+                        data=payload.get("d", payload),
                     )
                 )
 
@@ -275,28 +275,34 @@ class Node(Generic[BotT, PlayerT]):
         LOGGER.debug(f"Node '{self.identifier}' received a payload with op '{op}'.\nData: {data}")
 
         if op in (1, "stats"):
-            self._stats = None  # Stats(data)
+            self._stats = None  # TODO: Implement
             return
 
-        player = self._players.get(int(data["guild_id"] if self.provider is Provider.OBSIDIAN else data["guildId"]))
+        guild_id = int(data.get("guild_id", data.get("guildId")))
+        player = self._players.get(guild_id)
 
         if op in (4, "event"):
 
             if not player:
-                LOGGER.warning(f"Node '{self.identifier}' received a player event for a guild without a player.\nData: {data}")
+                LOGGER.warning(
+                    f"Node '{self.identifier}' received an event for guild '{guild_id}' which does not "
+                    f"have a player."
+                )
             else:
                 player._dispatch_event(data)
-            return
 
-        if op in (5, "playerUpdate"):
+        elif op in (5, "playerUpdate"):
 
             if not player:
-                LOGGER.warning(f"Node '{self.identifier}' received a player update for a guild without a player.\nData: {data}")
+                LOGGER.warning(
+                    f"Node '{self.identifier}' received an update for guild '{guild_id}' which does not "
+                    f"have a player."
+                )
             else:
                 player._update_state(data)
-            return
 
-        LOGGER.warning(f"Node '{self.identifier}' received a payload with an unknown op '{op}'.\nData: {data}")
+        else:
+            LOGGER.warning(f"Node '{self.identifier}' received a payload with an unhandled op code: '{op}'.")
 
     async def _send_payload(
         self,
@@ -334,7 +340,7 @@ class Node(Generic[BotT, PlayerT]):
             _json = _json.decode("utf-8")
 
         await self._websocket.send_str(_json)
-        LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
+        # LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
 
     # REST
 

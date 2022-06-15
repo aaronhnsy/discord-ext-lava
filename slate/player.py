@@ -147,13 +147,13 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         _type = data["type"]
 
         if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node.provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
-            LOGGER.error(f"Player '{self.channel.guild.id}' received an event with an unknown type '{_type}'.\nData: {data}")
+            LOGGER.error(f"Player '{self.channel.guild.id}' received an event with an unknown type: '{_type}'.")
             return
 
         event = event(data)
 
-        LOGGER.info(f"Player '{self.channel.guild.id}' dispatched an event with type '{_type}'.\nData: {data}")
         self.bot.dispatch(f"slate_{event.type.lower()}", self, event)
+        LOGGER.info(f"Player '{self.channel.guild.id}' dispatched '{_type}' event.")
 
     def _update_state(
         self,
