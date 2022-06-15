@@ -281,7 +281,7 @@ class Node(Generic[BotT, PlayerT]):
 
             case 4 | "event":
 
-                player = self._players.get(guild_id := int(data.get("guild_id") or data.get("guildId")))
+                player = self._players.get(guild_id := int(data.get("guild_id") or data.get("guildId", 0)))
 
                 if not player:
                     LOGGER.warning(
@@ -293,7 +293,7 @@ class Node(Generic[BotT, PlayerT]):
 
             case 5 | "playerUpdate":
 
-                player = self._players.get(guild_id := int(data.get("guild_id") or data.get("guildId")))
+                player = self._players.get(guild_id := int(data.get("guild_id") or data.get("guildId", 0)))
 
                 if not player:
                     LOGGER.warning(
