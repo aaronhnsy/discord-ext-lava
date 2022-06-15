@@ -51,6 +51,8 @@ LOAD_FAILED: set[str] = {"FAILED", "LOAD_FAILED"}
 TRACK_LOADED: set[str] = {"TRACK", "TRACK_LOADED", "SEARCH_RESULT"}
 PLAYLIST_LOADED: set[str] = {"TRACK_COLLECTION", "PLAYLIST_LOADED"}
 
+ordinal: Callable[[int], str] = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
+
 
 """
 https://github.com/PythonistaGuild/Wavelink/blob/fe27c9175e03ce42ea55ad47a4cb7b02bd1324d7/wavelink/backoff.py#L29-L75
@@ -88,36 +90,34 @@ class Backoff:
     ) -> None:
 
         self._base: int = base
-        self._max_time: float = max_time
+        self._max_wait: float = max_time
         self._max_tries: int | None = max_tries
 
         _random = random.Random()
         _random.seed()
-        self._random: Callable[[float, float], float] = _random.uniform
+        self._uniform: Callable[[float, float], float] = _random.uniform
 
-        self._retries: int = 1
+        self._tries: int = 0
         self._last_wait: float = 0
 
     def calculate(self) -> float:
 
-        exponent = min((self._retries ** 2), self._max_time)
-        wait = self._random(0, (self._base * 2) * exponent)
+        self._tries += 1
+
+        exponent = min((self._tries ** 2), self._max_wait)
+        wait = self._uniform(0, (self._base * 2) * exponent)
 
         if wait <= self._last_wait:
             wait = self._last_wait * 2
 
         self._last_wait = wait
 
-        if wait > self._max_time:
-            wait = self._max_time
-            self._retries = 0
-            self._last_wait = 0
+        if wait > self._max_wait:
+            wait = self._max_wait
 
-        if self._max_tries and self._retries >= self._max_tries:
-            self._retries = 0
+        if self._max_tries and self._tries > self._max_tries:
+            self._tries = 0
             self._last_wait = 0
-
-        self._retries += 1
 
         return wait
 

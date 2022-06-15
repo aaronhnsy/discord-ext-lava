@@ -37,6 +37,7 @@ from .utils import (
     SPOTIFY_URL_REGEX,
     TRACK_LOADED,
     Backoff,
+    ordinal,
 )
 
 
@@ -184,22 +185,17 @@ class Node(Generic[BotT, PlayerT]):
             LOGGER.error((message := f"Node '{self.identifier}' failed to connect."))
             raise NodeConnectionError(message)
 
-        else:
+        self._websocket = websocket
 
-            self._websocket = websocket
+        if self._task is None or self._task.done():
+            self._task = asyncio.create_task(self._listen())
 
-            if self._task is None or self._task.done():
-                self._task = asyncio.create_task(self._listen())
+        self._backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
 
-            self._backoff = Backoff(base=3, max_time=60, max_tries=5)
+        self.bot.dispatch("node_connected", self)
+        LOGGER.info(f"Node '{self.identifier}' has connected to its websocket.")
 
-            self.bot.dispatch("node_connected", self)
-            LOGGER.info(f"Node '{self.identifier}' has connected to its websocket.")
-
-    async def disconnect(self) -> None:
-        """
-        Disconnects this node from its provider server.
-        """
+    async def _clear_state(self) -> None:
 
         if self._task is not None and self._task.done() is False:
             self._task.cancel()
@@ -210,6 +206,13 @@ class Node(Generic[BotT, PlayerT]):
             await self._websocket.close()
 
         self._websocket = None
+
+    async def disconnect(self) -> None:
+        """
+        Disconnects this node from its provider server.
+        """
+
+        await self._clear_state()
 
         self.bot.dispatch("node_disconnected", self)
         LOGGER.info(f"Node '{self.identifier}' has disconnected from its websocket.")
@@ -223,17 +226,35 @@ class Node(Generic[BotT, PlayerT]):
 
             if message.type is aiohttp.WSMsgType.CLOSED:
 
-                with contextlib.suppress(NodeConnectionError):
-                    await self.connect()
-
                 if self.is_connected():
                     continue
 
+                # Log warning for first reconnection attempt.
+                if self._backoff._tries == 0:
+                    LOGGER.warning(
+                        f"Node '{self.identifier}' was unexpectedly disconnected from its websocket and is now "
+                        f"entering a reconnection backoff period."
+                    )
+
+                # Sleep for the backoff period.
                 LOGGER.warning(
-                    f"Node '{self.identifier}'s websocket was closed, attempting "
-                    f"reconnection in {(delay := self._backoff.calculate()):.2f} seconds."
+                    f"Node '{self.identifier}' attempting {ordinal(self._backoff._tries + 1)} reconnection attempt "
+                    f"in {(delay := self._backoff.calculate()):.2f} seconds."
                 )
                 await asyncio.sleep(delay)
+
+                # Attempt to reconnect to the websocket.
+                with contextlib.suppress(NodeConnectionError):
+                    await self.connect()
+
+                # Stop backoff period if we've reached the max amount of retries.
+                if self._backoff._max_tries and self._backoff._tries == self._backoff._max_tries:
+                    LOGGER.warning(
+                        f"Node '{self.identifier}' has reached the maximum amount of reconnection attempts and will "
+                        f"not attempt to reconnect again."
+                    )
+                    await self._clear_state()
+                    break
 
             else:
                 payload = message.json(loads=self._json_loads)
