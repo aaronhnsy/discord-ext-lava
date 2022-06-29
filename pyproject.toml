@@ -7,13 +7,19 @@ build-backend = "poetry.core.masonry.api"
 name = "slate"
 version = "0.3.1"
 description = "A discord.py compatible wrapper for lavalink-like applications."
-authors = ["Axel <axelancerr@gmail.com>"]
 license = "MIT"
+authors = ["Axel <axelancerr@gmail.com>"]
 readme = "README.md"
 homepage = "https://github.com/Axelware/slate"
 repository = "https://github.com/Axelware/slate"
 documentation = "https://slate-py.readthedocs.io/en/latest/"
-keywords = ["obsidian", "lavalink", "api", "wrapper", "async"]
+keywords = [
+    "obsidian",
+    "lavalink",
+    "api",
+    "wrapper",
+    "async"
+]
 classifiers = [
     "Framework :: AsyncIO",
     "Topic :: Software Development",
@@ -32,39 +38,33 @@ packages = [
     { include = "slate/**/*.py" },
     { include = "slate/py.typed" },
 ]
-include = [
-    "LICENSE"
-]
+include = ["LICENSE"]
 
 
 [tool.poetry.dependencies]
-python = "^3.10.0"
-
-aiohttp = { version = "^3.8.0" }
-typing_extensions = { version = "^4.2.0" }
-"spoti.py" = { version = "^0.1.0" }
-
+python = "^3.10"
+aiohttp = "^3.8.0"
+typing_extensions = "^4.2.0"
+"spoti.py" = "^0.1.0"
 "discord.py" = { git = "https://github.com/Rapptz/discord.py" }
 
-sphinx = { version = "^5.0.0", optional = true }
-sphinxcontrib-trio = { version = "*", optional = true }
-sphinx-copybutton = { version = "*", optional = true }
-sphinx-inline-tabs = { version = "*", optional = true }
-furo = { version = "*", optional = true }
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "5.0.2"
+sphinxcontrib-trio = "1.1.2"
+sphinx-copybutton = "0.5.0"
+sphinx-inline-tabs = "2022.1.2b11"
+furo = "2022.6.21"
 
 
-[tool.poetry.dev-dependencies]
-isort = "*"
+[tool.poetry.group.dev]
+optional = true
 
-
-[tool.poetry.extras]
-docs = [
-    "sphinx",
-    "sphinxcontrib-trio",
-    "sphinx-copybutton",
-    "sphinx-inline-tabs",
-    "furo"
-]
+[tool.poetry.group.dev.dependencies]
+isort = "5.10.1"
 
 
 [tool.poetry.urls]

@@ -33,8 +33,8 @@ frozenlist = ">=1.1.0"
 name = "alabaster"
 version = "0.7.12"
 description = "A configurable sidebar-enabled Sphinx theme"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -63,8 +63,8 @@ tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>
 name = "babel"
 version = "2.10.3"
 description = "Internationalization utilities"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -74,8 +74,8 @@ pytz = ">=2015.7"
 name = "beautifulsoup4"
 version = "4.11.1"
 description = "Screen-scraping library"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6.0"
 
 [package.dependencies]
@@ -89,8 +89,8 @@ lxml = ["lxml"]
 name = "certifi"
 version = "2022.6.15"
 description = "Python package for providing Mozilla's CA Bundle."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
@@ -108,13 +108,13 @@ unicode_backport = ["unicodedata2"]
 name = "colorama"
 version = "0.4.5"
 description = "Cross-platform colored terminal text."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "discord.py"
-version = "2.0.0a4337+gbe6db202"
+version = "2.0.0a4374+g7ad00750"
 description = "A Python wrapper for the Discord API"
 category = "main"
 optional = false
@@ -134,14 +134,14 @@ voice = ["PyNaCl (>=1.3.0,<1.6)"]
 type = "git"
 url = "https://github.com/Rapptz/discord.py"
 reference = "HEAD"
-resolved_reference = "7ad00750c6422d8f19c0fb1859b7ee69fd4fa519"
+resolved_reference = "b7dd97dca997fcb7b9648dab0df826a56a1ebe53"
 
 [[package]]
 name = "docutils"
 version = "0.18.1"
 description = "Docutils -- Python Documentation Utilities"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
@@ -156,8 +156,8 @@ python-versions = ">=3.7"
 name = "furo"
 version = "2022.6.21"
 description = "A clean customisable Sphinx documentation theme."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -178,8 +178,8 @@ python-versions = ">=3.5"
 name = "imagesize"
 version = "1.3.0"
 description = "Getting image size from png/jpeg/jpeg2000/gif file"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
@@ -200,8 +200,8 @@ plugins = ["setuptools"]
 name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -214,8 +214,8 @@ i18n = ["Babel (>=2.7)"]
 name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.7"
 
 [[package]]
@@ -230,8 +230,8 @@ python-versions = ">=3.7"
 name = "packaging"
 version = "21.3"
 description = "Core utilities for Python packages"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -241,16 +241,16 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 name = "pygments"
 version = "2.12.0"
 description = "Pygments is a syntax highlighting package written in Python."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6.8"
 
 [package.extras]
@@ -260,16 +260,16 @@ diagrams = ["railroad-diagrams", "jinja2"]
 name = "pytz"
 version = "2022.1"
 description = "World timezone definitions, modern and historical"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = "*"
 
 [[package]]
 name = "requests"
 version = "2.28.0"
 description = "Python HTTP for Humans."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.7, <4"
 
 [package.dependencies]
@@ -286,24 +286,24 @@ use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 name = "snowballstemmer"
 version = "2.2.0"
 description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = "*"
 
 [[package]]
 name = "soupsieve"
 version = "2.3.2.post1"
 description = "A modern CSS selector implementation for Beautiful Soup."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
 name = "sphinx"
 version = "5.0.2"
 description = "Python documentation generator"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -331,10 +331,10 @@ test = ["pytest (>=4.6)", "html5lib", "cython", "typed-ast"]
 
 [[package]]
 name = "sphinx-basic-ng"
-version = "0.0.1a11"
+version = "0.0.1a12"
 description = "A modern skeleton for Sphinx themes."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -347,8 +347,8 @@ docs = ["furo", "myst-parser", "sphinx-copybutton", "sphinx-inline-tabs", "ipyth
 name = "sphinx-copybutton"
 version = "0.5.0"
 description = "Add a copy button to each of your code cells."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -362,8 +362,8 @@ rtd = ["sphinx", "ipython", "myst-nb", "sphinx-book-theme"]
 name = "sphinx-inline-tabs"
 version = "2022.1.2b11"
 description = "Add inline tabbed content to your Sphinx documentation."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.8"
 
 [package.dependencies]
@@ -377,8 +377,8 @@ test = ["pytest", "pytest-cov", "pytest-xdist"]
 name = "sphinxcontrib-applehelp"
 version = "1.0.2"
 description = "sphinxcontrib-applehelp is a sphinx extension which outputs Apple help books"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.5"
 
 [package.extras]
@@ -389,8 +389,8 @@ test = ["pytest"]
 name = "sphinxcontrib-devhelp"
 version = "1.0.2"
 description = "sphinxcontrib-devhelp is a sphinx extension which outputs Devhelp document."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.5"
 
 [package.extras]
@@ -401,8 +401,8 @@ test = ["pytest"]
 name = "sphinxcontrib-htmlhelp"
 version = "2.0.0"
 description = "sphinxcontrib-htmlhelp is a sphinx extension which renders HTML help files"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.6"
 
 [package.extras]
@@ -413,8 +413,8 @@ test = ["pytest", "html5lib"]
 name = "sphinxcontrib-jsmath"
 version = "1.0.1"
 description = "A sphinx extension which renders display math in HTML via JavaScript"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.5"
 
 [package.extras]
@@ -424,8 +424,8 @@ test = ["pytest", "flake8", "mypy"]
 name = "sphinxcontrib-qthelp"
 version = "1.0.3"
 description = "sphinxcontrib-qthelp is a sphinx extension which outputs QtHelp document."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.5"
 
 [package.extras]
@@ -436,8 +436,8 @@ test = ["pytest"]
 name = "sphinxcontrib-serializinghtml"
 version = "1.1.5"
 description = "sphinxcontrib-serializinghtml is a sphinx extension which outputs \"serialized\" HTML files (json and pickle)."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=3.5"
 
 [package.extras]
@@ -448,8 +448,8 @@ test = ["pytest"]
 name = "sphinxcontrib-trio"
 version = "1.1.2"
 description = "Make Sphinx better at documenting Python functions and methods"
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = "*"
 
 [package.dependencies]
@@ -482,8 +482,8 @@ python-versions = ">=3.7"
 name = "urllib3"
 version = "1.26.9"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
-category = "main"
-optional = true
+category = "dev"
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
 [package.extras]
@@ -503,13 +503,10 @@ python-versions = ">=3.6"
 idna = ">=2.0"
 multidict = ">=4.0"
 
-[extras]
-docs = ["sphinx", "sphinxcontrib-trio", "sphinx-copybutton", "sphinx-inline-tabs", "furo"]
-
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10.0"
-content-hash = "d3af34fb4f38303c40f3d833085f4e3bde15f700e39e473b539fa11c1f530a0e"
+python-versions = "^3.10"
+content-hash = "f5e7d6ce2eb2f53b84d97516dac95509a63a3910cdd68fc14eda146ad9258803"
 
 [metadata.files]
 aiohttp = [
@@ -844,8 +841,8 @@ sphinx = [
     {file = "Sphinx-5.0.2.tar.gz", hash = "sha256:b18e978ea7565720f26019c702cd85c84376e948370f1cd43d60265010e1c7b0"},
 ]
 sphinx-basic-ng = [
-    {file = "sphinx_basic_ng-0.0.1a11-py3-none-any.whl", hash = "sha256:9aecb5345816998789ef76658a83e3c0a12aafa14b17d40e28cd4aaeb94d1517"},
-    {file = "sphinx_basic_ng-0.0.1a11.tar.gz", hash = "sha256:bf9a8fda0379c7d2ab51c9543f2b18e014b77fb295b49d64f3c1a910c863b34f"},
+    {file = "sphinx_basic_ng-0.0.1a12-py3-none-any.whl", hash = "sha256:e8b6efd2c5ece014156de76065eda01ddfca0fee465aa020b1e3c12f84570bbe"},
+    {file = "sphinx_basic_ng-0.0.1a12.tar.gz", hash = "sha256:cffffb14914ddd26c94b1330df1d72dab5a42e220aaeb5953076a40b9c50e801"},
 ]
 sphinx-copybutton = [
     {file = "sphinx-copybutton-0.5.0.tar.gz", hash = "sha256:a0c059daadd03c27ba750da534a92a63e7a36a7736dcf684f26ee346199787f6"},

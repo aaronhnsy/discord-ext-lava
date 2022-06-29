@@ -40,7 +40,7 @@ jobs:
       - name: "Install project dependencies"
         run: |
           poetry env use ${{ matrix.python-version }}
-          poetry install -E docs
+          poetry install --with docs
 
       - name: "Install Node v17"
         uses: actions/setup-node@v3
