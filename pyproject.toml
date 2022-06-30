@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry-core>=1.1.0b2"]
 build-backend = "poetry.core.masonry.api"
 
 
@@ -46,7 +46,6 @@ python = "^3.10"
 aiohttp = "^3.8.0"
 typing_extensions = "^4.2.0"
 "spoti.py" = "^0.1.0"
-"discord.py" = { git = "https://github.com/Rapptz/discord.py" }
 
 
 [tool.poetry.group.docs]
@@ -65,6 +64,7 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 isort = "5.10.1"
+"discord.py" = { git = "https://github.com/Rapptz/discord.py" }
 
 
 [tool.poetry.urls]
