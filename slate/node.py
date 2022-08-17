@@ -105,7 +105,7 @@ class Node(Generic[BotT, PlayerT]):
     def __repr__(self) -> str:
         return f"<slate.Node player_count={len(self._players)}>"
 
-    # Properties
+    # properties
 
     @property
     def bot(self) -> BotT:
@@ -135,7 +135,7 @@ class Node(Generic[BotT, PlayerT]):
         """
         return self._players
 
-    # Utilities
+    # utilities
 
     def is_connected(self) -> bool:
         """
@@ -143,7 +143,7 @@ class Node(Generic[BotT, PlayerT]):
         """
         return self._websocket is not None and self._websocket.closed is False
 
-    # WebSocket
+    # webSocket
 
     async def connect(self) -> None:
         """
@@ -339,7 +339,7 @@ class Node(Generic[BotT, PlayerT]):
         await self._websocket.send_str(_json)
         # LOGGER.debug(f"Node '{self.identifier}' sent a payload with op '{op}'.\nData: {data}")
 
-    # REST
+    # rest
 
     async def _request(
         self,

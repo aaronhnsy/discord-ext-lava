@@ -35,7 +35,7 @@ class Search:
     def __repr__(self) -> str:
         return f"<slate.Result source={self._source}, type='{self._type}', result={type(self._result)}>"
 
-    # Properties
+    # properties
 
     @property
     def source(self) -> Source:

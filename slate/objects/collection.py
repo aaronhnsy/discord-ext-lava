@@ -32,7 +32,7 @@ class Collection:
     def __repr__(self) -> str:
         return "<slate.Collection>"
 
-    # Properties
+    # properties
 
     @property
     def name(self) -> str:

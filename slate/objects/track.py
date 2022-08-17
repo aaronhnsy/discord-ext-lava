@@ -59,7 +59,7 @@ class Track:
     def __repr__(self) -> str:
         return f"<slate.Track title='{self.title}', author='{self.author}'>"
 
-    # Properties
+    # properties
 
     @property
     def artwork_url(self) -> str | None:
@@ -71,7 +71,7 @@ class Track:
 
         return None
 
-    # Utilities
+    # utilities
 
     def is_stream(self) -> bool:
         return self._is_stream
@@ -79,7 +79,7 @@ class Track:
     def is_seekable(self) -> bool:
         return self._is_seekable
 
-    # Classmethods
+    # classmethods
 
     @staticmethod
     def _from_spotify_track(

@@ -58,7 +58,7 @@ class ChannelMix:
                f"right_to_left={self.right_to_left}, " \
                f"right_to_right{self.right_to_right}>"
 
-    # payload
+    # payloads
 
     def _construct_obsidian_payload(self) -> ObsidianChannelMixData:
         return {

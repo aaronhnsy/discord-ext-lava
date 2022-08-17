@@ -47,6 +47,8 @@ class Karaoke:
                f"level={self.level}, mono_level={self.mono_level}, " \
                f"band={self.band}, band_width={self.band_width}>"
 
+    # payloads
+
     def _construct_obsidian_payload(self) -> ObsidianKaraokeData:
         return {
             "level":        self.level,

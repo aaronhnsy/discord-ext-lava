@@ -31,6 +31,8 @@ class Rotation:
     def __repr__(self) -> str:
         return f"<slate.Rotation speed={self.speed}>"
 
+    # payloads
+
     def _construct_obsidian_payload(self) -> ObsidianRotationData:
         return self.speed
 

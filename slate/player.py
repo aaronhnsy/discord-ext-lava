@@ -89,7 +89,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     def __repr__(self) -> str:
         return "<slate.Player>"
 
-    # Discord.py abstract methods
+    # discord.py abstract methods
 
     async def on_voice_server_update(
         self,
@@ -133,7 +133,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             guild_id=str(self.channel.guild.id)
         )
 
-    # Websocket
+    # websocket
 
     def _dispatch_event(
         self,
@@ -172,7 +172,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             self._position = state.get("position", 0)
             self._timestamp = state["time"]
 
-    # Properties
+    # properties
 
     @property
     def bot(self) -> BotT:
@@ -198,7 +198,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
     @property
     def current_track_id(self) -> str | None:
         """
-        The id of the current track. This is ``None`` if no track is playing.
+        The ID of the current track. This is ``None`` if no track is playing.
         """
         return self._current_track_id
 
@@ -254,7 +254,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
             if not member.bot and not member.voice.deaf and not member.voice.self_deaf
         ]
 
-    # Utility methods
+    # utility methods
 
     def is_connected(self) -> bool:
         """
@@ -274,7 +274,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         """
         return self._paused is True
 
-    # Player methods
+    # player methods
 
     async def connect(
         self,

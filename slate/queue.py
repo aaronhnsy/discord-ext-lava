@@ -67,7 +67,7 @@ class Queue(Generic[QueueItemT]):
     def __bool__(self) -> bool:
         return bool(self._items.__len__())
 
-    # Private methods
+    # private methods
 
     def _wakeup_next(self) -> None:
 
@@ -128,7 +128,7 @@ class Queue(Generic[QueueItemT]):
 
         self._wakeup_next()
 
-    # Misc
+    # misc
 
     @property
     def loop_mode(self) -> QueueLoopMode:
@@ -195,7 +195,7 @@ class Queue(Generic[QueueItemT]):
 
         self._waiters.clear()
 
-    # GET methods
+    # get methods
 
     def get_from_front(
         self,
@@ -307,7 +307,7 @@ class Queue(Generic[QueueItemT]):
 
         return self.get_from_front(put_into_history=put_into_history)
 
-    # PUT methods
+    # put methods
 
     def put_at_front(
         self,
@@ -396,7 +396,7 @@ class Queue(Generic[QueueItemT]):
         """
         self._put(target=self._items, item=item, items=items, position=None)
 
-    # History methods
+    # history methods
 
     def get_from_history(
         self,

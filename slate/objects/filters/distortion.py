@@ -74,6 +74,8 @@ class Distortion:
                f"tan_offset={self.tan_offset}, tan_scale={self.tan_scale}, " \
                f"offset={self.offset}, scale={self.scale}>"
 
+    # payloads
+
     def _construct_obsidian_payload(self) -> ObsidianDistortionData:
         return {
             "sin_offset": self.sin_offset,

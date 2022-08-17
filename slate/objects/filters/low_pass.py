@@ -32,6 +32,8 @@ class LowPass:
     def __repr__(self) -> str:
         return f"<slate.LowPass smoothing={self.smoothing}>"
 
+    # payloads
+
     def _construct_obsidian_payload(self) -> ObsidianLowPassData:
         return self.smoothing
 
