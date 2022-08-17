@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0
+## 0.4.0
 
 ### Breaking
 * Renamed `slate.InvalidNodePassword` -> `slate.InvalidPassword`.

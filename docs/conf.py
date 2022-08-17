@@ -65,7 +65,7 @@ exclude_patters: list[str] = [
     ".DS_Store"
 ]
 
-needs_sphinx: str = "4.5.0"
+needs_sphinx: str = "5.1.1"
 nitpicky: bool = True
 
 

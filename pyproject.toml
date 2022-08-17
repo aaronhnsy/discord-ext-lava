@@ -1,25 +1,20 @@
 [build-system]
-requires = ["poetry-core>=1.1.0b2"]
+requires      = ["poetry-core>=1.1.0b2"]
 build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry]
-name = "slate"
-version = "0.3.1"
-description = "A discord.py compatible wrapper for lavalink-like applications."
-license = "MIT"
-authors = ["Axel <axelancerr@gmail.com>"]
-readme = "README.md"
-homepage = "https://github.com/Axelware/slate"
-repository = "https://github.com/Axelware/slate"
+name          = "slate.py"
+version       = "0.4.0"
+description   = "A discord.py compatible wrapper for lavalink-like applications."
+license       = "MIT"
+authors       = ["Axel <axelancerr@gmail.com>"]
+readme        = "README.md"
+homepage      = "https://github.com/Axelware/slate"
+repository    = "https://github.com/Axelware/slate"
 documentation = "https://slate-py.readthedocs.io/en/latest/"
-keywords = [
-    "obsidian",
-    "lavalink",
-    "api",
-    "wrapper",
-    "async"
-]
+keywords      = ["obsidian", "lavalink", "api", "wrapper", "async"]
+include       = ["CHANGELOG.md", "LICENSE"]
 classifiers = [
     "Framework :: AsyncIO",
     "Topic :: Software Development",
@@ -38,63 +33,46 @@ packages = [
     { include = "slate/**/*.py" },
     { include = "slate/py.typed" },
 ]
-include = ["LICENSE"]
+
 
 
 [tool.poetry.dependencies]
-python = "^3.10"
-aiohttp = "^3.8.0"
-typing_extensions = "^4.2.0"
-"spoti.py" = "^0.1.0"
+python            = "^3.10.0"
+aiohttp           = "^3.8.0"
+typing_extensions = "^4.3.0"
+spoti-py          = "^0.1.0"
+discord-py        = { git = "https://github.com/Rapptz/discord.py", branch = "master" }
 
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "5.0.2"
-sphinxcontrib-trio = "1.1.2"
-sphinx-copybutton = "0.5.0"
-sphinx-inline-tabs = "2022.1.2b11"
-furo = "2022.6.21"
+sphinx              = "5.1.1"
+sphinxcontrib-trio  = "1.1.2"
+sphinx-copybutton   = "0.5.0"
+sphinx-inline-tabs  = "2022.1.2b11"
+furo                = "2022.6.21"
 
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-isort = "5.10.1"
-"discord.py" = { git = "https://github.com/Rapptz/discord.py" }
+jishaku    = "*"
 
 
 [tool.poetry.urls]
 "Issue Tracker" = "https://github.com/Axelware/slate/issues"
-"Discord" = "https://discord.com/invite/w9f6NkQbde"
-
-
-[tool.isort]
-line_length = 120
-multi_line_output = 3
-lines_after_imports = 2
-combine_star = true
-star_first = true
-include_trailing_comma = true
-dedup_headings = true
-import_heading_future = "Future"
-import_heading_stdlib = "Standard Library"
-import_heading_thirdparty = "Packages"
-import_heading_firstparty = "Local"
-import_heading_localfolder = "Local"
+"Discord"       = "https://discord.com/invite/w9f6NkQbde"
 
 
 [tool.pyright]
-include = [
-    "slate",
-    "tests"
-]
-pythonVersion = "3.10"
-typeCheckingMode = "strict"
+include                = ["slate"]
+pythonVersion          = "3.10"
+typeCheckingMode       = "strict"
 useLibraryCodeForTypes = true
+
 reportUnknownMemberType = false
-reportPrivateUsage = false
-reportImportCycles = false
+reportPrivateUsage      = false
+reportImportCycles      = false
