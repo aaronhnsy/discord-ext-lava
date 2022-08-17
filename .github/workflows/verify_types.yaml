@@ -51,7 +51,11 @@ jobs:
         run: |
           npm install -g pyright@latest
 
-      - name: "Verify Types for Python v${{ matrix.python-version }}"
+      - name: "Check import"
+        run: |
+          python -c "import slate"
+
+      - name: "Verify types"
         run: |
           poetry run pyright
           poetry run pyright --ignoreexternal --lib --verifytypes slate
