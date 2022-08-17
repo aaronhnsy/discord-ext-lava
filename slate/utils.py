@@ -1,13 +1,10 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import random
 import re
 from collections.abc import Callable
 from typing import Any, Literal
 
-# Local
 from .objects.enums import Source
 
 

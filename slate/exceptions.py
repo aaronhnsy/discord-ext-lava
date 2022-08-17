@@ -1,13 +1,9 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 from typing import Any, Literal
 
-# Packages
 import aiohttp
 
-# Local
 from .objects.enums import Source
 
 

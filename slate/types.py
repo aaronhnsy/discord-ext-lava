@@ -1,18 +1,14 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, TypeVar
 
-# Packages
 import discord
 import spotipy
 from discord.ext import commands
 
 
 if TYPE_CHECKING:
-    # Local
     from .objects.track import Track
     from .player import Player
 

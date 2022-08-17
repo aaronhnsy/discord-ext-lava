@@ -1,7 +1,5 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import asyncio
 import contextlib
 import random
@@ -9,7 +7,6 @@ from collections import deque
 from collections.abc import Iterator
 from typing import Generic, SupportsIndex, overload
 
-# Local
 from .objects.enums import QueueLoopMode
 from .types import QueueItemT
 

@@ -1,14 +1,10 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import logging
 from typing import Generic
 
-# Packages
 import aiohttp
 
-# Local
 from .exceptions import NodeAlreadyExists, NodeNotFound, NoNodesConnected
 from .node import Node
 from .objects.enums import Provider

@@ -1,18 +1,14 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import asyncio
 import contextlib
 import json
 import logging
 from typing import Any, Generic, Literal
 
-# Packages
 import aiohttp
 import spotipy
 
-# Local
 from .exceptions import (
     HTTPError,
     InvalidPassword,
@@ -157,7 +153,6 @@ class Node(Generic[BotT, PlayerT]):
         if self.is_connected():
             raise NodeAlreadyConnected(f"Node '{self.identifier}' is already connected.")
 
-        # Local
         from . import __version__
         assert self._bot.user is not None
 
@@ -354,7 +349,6 @@ class Node(Generic[BotT, PlayerT]):
         parameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
 
-        # Local
         from . import __version__
 
         if not self._session:

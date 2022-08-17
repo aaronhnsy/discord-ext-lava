@@ -1,11 +1,8 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import logging
 from typing import Final, Literal, NamedTuple
 
-# Local
 from .exceptions import *
 from .node import *
 from .objects import *

@@ -1,17 +1,13 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import contextlib
 import logging
 import time
 from typing import Any, Generic
 
-# Packages
 import discord
 import discord.types.voice
 
-# Local
 from .node import Node
 from .objects.enums import Provider
 from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen

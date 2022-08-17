@@ -1,10 +1,7 @@
-# Future
 from __future__ import annotations
 
-# Packages
 import spotipy
 
-# Local
 from .collection import Collection
 from .enums import Source
 from .track import Track

@@ -1,13 +1,9 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 from typing import Any
 
-# Packages
 import spotipy
 
-# Local
 from ..types import SpotifySearchResult, SpotifySearchTrack
 from .enums import Source
 

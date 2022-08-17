@@ -1,7 +1,5 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 import collections
 from typing import TypedDict
 

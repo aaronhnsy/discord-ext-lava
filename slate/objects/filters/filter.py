@@ -1,10 +1,7 @@
-# Future
 from __future__ import annotations
 
-# Standard Library
 from typing import TypedDict
 
-# Local
 from ..enums import Provider
 from .channel_mix import ChannelMix, LavalinkChannelMixData, ObsidianChannelMixData
 from .distortion import Distortion, LavalinkDistortionData, ObsidianDistortionData
