@@ -5,13 +5,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name          = "slate.py"
-version       = "0.4.0"
+version       = "0.4.1"
 description   = "A discord.py compatible wrapper for lavalink-like applications."
 license       = "MIT"
 authors       = ["Axel <axelancerr@gmail.com>"]
 readme        = "README.md"
-homepage      = "https://github.com/Axelware/slate"
-repository    = "https://github.com/Axelware/slate"
+homepage      = "https://github.com/Axelware/slate.py"
+repository    = "https://github.com/Axelware/slate.py"
 documentation = "https://slate-py.readthedocs.io/en/latest/"
 keywords      = ["obsidian", "lavalink", "api", "wrapper", "async"]
 include       = ["CHANGELOG.md", "LICENSE"]
@@ -41,7 +41,7 @@ python            = "^3.10.0"
 aiohttp           = "^3.8.0"
 typing_extensions = "^4.3.0"
 spoti-py          = "^0.1.0"
-discord-py        = { git = "https://github.com/Rapptz/discord.py", branch = "master" }
+discord-py        = "^2.0.0"
 
 
 [tool.poetry.group.docs]
@@ -63,7 +63,7 @@ jishaku = "*"
 
 
 [tool.poetry.urls]
-"Issue Tracker" = "https://github.com/Axelware/slate/issues"
+"Issue Tracker" = "https://github.com/Axelware/slate.py/issues"
 "Discord"       = "https://discord.com/invite/w9f6NkQbde"
 
 
