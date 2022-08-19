@@ -10,5 +10,5 @@ A [discord.py](https://github.com/Rapptz/discord.py) compatible wrapper for [lav
 **Python 3.10 or later is required.**
 
 ```shell
-pip install -U git+https://github.com/Axelware/slate.git@main#egg=slate
+pip install -U git+https://github.com/Axelware/slate.py.git
 ```
