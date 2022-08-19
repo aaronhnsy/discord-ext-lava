@@ -3,7 +3,7 @@ A [discord.py](https://github.com/Rapptz/discord.py) compatible wrapper for [lav
 
 ## Support
 - [Documentation](https://slate-py.readthedocs.io/)
-- [GitHub](https://github.com/Axelware/slate)
+- [GitHub](https://github.com/Axelware/slate.py)
 - [Discord](https://discord.com/invite/w9f6NkQbde)
 
 ## Installation

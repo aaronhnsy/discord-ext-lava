@@ -26,12 +26,12 @@ This installs the latest stable release of slate from github
 
     .. code-block:: console
 
-        py -3 -m pip install -U git+https://github.com/Axelware/slate.git@v0.3.1
+        py -3 -m pip install -U git+https://github.com/Axelware/slate.py.git@v0.3.1
 .. tab:: MacOS/Linux
 
     .. code-block:: console
 
-        python3 -m pip install -U git+https://github.com/Axelware/slate.git@v0.3.1
+        python3 -m pip install -U git+https://github.com/Axelware/slate.py.git@v0.3.1
 
 Installing Development Version
 -------------------------------
@@ -46,9 +46,9 @@ This installs the master branch from github
 
     .. code-block:: console
 
-        py -3 -m pip install -U git+https://github.com/Axelware/slate.git
+        py -3 -m pip install -U git+https://github.com/Axelware/slate.py.git
 .. tab:: MacOS/Linux
 
     .. code-block:: console
 
-        python3 -m pip install -U git+https://github.com/Axelware/slate.git
+        python3 -m pip install -U git+https://github.com/Axelware/slate.py.git
