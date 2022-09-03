@@ -39,7 +39,7 @@ class Timescale:
         self.rate: float = rate
 
     def __repr__(self) -> str:
-        return f"<slate.Timescale pitch={self.pitch}, speed={self.speed}, rate={self.rate}>"
+        return f"<discord.ext.lava.Timescale pitch={self.pitch}, speed={self.speed}, rate={self.rate}>"
 
     def _construct_payload(self) -> TimescaleData:
         return {

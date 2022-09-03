@@ -1,9 +1,9 @@
-.. py:currentmodule:: slate
+.. py:currentmodule:: discord.ext.lava
 
 
-Slate
+discord-ext-lava
 ================
-Slate is a discord.py compatible wrapper for lavalink-like applications.
+discord-ext-lava is a discord.py compatible wrapper for lavalink-like applications.
 
 
 .. toctree::

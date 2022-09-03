@@ -30,7 +30,7 @@ class LowPass:
         self.smoothing: float = smoothing
 
     def __repr__(self) -> str:
-        return f"<slate.LowPass smoothing={self.smoothing}>"
+        return f"<discord.ext.lava.LowPass smoothing={self.smoothing}>"
 
     # payloads
 

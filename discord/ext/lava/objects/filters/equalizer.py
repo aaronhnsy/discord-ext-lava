@@ -40,7 +40,7 @@ class Equalizer:
         self.bands: list[EqualizerBandData] = [{"band": band, "gain": _dict[band]} for band in range(15)]
 
     def __repr__(self) -> str:
-        return f"<slate.Equalizer name='{self.name}', bands={self.bands}>"
+        return f"<discord.ext.lava.Equalizer name='{self.name}', bands={self.bands}>"
 
     def _construct_payload(self) -> EqualizerData:
         return self.bands

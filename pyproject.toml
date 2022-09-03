@@ -4,16 +4,16 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry]
-name          = "slate.py"
-version       = "0.4.1"
-description   = "A discord.py compatible wrapper for lavalink-like applications."
+name          = "discord-ext-lava"
+version       = "0.5.0"
+description   = "A discord.py extension for lavaplayer-based audio nodes."
 license       = "MIT"
 authors       = ["Axel <axelancerr@gmail.com>"]
 readme        = "README.md"
-homepage      = "https://github.com/Axelware/slate.py"
-repository    = "https://github.com/Axelware/slate.py"
-documentation = "https://slate-py.readthedocs.io/en/latest/"
-keywords      = ["obsidian", "lavalink", "api", "wrapper", "async"]
+homepage      = "https://github.com/Axelware/discord-ext-lava"
+repository    = "https://github.com/Axelware/discord-ext-lava"
+documentation = "https://discord-ext-lava.readthedocs.io/en/latest/"
+keywords      = ["obsidian", "lavalink", "api", "wrapper", "async", "discord", "discord-ext"]
 include       = ["CHANGELOG.md", "LICENSE"]
 classifiers = [
     "Framework :: AsyncIO",
@@ -29,9 +29,7 @@ classifiers = [
     "Typing :: Typed"
 ]
 packages = [
-    { include = "slate" },
-    { include = "slate/**/*.py" },
-    { include = "slate/py.typed" },
+    { include = "discord/ext/lava" },
 ]
 
 
@@ -62,12 +60,12 @@ jishaku = "*"
 
 
 [tool.poetry.urls]
-"Issue Tracker" = "https://github.com/Axelware/slate.py/issues"
+"Issue Tracker" = "https://github.com/Axelware/discord-ext-lava/issues"
 "Discord"       = "https://discord.com/invite/w9f6NkQbde"
 
 
 [tool.pyright]
-include                = ["slate"]
+include                = ["discord/ext/lava"]
 pythonVersion          = "3.10"
 typeCheckingMode       = "strict"
 useLibraryCodeForTypes = true

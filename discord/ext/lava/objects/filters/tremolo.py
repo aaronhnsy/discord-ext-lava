@@ -34,7 +34,7 @@ class Tremolo:
         self.depth: float = depth
 
     def __repr__(self) -> str:
-        return f"<slate.Tremolo frequency={self.frequency}, depth={self.depth}>"
+        return f"<discord.ext.lava.Tremolo frequency={self.frequency}, depth={self.depth}>"
 
     def _construct_payload(self) -> TremoloData:
         return {

@@ -30,7 +30,7 @@ class Collection:
         self._tracks: list[Track] = [Track(id=track["track"], info=track["info"], extras=extras) for track in tracks]
 
     def __repr__(self) -> str:
-        return "<slate.Collection>"
+        return "<discord.ext.lava.Collection>"
 
     # properties
 

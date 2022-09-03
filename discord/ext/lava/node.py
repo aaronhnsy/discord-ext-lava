@@ -42,7 +42,7 @@ __all__ = (
 )
 
 
-LOGGER: logging.Logger = logging.getLogger("slate.node")
+LOGGER: logging.Logger = logging.getLogger("discord.ext.lava.node")
 
 
 class Node(Generic[BotT, PlayerT]):
@@ -103,7 +103,7 @@ class Node(Generic[BotT, PlayerT]):
         self._players: dict[int, PlayerT] = {}
 
     def __repr__(self) -> str:
-        return f"<slate.Node player_count={len(self._players)}>"
+        return f"<discord.ext.lava.Node player_count={len(self._players)}>"
 
     # properties
 
@@ -162,7 +162,7 @@ class Node(Generic[BotT, PlayerT]):
         path = self._ws_path or "/magma" if self._provider is Provider.OBSIDIAN else ""
         url = self._ws_url or f"ws://{self._host}:{self._port}{path}"
         headers = {
-            "Client-Name": f"Slate/{__version__}",
+            "Client-Name": f"discord-ext-lava/{__version__}",
             "User-Id":     str(self._bot.user.id),
         }
         if self._password:
@@ -356,7 +356,7 @@ class Node(Generic[BotT, PlayerT]):
 
         url = f"{self._rest_url or f'http://{self._host}:{self._port}'}{path}"
         headers = {
-            "Client-Name": f"Slate/{__version__}"
+            "Client-Name": f"discord-ext-lava/{__version__}"
         }
         if self._password:
             headers["Authorization"] = self._password
@@ -502,21 +502,21 @@ class Node(Generic[BotT, PlayerT]):
         ----------
         search: :class:`str`
             The search query.
-        source: :class:`~slate.Source`
+        source: :class:`~discord.ext.lava.Source`
             The source to request results from. Defaults to :attr:`Source.NONE`.
 
         Raises
         ------
-        :exc:`~slate.NoResultsFound`
+        :exc:`~discord.ext.lava.NoResultsFound`
             If no results were found.
-        :exc:`~slate.SearchFailed`
+        :exc:`~discord.ext.lava.SearchFailed`
             If the search failed.
-        :exc:`~slate.HTTPError`
+        :exc:`~discord.ext.lava.HTTPError`
             If the HTTP request failed.
 
         Returns
         -------
-        :class:`~slate.Search`
+        :class:`~discord.ext.lava.Search`
         """
 
         if self._spotify and (match := SPOTIFY_URL_REGEX.match(search)):

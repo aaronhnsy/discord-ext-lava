@@ -92,7 +92,7 @@ class Filter:
         self.volume: Volume | None = volume
 
     def __repr__(self) -> str:
-        return f"<slate.Filter channel_mix={self.channel_mix}, distortion={self.distortion}, " \
+        return f"<discord.ext.lava.Filter channel_mix={self.channel_mix}, distortion={self.distortion}, " \
                f"equalizer={self.equalizer}, karaoke={self.karaoke}, low_pass={self.low_pass}, " \
                f"rotation={self.rotation}, timescale={self.timescale}, tremolo={self.tremolo}, " \
                f"vibrato={self.vibrato}, volume={self.volume}>"

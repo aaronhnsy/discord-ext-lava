@@ -52,7 +52,7 @@ class ChannelMix:
         self.right_to_right: float = right_to_right
 
     def __repr__(self) -> str:
-        return f"<slate.ChannelMix " \
+        return f"<discord.ext.lava.ChannelMix " \
                f"left_to_left={self.left_to_left}, " \
                f"left_to_right={self.left_to_right}, " \
                f"right_to_left={self.right_to_left}, " \

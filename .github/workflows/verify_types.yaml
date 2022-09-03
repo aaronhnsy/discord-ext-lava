@@ -51,7 +51,7 @@ jobs:
 
       - name: "Install Poetry"
         run: |
-          pipx install poetry==1.2.0b3
+          pipx install poetry
 
       - name: "Install Dependencies"
         run: |
@@ -61,4 +61,4 @@ jobs:
       - name: "Verify types"
         run: |
           poetry run pyright
-          poetry run pyright --ignoreexternal --lib --verifytypes slate
+          poetry run pyright --ignoreexternal --lib --verifytypes discord.ext.lava

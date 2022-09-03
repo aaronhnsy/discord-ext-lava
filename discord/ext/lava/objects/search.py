@@ -33,7 +33,7 @@ class Search:
         self._tracks: list[Track] = tracks
 
     def __repr__(self) -> str:
-        return f"<slate.Result source={self._source}, type='{self._type}', result={type(self._result)}>"
+        return f"<discord.ext.lava.Result source={self._source}, type='{self._type}', result={type(self._result)}>"
 
     # properties
 

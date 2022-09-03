@@ -8,7 +8,7 @@ from .objects.enums import Source
 
 
 __all__ = (
-    "SlateError",
+    "LavaError",
     "NodeAlreadyExists",
     "NodeNotFound",
     "NoNodesConnected",
@@ -22,27 +22,27 @@ __all__ = (
 )
 
 
-class SlateError(Exception):
+class LavaError(Exception):
     pass
 
 
-class NodeAlreadyExists(SlateError):
+class NodeAlreadyExists(LavaError):
     pass
 
 
-class NodeNotFound(SlateError):
+class NodeNotFound(LavaError):
     pass
 
 
-class NoNodesConnected(SlateError):
+class NoNodesConnected(LavaError):
     pass
 
 
-class NodeAlreadyConnected(SlateError):
+class NodeAlreadyConnected(LavaError):
     pass
 
 
-class NodeConnectionError(SlateError):
+class NodeConnectionError(LavaError):
     pass
 
 
@@ -50,11 +50,11 @@ class InvalidPassword(NodeConnectionError):
     pass
 
 
-class NodeNotConnected(SlateError):
+class NodeNotConnected(LavaError):
     pass
 
 
-class HTTPError(SlateError):
+class HTTPError(LavaError):
 
     def __init__(
         self,
@@ -74,7 +74,7 @@ class HTTPError(SlateError):
         return self._message
 
 
-class NoResultsFound(SlateError):
+class NoResultsFound(LavaError):
 
     def __init__(
         self,
@@ -101,7 +101,7 @@ class NoResultsFound(SlateError):
         return self._type
 
 
-class SearchFailed(SlateError):
+class SearchFailed(LavaError):
 
     def __init__(
         self,

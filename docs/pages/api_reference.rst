@@ -1,4 +1,4 @@
-.. py:currentmodule:: slate
+.. py:currentmodule:: discord.ext.lava
 
 
 API Reference
@@ -11,18 +11,18 @@ Pool
 
 Node
 ----
-.. autoclass:: slate.Node
+.. autoclass:: discord.ext.lava.Node
     :members:
 
 Player
 ------
-.. autoclass:: slate.Player
+.. autoclass:: discord.ext.lava.Player
     :members:
     :exclude-members: on_voice_server_update, on_voice_state_update
 
 Queue
 -----
-.. autoclass:: slate.Queue
+.. autoclass:: discord.ext.lava.Queue
     :members:
 
 
@@ -31,17 +31,17 @@ Objects
 
 Track
 ~~~~~
-.. autoclass:: slate.Track
+.. autoclass:: discord.ext.lava.Track
     :members:
 
 Collection
 ~~~~~~~~~~
-.. autoclass:: slate.Collection
+.. autoclass:: discord.ext.lava.Collection
     :members:
 
 Search
 ~~~~~~
-.. autoclass:: slate.Search
+.. autoclass:: discord.ext.lava.Search
     :members:
 
 
@@ -50,32 +50,32 @@ Events
 
 TrackStart
 ~~~~~~~~~~
-.. autoclass:: slate.TrackStart
+.. autoclass:: discord.ext.lava.TrackStart
     :members:
 
 TrackEnd
 ~~~~~~~~
-.. autoclass:: slate.TrackEnd
+.. autoclass:: discord.ext.lava.TrackEnd
     :members:
 
 TrackStuck
 ~~~~~~~~~~
-.. autoclass:: slate.TrackStuck
+.. autoclass:: discord.ext.lava.TrackStuck
     :members:
 
 TrackException
 ~~~~~~~~~~~~~~
-.. autoclass:: slate.TrackException
+.. autoclass:: discord.ext.lava.TrackException
     :members:
 
 WebsocketOpen
 ~~~~~~~~~~~~~
-.. autoclass:: slate.WebsocketOpen
+.. autoclass:: discord.ext.lava.WebsocketOpen
     :members:
 
 WebsocketClosed
 ~~~~~~~~~~~~~~~
-.. autoclass:: slate.WebsocketClosed
+.. autoclass:: discord.ext.lava.WebsocketClosed
     :members:
 
 
@@ -84,57 +84,57 @@ Filters
 
 ChannelMix
 ~~~~~~~~~~
-.. autoclass:: slate.ChannelMix
+.. autoclass:: discord.ext.lava.ChannelMix
     :members:
 
 Distortion
 ~~~~~~~~~~
-.. autoclass:: slate.Distortion
+.. autoclass:: discord.ext.lava.Distortion
     :members:
 
 Equalizer
 ~~~~~~~~~
-.. autoclass:: slate.Equalizer
+.. autoclass:: discord.ext.lava.Equalizer
     :members:
 
 Karaoke
 ~~~~~~~
-.. autoclass:: slate.Karaoke
+.. autoclass:: discord.ext.lava.Karaoke
     :members:
 
 LowPass
 ~~~~~~~
-.. autoclass:: slate.LowPass
+.. autoclass:: discord.ext.lava.LowPass
     :members:
 
 Rotation
 ~~~~~~~~
-.. autoclass:: slate.Rotation
+.. autoclass:: discord.ext.lava.Rotation
     :members:
 
 Timescale
 ~~~~~~~~~
-.. autoclass:: slate.Timescale
+.. autoclass:: discord.ext.lava.Timescale
     :members:
 
 Tremolo
 ~~~~~~~
-.. autoclass:: slate.Tremolo
+.. autoclass:: discord.ext.lava.Tremolo
     :members:
 
 Vibrato
 ~~~~~~~
-.. autoclass:: slate.Vibrato
+.. autoclass:: discord.ext.lava.Vibrato
     :members:
 
 Volume
 ~~~~~~
-.. autoclass:: slate.Volume
+.. autoclass:: discord.ext.lava.Volume
     :members:
 
 Filter
 ~~~~~~
-.. autoclass:: slate.Filter
+.. autoclass:: discord.ext.lava.Filter
     :members:
 
 
@@ -143,68 +143,68 @@ Enums
 
 Provider
 ~~~~~~~~
-.. autoclass:: slate.Provider
+.. autoclass:: discord.ext.lava.Provider
     :members:
 
 QueueLoopMode
 ~~~~~~~~~~~~~
-.. autoclass:: slate.QueueLoopMode
+.. autoclass:: discord.ext.lava.QueueLoopMode
     :members:
 
 Source
 ~~~~~~
-.. autoclass:: slate.Source
+.. autoclass:: discord.ext.lava.Source
     :members:
 
 
 Exceptions
 ----------
 
-SlateError
+LavaError
 ~~~~~~~~~~
-.. autoexception:: slate.SlateError
+.. autoexception:: discord.ext.lava.LavaError
 
 NodeAlreadyExists
 ~~~~~~~~~~~~~~~~~
-.. autoexception:: slate.NodeAlreadyExists
+.. autoexception:: discord.ext.lava.NodeAlreadyExists
 
 NodeNotFound
 ~~~~~~~~~~~~
-.. autoexception:: slate.NodeNotFound
+.. autoexception:: discord.ext.lava.NodeNotFound
 
 NoNodesConnected
 ~~~~~~~~~~~~~~~~
-.. autoexception:: slate.NoNodesConnected
+.. autoexception:: discord.ext.lava.NoNodesConnected
 
 NodeAlreadyConnected
 ~~~~~~~~~~~~~~~~
-.. autoexception:: slate.NodeAlreadyConnected
+.. autoexception:: discord.ext.lava.NodeAlreadyConnected
 
 NodeConnectionError
 ~~~~~~~~~~~~~~~~~~~
-.. autoexception:: slate.NodeConnectionError
+.. autoexception:: discord.ext.lava.NodeConnectionError
 
 InvalidPassword
 ~~~~~~~~~~~~~~~~~~~
-.. autoexception:: slate.InvalidPassword
+.. autoexception:: discord.ext.lava.InvalidPassword
 
 NodeNotConnected
 ~~~~~~~~~~~~~~~~
-.. autoexception:: slate.NodeNotConnected
+.. autoexception:: discord.ext.lava.NodeNotConnected
 
 HTTPError
 ~~~~~~~~~
-.. autoexception:: slate.HTTPError
+.. autoexception:: discord.ext.lava.HTTPError
    :members:
 
 NoResultsFound
 ~~~~~~~~~~~~~~
-.. autoexception:: slate.NoResultsFound
+.. autoexception:: discord.ext.lava.NoResultsFound
    :members:
 
 SearchFailed
 ~~~~~~~~~~~~
-.. autoexception:: slate.SearchFailed
+.. autoexception:: discord.ext.lava.SearchFailed
    :members:
 
 
@@ -213,13 +213,13 @@ Utils
 
 SPOTIFY_URL_REGEX
 ~~~~~~~~~~~~~~~~~
-.. attribute:: slate.SPOTIFY_URL_REGEX
+.. attribute:: discord.ext.lava.SPOTIFY_URL_REGEX
 
 A regex that matches spotify URLs for tracks, albums, playlists, and artists.
 
 
 MISSING
 ~~~~~~~
-.. attribute:: slate.MISSING
+.. attribute:: discord.ext.lava.MISSING
 
 A sentinel value that is used to indicate a missing value with distinction from :class:`None`.

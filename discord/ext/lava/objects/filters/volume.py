@@ -25,7 +25,7 @@ class Volume:
         self.level: float = level
 
     def __repr__(self) -> str:
-        return f"<slate.Volume level={self.level}>"
+        return f"<discord.ext.lava.Volume level={self.level}>"
 
     def _construct_payload(self) -> VolumeData:
         return self.level / 100.0

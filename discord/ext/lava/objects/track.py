@@ -57,7 +57,7 @@ class Track:
         self.extras: dict[str, Any] = extras or {}
 
     def __repr__(self) -> str:
-        return f"<slate.Track title='{self.title}', author='{self.author}'>"
+        return f"<discord.ext.lava.Track title='{self.title}', author='{self.author}'>"
 
     # properties
 

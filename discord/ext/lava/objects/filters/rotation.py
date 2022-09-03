@@ -29,7 +29,7 @@ class Rotation:
         self.speed: float = speed
 
     def __repr__(self) -> str:
-        return f"<slate.Rotation speed={self.speed}>"
+        return f"<discord.ext.lava.Rotation speed={self.speed}>"
 
     # payloads
 

@@ -16,13 +16,13 @@ __all__ = (
 )
 
 
-LOGGER: logging.Logger = logging.getLogger("slate.pool")
+LOGGER: logging.Logger = logging.getLogger("discord.ext.lava.pool")
 
 
 class Pool(Generic[BotT, PlayerT]):
 
     def __repr__(self) -> str:
-        return f"<slate.Pool node_count={len(self.nodes)}>"
+        return f"<discord.ext.lava.Pool node_count={len(self.nodes)}>"
 
     nodes: dict[str, Node[BotT, PlayerT]] = {}
     """
@@ -102,16 +102,16 @@ class Pool(Generic[BotT, PlayerT]):
         ------
         :exc:`ValueError`
             If you don't provide either ``host`` and ``port`` or ``ws_url`` and ``rest_url``.
-        :exc:`~slate.NodeAlreadyExists`
+        :exc:`~discord.ext.lava.NodeAlreadyExists`
             If a node with the given identifier already exists.
-        :exc:`~slate.InvalidNodePassword`
+        :exc:`~discord.ext.lava.InvalidNodePassword`
             If the password provided did not match the password required by the provider server.
-        :exc:`~slate.NodeConnectionError`
+        :exc:`~discord.ext.lava.NodeConnectionError`
             If the node could not connect to the provider server.
 
         Returns
         -------
-        :class:`~slate.Node`
+        :class:`~discord.ext.lava.Node`
         """
 
         if identifier in cls.nodes:
@@ -155,14 +155,14 @@ class Pool(Generic[BotT, PlayerT]):
 
         Raises
         ------
-        :exc:`~slate.NoNodesConnected`
+        :exc:`~discord.ext.lava.NoNodesConnected`
             If there are no nodes attached to the pool.
-        :exc:`~slate.NodeNotFound`
+        :exc:`~discord.ext.lava.NodeNotFound`
             If there are no nodes with the given identifier in the pool.
 
         Returns
         -------
-        :class:`~slate.Node`
+        :class:`~discord.ext.lava.Node`
         """
 
         if not cls.nodes:

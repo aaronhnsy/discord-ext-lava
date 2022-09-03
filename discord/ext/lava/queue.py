@@ -33,7 +33,7 @@ class Queue(Generic[QueueItemT]):
         self._finished.set()
 
     def __repr__(self) -> str:
-        return f"<slate.Queue item_count={len(self._items)}>"
+        return f"<discord.ext.lava.Queue item_count={len(self._items)}>"
 
     def __len__(self) -> int:
         return self._items.__len__()
@@ -224,7 +224,7 @@ class Queue(Generic[QueueItemT]):
 
         Returns
         -------
-        :class:`~slate.Track`
+        :class:`~discord.ext.lava.Track`
         """
 
         try:
@@ -259,7 +259,7 @@ class Queue(Generic[QueueItemT]):
 
         Returns
         -------
-        :class:`~slate.Track`
+        :class:`~discord.ext.lava.Track`
         """
 
         try:
@@ -418,7 +418,7 @@ class Queue(Generic[QueueItemT]):
 
         Returns
         -------
-        :class:`~slate.Track`
+        :class:`~discord.ext.lava.Track`
         """
 
         try:
@@ -448,7 +448,7 @@ class Queue(Generic[QueueItemT]):
 
         Returns
         -------
-        :class:`~slate.Track`
+        :class:`~discord.ext.lava.Track`
         """
 
         try:

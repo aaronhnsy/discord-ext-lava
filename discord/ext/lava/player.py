@@ -23,7 +23,7 @@ __all__ = (
 )
 
 
-LOGGER: logging.Logger = logging.getLogger("slate.player")
+LOGGER: logging.Logger = logging.getLogger("discord.ext.lava.player")
 
 
 OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
@@ -87,7 +87,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         return self  # type: ignore
 
     def __repr__(self) -> str:
-        return "<slate.Player>"
+        return "<discord.ext.lava.Player>"
 
     # discord.py abstract methods
 
@@ -148,7 +148,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
         event = event(data)
 
-        self.bot.dispatch(f"slate_{event.type.lower()}", self, event)
+        self.bot.dispatch(f"lava_{event.type.lower()}", self, event)
         LOGGER.info(f"Player '{self.channel.guild.id}' dispatched '{_type}' event.")
 
     def _update_state(

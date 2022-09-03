@@ -43,7 +43,7 @@ class Karaoke:
         self.band_width: float = band_width
 
     def __repr__(self) -> str:
-        return f"<slate.Karaoke " \
+        return f"<discord.ext.lava.Karaoke " \
                f"level={self.level}, mono_level={self.mono_level}, " \
                f"band={self.band}, band_width={self.band_width}>"
 

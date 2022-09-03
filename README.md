@@ -1,14 +1,7 @@
-# slate
-A [discord.py](https://github.com/Rapptz/discord.py) compatible wrapper for [lavalink](https://github.com/freyacodes/Lavalink)-like applications.
+# discord-ext-lava
+A [discord.py](https://github.com/Rapptz/discord.py) extension for [lavaplayer](https://github.com/Walkyst/lavaplayer-fork)-based audio nodes.
 
 ## Support
-- [Documentation](https://slate-py.readthedocs.io/)
-- [GitHub](https://github.com/Axelware/slate.py)
+- [Documentation](https://discord-ext-lava.readthedocs.io/)
+- [GitHub](https://github.com/Axelware/discord-ext-lava)
 - [Discord](https://discord.com/invite/w9f6NkQbde)
-
-## Installation
-**Python 3.10 or later is required.**
-
-```shell
-pip install -U git+https://github.com/Axelware/slate.py.git
-```

@@ -3,7 +3,7 @@ Installing
 
 Requirements
 ------------
-Slate requires Python 3.10+. You can download the latest version of python `here <https://www.python.org/downloads/>`__
+discord-ext-lava requires Python 3.10+. You can download the latest version of python `here <https://www.python.org/downloads/>`__
 
 * `aiohttp <https://pypi.org/project/aiohttp/>`_
 * `typing_extensions <https://pypi.org/project/typing_extensions/>`_
@@ -20,18 +20,18 @@ Slate requires Python 3.10+. You can download the latest version of python `here
 
 Installing Stable Version
 -------------------------
-This installs the latest stable release of slate from github
+This installs the latest stable release of discord-ext-lava from github
 
 .. tab:: Windows
 
     .. code-block:: console
 
-        py -3 -m pip install -U git+https://github.com/Axelware/slate.py.git@v0.3.1
+        py -3 -m pip install -U git+https://github.com/Axelware/discord-ext-lava@v0.3.1
 .. tab:: MacOS/Linux
 
     .. code-block:: console
 
-        python3 -m pip install -U git+https://github.com/Axelware/slate.py.git@v0.3.1
+        python3 -m pip install -U git+https://github.com/Axelware/discord-ext-lava@v0.3.1
 
 Installing Development Version
 -------------------------------
@@ -46,9 +46,9 @@ This installs the master branch from github
 
     .. code-block:: console
 
-        py -3 -m pip install -U git+https://github.com/Axelware/slate.py.git
+        py -3 -m pip install -U git+https://github.com/Axelware/discord-ext-lava
 .. tab:: MacOS/Linux
 
     .. code-block:: console
 
-        python3 -m pip install -U git+https://github.com/Axelware/slate.py.git
+        python3 -m pip install -U git+https://github.com/Axelware/discord-ext-lava

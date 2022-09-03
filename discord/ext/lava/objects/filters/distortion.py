@@ -68,7 +68,7 @@ class Distortion:
         self.scale: float = scale
 
     def __repr__(self) -> str:
-        return f"<slate.Distortion " \
+        return f"<discord.ext.lava.Distortion " \
                f"sin_offset={self.sin_offset}, sin_scale={self.sin_scale}, " \
                f"cos_offset={self.cos_offset}, cos_scale={self.cos_scale}, " \
                f"tan_offset={self.tan_offset}, tan_scale={self.tan_scale}, " \

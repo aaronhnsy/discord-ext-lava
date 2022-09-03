@@ -1,15 +1,13 @@
 # Changelog
 
-## 0.4.0
 
-### Breaking
-* Renamed `slate.InvalidNodePassword` -> `slate.InvalidPassword`.
-* Redesign `slate.Queue`, adds more utility and magic methods.
-* Add `__slots__` to most all object class + `slate.Queue`.
+## 0.5.0
 
-### Fixes
-* Fixed spotify URL regex.
-* Fix `slate.Filter` not actually persisting previous Filters.
+### New Features
+- Placeholder
 
-### Misc
-* Added and fixed documentation for more classes, methods, and objects.
+### Bug Fixes
+- Placeholder
+
+### Notes
+- Placeholder
