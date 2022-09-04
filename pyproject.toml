@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name          = "discord-ext-lava"
-version       = "0.5.0"
+version       = "0.5.1"
 description   = "A discord.py extension for lavaplayer-based audio nodes."
 license       = "MIT"
 authors       = ["Axel <axelancerr@gmail.com>"]

@@ -1,13 +1,13 @@
-# Changelog
-
-
-## 0.5.0
+# v0.5.1
 
 ### New Features
-- Placeholder
+- n/a
+
+### Changes
+- n/a
 
 ### Bug Fixes
-- Placeholder
+- n/a
 
 ### Notes
-- Placeholder
+- n/a
