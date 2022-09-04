@@ -3,16 +3,20 @@
 
 discord-ext-lava
 ================
-discord-ext-lava is a discord.py compatible wrapper for lavalink-like applications.
+A discord.py extension for lavaplayer-based audio nodes.
 
 
 .. toctree::
-    :caption: Getting Started
+    :hidden:
+    :caption: Introduction
 
-    pages/installing
+    pages/installation
+    pages/contribution
 
 
 .. toctree::
-    :caption: API Reference
+    :hidden:
+    :caption: API
 
-    pages/api_reference
+    pages/usage
+    pages/reference

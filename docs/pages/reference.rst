@@ -1,8 +1,8 @@
 .. py:currentmodule:: discord.ext.lava
 
 
-API Reference
-=============
+Reference
+=========
 
 Pool
 ----
@@ -177,7 +177,7 @@ NoNodesConnected
 .. autoexception:: discord.ext.lava.NoNodesConnected
 
 NodeAlreadyConnected
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 .. autoexception:: discord.ext.lava.NodeAlreadyConnected
 
 NodeConnectionError
@@ -185,7 +185,7 @@ NodeConnectionError
 .. autoexception:: discord.ext.lava.NodeConnectionError
 
 InvalidPassword
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 .. autoexception:: discord.ext.lava.InvalidPassword
 
 NodeNotConnected
