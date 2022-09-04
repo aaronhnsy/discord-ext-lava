@@ -159,7 +159,7 @@ class Node(Generic[BotT, PlayerT]):
         if not self._session:
             self._session = aiohttp.ClientSession()
 
-        path = self._ws_path or "/magma" if self._provider is Provider.OBSIDIAN else ""
+        path = self._ws_path or "/magma" if self._provider is Provider.Obsidian else ""
         url = self._ws_url or f"ws://{self._host}:{self._port}{path}"
         headers = {
             "Client-Name": f"discord-ext-lava/{__version__}",
@@ -317,7 +317,7 @@ class Node(Generic[BotT, PlayerT]):
         if not data:
             data = {}
 
-        if self.provider is Provider.OBSIDIAN:
+        if self.provider is Provider.Obsidian:
             if guild_id:
                 data["guild_id"] = guild_id
             data = {
@@ -422,12 +422,12 @@ class Node(Generic[BotT, PlayerT]):
                 tracks = [Track._from_spotify_track(result, result, extras)]
 
         except spotipy.NotFound:
-            raise NoResultsFound(search=_id, source=Source.SPOTIFY, type=_type)
+            raise NoResultsFound(search=_id, source=Source.Spotify, type=_type)
         except spotipy.HTTPError:
             raise SearchFailed(data={"message": "Error while accessing spotify API.", "severity": "COMMON"})
 
         return Search(
-            source=Source.SPOTIFY,
+            source=Source.Spotify,
             type=_type,
             result=result,
             tracks=tracks
@@ -470,7 +470,7 @@ class Node(Generic[BotT, PlayerT]):
 
         elif load_type in PLAYLIST_LOADED:
 
-            if self.provider is Provider.OBSIDIAN:
+            if self.provider is Provider.Obsidian:
                 info = data["collection_info"]
             else:
                 info = data["playlistInfo"]

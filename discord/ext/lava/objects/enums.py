@@ -11,27 +11,27 @@ __all__ = (
 
 
 class Provider(Enum):
-    OBSIDIAN = 0
-    LAVALINK = 1
+    Obsidian = 0
+    Lavalink = 1
 
 
 class QueueLoopMode(Enum):
-    DISABLED = 0
-    ALL = 1
-    CURRENT = 2
+    Disabled = 0
+    All = 1
+    Current = 2
 
 
 class Source(Enum):
-    BANDCAMP = "bandcamp"
-    YARN = "getyarn.io"
-    HTTP = "http"
-    LOCAL = "local"
-    NICO = "niconico"
-    SOUNDCLOUD = "soundcloud"
-    TWITCH = "twitch"
-    VIMEO = "vimeo"
-    YOUTUBE = "youtube"
-    YOUTUBE_MUSIC = "youtube_music"
-    SPOTIFY = "spotify"
-    UNKNOWN = "unknown"
+    Bandcamp = "bandcamp"
+    GetYarn = "getyarn.io"
+    Http = "http"
+    Local = "local"
+    NicoNico = "niconico"
+    SoundCloud = "soundcloud"
+    Twitch = "twitch"
+    Vimeo = "vimeo"
+    Youtube = "youtube"
+    YoutubeMusic = "youtube_music"
+    Spotify = "spotify"
+    Unknown = "unknown"
     NONE = ""

@@ -26,7 +26,7 @@ __all__ = (
 LOGGER: logging.Logger = logging.getLogger("discord.ext.lava.player")
 
 
-OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
+Obsidian_EVENT_MAPPING: dict[str, Any] = {
     "WEBSOCKET_OPEN":   WebsocketOpen,
     "WEBSOCKET_CLOSED": WebsocketClosed,
     "TRACK_START":      TrackStart,
@@ -116,7 +116,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         if not self._session_id or not self._voice_server_update_data:
             return
 
-        if self._node.provider is Provider.OBSIDIAN:
+        if self._node.provider is Provider.Obsidian:
             data = {
                 "session_id": self._session_id,
                 **self._voice_server_update_data
@@ -142,7 +142,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
         _type = data["type"]
 
-        if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node.provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
+        if not (event := Obsidian_EVENT_MAPPING.get(_type) if self._node.provider is Provider.Obsidian else LAVALINK_EVENT_MAPPING.get(_type)):
             LOGGER.error(f"Player '{self.channel.guild.id}' received an event with an unknown type: '{_type}'.")
             return
 
@@ -158,7 +158,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
         self._last_update = time.time() * 1000
 
-        if self._node.provider is Provider.OBSIDIAN:
+        if self._node.provider is Provider.Obsidian:
 
             current: dict[str, Any] = data["current_track"]
             self._current_track_id = current["track"]
@@ -359,7 +359,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
         data: dict[str, Any] = {
             "track": track.id,
         }
-        if self._node.provider is Provider.OBSIDIAN:
+        if self._node.provider is Provider.Obsidian:
             if start_time:
                 data["start_time"] = start_time
             if end_time:
@@ -431,7 +431,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
         await self._node._send_payload(
             8,  # pause
-            data={"state": pause} if self._node.provider is Provider.OBSIDIAN else {"pause": pause},
+            data={"state": pause} if self._node.provider is Provider.Obsidian else {"pause": pause},
             guild_id=str(self.channel.guild.id)
         )
         LOGGER.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
@@ -460,7 +460,7 @@ class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
 
         await self._node._send_payload(
             9,  # filters
-            data={"filters": _payload} if self._node.provider is Provider.OBSIDIAN else _payload,
+            data={"filters": _payload} if self._node.provider is Provider.Obsidian else _payload,
             guild_id=str(self.channel.guild.id)
         )
         LOGGER.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")

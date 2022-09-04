@@ -38,9 +38,9 @@ OBSIDIAN_TO_LAVALINK_OP_MAP: dict[int, str] = {
 }
 
 SOURCE_MAP: dict[Source, str] = {
-    Source.YOUTUBE:       "ytsearch:",
-    Source.YOUTUBE_MUSIC: "ytmsearch:",
-    Source.SOUNDCLOUD:    "scsearch:",
+    Source.Youtube:      "ytsearch:",
+    Source.YoutubeMusic: "ytmsearch:",
+    Source.SoundCloud:   "scsearch:",
 }
 
 NO_MATCHES: set[str] = {"NONE", "NO_MATCHES"}
