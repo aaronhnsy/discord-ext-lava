@@ -30,15 +30,17 @@ classifiers = [
 ]
 packages = [
     { include = "discord/ext/lava" },
+    { include = "discord/ext/lava/**/*.py" },
+    { include = "discord/ext/lava/**/*.typed" },
 ]
 
 
 [tool.poetry.dependencies]
 python            = "^3.10.0"
 aiohttp           = "^3.8.0"
-typing_extensions = "^4.3.0"
-spoti-py          = "^0.1.0"
 discord-py        = "^2.0.0"
+spoti-py          = "^0.1.0"
+typing_extensions = "^4.3.0"
 
 
 [tool.poetry.group.docs]
@@ -70,6 +72,6 @@ pythonVersion          = "3.10"
 typeCheckingMode       = "strict"
 useLibraryCodeForTypes = true
 
-reportUnknownMemberType = false
 reportPrivateUsage      = false
+reportUnknownMemberType = false
 reportImportCycles      = false
