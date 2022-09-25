@@ -66,7 +66,7 @@ class Track:
 
         if self._artwork_url:
             return self._artwork_url
-        elif self.source is Source.Youtube:
+        elif self.source is Source.YOUTUBE:
             return f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"
 
         return None

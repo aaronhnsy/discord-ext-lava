@@ -25,7 +25,7 @@ class Queue(Generic[QueueItemT]):
         self._items: list[QueueItemT] = []
         self._history: list[QueueItemT] = []
 
-        self._loop_mode: QueueLoopMode = QueueLoopMode.Disabled
+        self._loop_mode: QueueLoopMode = QueueLoopMode.DISABLED
 
         self._waiters: deque[asyncio.Future[None]] = deque()
 
@@ -89,11 +89,11 @@ class Queue(Generic[QueueItemT]):
         if put_into_history:
             self.put_into_history(item=item)
 
-        if self._loop_mode is not QueueLoopMode.Disabled:
+        if self._loop_mode is not QueueLoopMode.DISABLED:
             self._put(
                 target=self._items,
                 item=item,
-                position=0 if self._loop_mode is QueueLoopMode.Current else None
+                position=0 if self._loop_mode is QueueLoopMode.CURRENT else None
             )
 
         return item

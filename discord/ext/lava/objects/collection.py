@@ -63,4 +63,4 @@ class Collection:
         try:
             return self._tracks[0].source
         except IndexError:
-            return Source.Unknown
+            return Source.UNKNOWN
