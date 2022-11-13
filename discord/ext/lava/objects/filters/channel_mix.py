@@ -4,20 +4,12 @@ from typing import TypedDict
 
 
 __all__ = (
-    "ObsidianChannelMixData",
-    "LavalinkChannelMixData",
+    "ChannelMixData",
     "ChannelMix",
 )
 
 
-class ObsidianChannelMixData(TypedDict):
-    left_to_left: float
-    left_to_right: float
-    right_to_left: float
-    right_to_right: float
-
-
-class LavalinkChannelMixData(TypedDict):
+class ChannelMixData(TypedDict):
     leftToLeft: float
     leftToRight: float
     rightToLeft: float
@@ -38,8 +30,8 @@ class ChannelMix:
     ) -> None:
 
         if any(
-                value for value in (left_to_left, left_to_right, right_to_left, right_to_right) if
-                value < 0.0 or value > 1.0
+            value for value in (left_to_left, left_to_right, right_to_left, right_to_right) if
+            value < 0.0 or value > 1.0
         ):
             raise ValueError(
                 "'left_to_left', 'left_to_right', 'right_to_left', and 'right_to_right' must all be between "
@@ -58,25 +50,13 @@ class ChannelMix:
                f"right_to_left={self.right_to_left}, " \
                f"right_to_right{self.right_to_right}>"
 
-    # payloads
-
-    def _construct_obsidian_payload(self) -> ObsidianChannelMixData:
-        return {
-            "left_to_left":   self.left_to_left,
-            "left_to_right":  self.left_to_right,
-            "right_to_left":  self.right_to_left,
-            "right_to_right": self.right_to_right,
-        }
-
-    def _construct_lavalink_payload(self) -> LavalinkChannelMixData:
+    def construct_payload(self) -> ChannelMixData:
         return {
             "leftToLeft":   self.left_to_left,
             "leftToRight":  self.left_to_right,
             "rightToLeft":  self.right_to_left,
             "rightToRight": self.right_to_right,
         }
-
-    # classmethods
 
     @classmethod
     def mono(cls) -> ChannelMix:

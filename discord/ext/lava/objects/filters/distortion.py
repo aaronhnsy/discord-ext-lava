@@ -4,24 +4,12 @@ from typing import TypedDict
 
 
 __all__ = (
-    "ObsidianDistortionData",
-    "LavalinkDistortionData",
+    "DistortionData",
     "Distortion",
 )
 
 
-class ObsidianDistortionData(TypedDict):
-    sin_offset: float
-    sin_scale: float
-    cos_offset: float
-    cos_scale: float
-    tan_offset: float
-    tan_scale: float
-    offset: float
-    scale: float
-
-
-class LavalinkDistortionData(TypedDict):
+class DistortionData(TypedDict):
     sinOffset: float
     sinScale: float
     cosOffset: float
@@ -57,7 +45,6 @@ class Distortion:
         offset: float = 0.0,
         scale: float = 1.0
     ) -> None:
-
         self.sin_offset: float = sin_offset
         self.sin_scale: float = sin_scale
         self.cos_offset: float = cos_offset
@@ -74,21 +61,7 @@ class Distortion:
                f"tan_offset={self.tan_offset}, tan_scale={self.tan_scale}, " \
                f"offset={self.offset}, scale={self.scale}>"
 
-    # payloads
-
-    def _construct_obsidian_payload(self) -> ObsidianDistortionData:
-        return {
-            "sin_offset": self.sin_offset,
-            "sin_scale":  self.sin_scale,
-            "cos_offset": self.cos_offset,
-            "cos_scale":  self.cos_scale,
-            "tan_offset": self.tan_offset,
-            "tan_scale":  self.tan_scale,
-            "offset":     self.offset,
-            "scale":      self.scale
-        }
-
-    def _construct_lavalink_payload(self) -> LavalinkDistortionData:
+    def construct_payload(self) -> DistortionData:
         return {
             "sinOffset": self.sin_offset,
             "sinScale":  self.sin_scale,

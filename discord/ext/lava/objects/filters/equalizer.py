@@ -42,5 +42,5 @@ class Equalizer:
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Equalizer name='{self.name}', bands={self.bands}>"
 
-    def _construct_payload(self) -> EqualizerData:
+    def construct_payload(self) -> EqualizerData:
         return self.bands

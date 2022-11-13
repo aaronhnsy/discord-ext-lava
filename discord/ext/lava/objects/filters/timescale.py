@@ -41,7 +41,7 @@ class Timescale:
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Timescale pitch={self.pitch}, speed={self.speed}, rate={self.rate}>"
 
-    def _construct_payload(self) -> TimescaleData:
+    def construct_payload(self) -> TimescaleData:
         return {
             "pitch": self.pitch,
             "speed": self.speed,

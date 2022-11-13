@@ -36,7 +36,7 @@ class Vibrato:
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Vibrato frequency={self.frequency}, depth={self.depth}>"
 
-    def _construct_payload(self) -> VibratoData:
+    def construct_payload(self) -> VibratoData:
         return {
             "frequency": self.frequency,
             "depth":     self.depth

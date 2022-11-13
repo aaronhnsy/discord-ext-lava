@@ -4,15 +4,12 @@ from typing import TypedDict
 
 
 __all__ = (
-    "ObsidianRotationData",
-    "LavalinkRotationData",
+    "RotationData",
     "Rotation",
 )
 
-ObsidianRotationData = float
 
-
-class LavalinkRotationData(TypedDict):
+class RotationData(TypedDict):
     rotationHz: float
 
 
@@ -25,18 +22,12 @@ class Rotation:
         *,
         speed: float = 5.0
     ) -> None:
-
         self.speed: float = speed
 
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Rotation speed={self.speed}>"
 
-    # payloads
-
-    def _construct_obsidian_payload(self) -> ObsidianRotationData:
-        return self.speed
-
-    def _construct_lavalink_payload(self) -> LavalinkRotationData:
+    def construct_payload(self) -> RotationData:
         return {
             "rotationHz": self.speed,
         }

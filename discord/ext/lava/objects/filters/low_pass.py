@@ -4,16 +4,12 @@ from typing import TypedDict
 
 
 __all__ = (
-    "ObsidianLowPassData",
-    "LavalinkLowPassData",
+    "LowPassData",
     "LowPass",
 )
 
 
-ObsidianLowPassData = float
-
-
-class LavalinkLowPassData(TypedDict):
+class LowPassData(TypedDict):
     smoothing: float
 
 
@@ -26,18 +22,12 @@ class LowPass:
         *,
         smoothing: float = 20.0
     ) -> None:
-
         self.smoothing: float = smoothing
 
     def __repr__(self) -> str:
         return f"<discord.ext.lava.LowPass smoothing={self.smoothing}>"
 
-    # payloads
-
-    def _construct_obsidian_payload(self) -> ObsidianLowPassData:
-        return self.smoothing
-
-    def _construct_lavalink_payload(self) -> LavalinkLowPassData:
+    def construct_payload(self) -> LowPassData:
         return {
             "smoothing": self.smoothing,
         }

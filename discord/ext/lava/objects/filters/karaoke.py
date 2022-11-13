@@ -4,8 +4,7 @@ from typing import TypedDict
 
 
 __all__ = (
-    "ObsidianKaraokeData",
-    "LavalinkKaraokeData",
+    "KaraokeData",
     "Karaoke",
 )
 
@@ -17,7 +16,7 @@ class ObsidianKaraokeData(TypedDict):
     filter_width: float
 
 
-class LavalinkKaraokeData(TypedDict):
+class KaraokeData(TypedDict):
     level: float
     monoLevel: float
     filterBand: float
@@ -47,17 +46,7 @@ class Karaoke:
                f"level={self.level}, mono_level={self.mono_level}, " \
                f"band={self.band}, band_width={self.band_width}>"
 
-    # payloads
-
-    def _construct_obsidian_payload(self) -> ObsidianKaraokeData:
-        return {
-            "level":        self.level,
-            "mono_level":   self.mono_level,
-            "filter_band":  self.band,
-            "filter_width": self.band_width
-        }
-
-    def _construct_lavalink_payload(self) -> LavalinkKaraokeData:
+    def construct_payload(self) -> KaraokeData:
         return {
             "level":       self.level,
             "monoLevel":   self.mono_level,
