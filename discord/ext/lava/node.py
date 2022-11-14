@@ -16,7 +16,7 @@ from discord.ext import commands
 from typing_extensions import TypeVar
 
 from .backoff import Backoff
-from .exceptions import AlreadyConnected, IncorrectPassword, NodeConnectionError
+from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .types.payloads import Payload
 
 
@@ -27,7 +27,7 @@ __all__ = (
 BotT = TypeVar("BotT", bound=commands.Bot | commands.AutoShardedBot, default=commands.Bot)
 PlayerT = TypeVar("PlayerT", bound=Any, default=Any)
 
-LOGGER: logging.Logger = logging.getLogger("discord.ext.lava.node")
+LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.node")
 
 ordinal: Callable[[int], str] = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
 
@@ -50,9 +50,6 @@ class Node(Generic[BotT, PlayerT]):
         session: aiohttp.ClientSession | None = None,
     ) -> None:
 
-        if (host is None and port is None) and (ws_url is None and rest_url is None):
-            raise ValueError("You must provide either the `host` and `port` OR `ws_url` and `rest_url` parameters.")
-
         self._bot = bot
         self._password = password
 
@@ -74,18 +71,12 @@ class Node(Generic[BotT, PlayerT]):
 
         self._session = session
 
-        self._backup_identifier: str = "".join(random.sample(string.ascii_letters, 20))
-        self._identifier: str | None = None
+        self.identifier: str = "".join(random.sample(string.ascii_letters, 20))
 
         self._backoff: Backoff = discord.utils.MISSING
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
-
-    # properties
-
-    @property
-    def identifier(self) -> str:
-        return self._identifier or self._backup_identifier
+        self._session_id: str | None = None
 
     # utility methods
 
@@ -97,7 +88,7 @@ class Node(Generic[BotT, PlayerT]):
     async def connect(self) -> None:
 
         if self.is_connected():
-            raise AlreadyConnected(f"Node '{self.identifier}' is already connected.")
+            raise NodeAlreadyConnected(f"Node '{self.identifier}' is already connected.")
 
         from . import __version__
         assert self._bot.user is not None
@@ -115,12 +106,19 @@ class Node(Generic[BotT, PlayerT]):
         try:
             websocket = await self._session.ws_connect(url, headers=headers)
         except Exception as error:
-            if isinstance(error, aiohttp.WSServerHandshakeError) and error.status == 401:
-                LOGGER.error(message := f"Incorrect password for '{url}'.")
-                raise IncorrectPassword(message)
+            if isinstance(error, aiohttp.WSServerHandshakeError):
+                match error.status:
+                    case 401:
+                        message = f"Incorrect password for '{url}'."
+                    case 404:
+                        message = f"Could not connect to '{url}', if using the `ws_url` parameter please make " \
+                                  f"sure its path is correct."
+                    case _:
+                        message = f"Could not connect to '{url}', encountered '{error.status}' status code error."
             else:
-                LOGGER.error(message := f"Error while connecting to '{url}'.")
-                raise NodeConnectionError(message)
+                message = f"{type(error)} while connecting to '{url}'. See above exception log."
+            LOGGER.error(message)
+            raise NodeConnectionError(message)
 
         self._backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
         self._websocket = websocket
@@ -183,11 +181,12 @@ class Node(Generic[BotT, PlayerT]):
 
     async def _process_payload(self, payload: Payload) -> None:
 
+        print(payload)
+
         if payload["op"] == "ready":
-            raise NotImplementedError
-        elif payload["op"] == "playerUpdate":
-            raise NotImplementedError
-        elif payload["op"] == "stats":
-            raise NotImplementedError
-        elif payload["op"] == "event":
+            self._session_id = payload["sessionId"]
+            LOGGER.info(f"Node '{self.identifier}' has connected to its websocket.")
+            return
+
+        elif payload["op"] in ["playerUpdate", "stats", "event"]:
             raise NotImplementedError

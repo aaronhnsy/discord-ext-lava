@@ -1,9 +1,8 @@
 
 __all__ = (
     "LavaError",
+    "NodeAlreadyConnected",
     "NodeConnectionError",
-    "AlreadyConnected",
-    "IncorrectPassword",
 )
 
 
@@ -11,14 +10,9 @@ class LavaError(Exception):
     pass
 
 
+class NodeAlreadyConnected(LavaError):
+    pass
+
+
 class NodeConnectionError(LavaError):
     pass
-
-
-class AlreadyConnected(NodeConnectionError):
-    pass
-
-
-class IncorrectPassword(NodeConnectionError):
-    pass
-

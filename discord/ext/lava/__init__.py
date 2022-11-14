@@ -4,7 +4,7 @@ from typing import Final, Literal, NamedTuple
 from .node import *
 
 
-logging.getLogger("discord.ext.lava")
+logging.getLogger("discord-ext-lava")
 
 
 __title__: Final[str] = "discord-ext-lava"
