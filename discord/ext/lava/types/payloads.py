@@ -5,7 +5,7 @@ from typing_extensions import Literal, NotRequired, TypedDict
 
 class ReadyPayload(TypedDict):
     op: Literal["ready"]
-    resumed: NotRequired[bool]
+    resumed: bool
     sessionId: str
 
 
