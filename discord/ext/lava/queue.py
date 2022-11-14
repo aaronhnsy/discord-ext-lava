@@ -1,19 +1,28 @@
 from __future__ import annotations
 
 import asyncio
+import collections
 import contextlib
+import enum
 import random
-from collections import deque
 from collections.abc import Iterator
 from typing import Generic, SupportsIndex, overload
 
-from .objects.enums import QueueLoopMode
-from .types import QueueItemT
+from typing_extensions import TypeVar
 
 
 __all__ = (
+    "QueueLoopMode",
     "Queue",
 )
+
+QueueItemT = TypeVar("QueueItemT")
+
+
+class QueueLoopMode(enum.Enum):
+    DISABLED = 0
+    ALL = 1
+    CURRENT = 2
 
 
 class Queue(Generic[QueueItemT]):
@@ -27,7 +36,7 @@ class Queue(Generic[QueueItemT]):
 
         self._loop_mode: QueueLoopMode = QueueLoopMode.DISABLED
 
-        self._waiters: deque[asyncio.Future[None]] = deque()
+        self._waiters: collections.deque[asyncio.Future[None]] = collections.deque()
 
         self._finished: asyncio.Event = asyncio.Event()
         self._finished.set()
