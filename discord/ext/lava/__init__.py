@@ -2,6 +2,7 @@ import logging
 from typing import Final, Literal, NamedTuple
 
 from .node import *
+from .objects import *
 
 
 logging.getLogger("discord-ext-lava")

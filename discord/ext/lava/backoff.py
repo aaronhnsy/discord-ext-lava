@@ -52,6 +52,9 @@ class Backoff:
         _random.seed()
         self.uniform: Callable[[float, float], float] = _random.uniform
 
+    def reset(self) -> None:
+        self.tries = 0
+
     def calculate(self) -> float:
 
         self.tries += 1
