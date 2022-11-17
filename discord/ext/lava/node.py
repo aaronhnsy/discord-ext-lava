@@ -136,16 +136,16 @@ class Node(Generic[BotT, PlayerT]):
         except Exception as error:
             if isinstance(error, aiohttp.WSServerHandshakeError):
                 if error.status == 401:
-                    message = f"Node '{self.identifier}' could not connect to the websocket due to an incorrect " \
+                    message = f"Node '{self.identifier}' could not connect to its websocket due to an incorrect " \
                               f"password. "
                 elif error.status in {403, 404}:
-                    message = f"Node '{self.identifier}' could not connect to the websocket, if you're using the " \
+                    message = f"Node '{self.identifier}' could not connect to its websocket, if you're using the " \
                               f"`ws_url` parameter please make sure its path is correct."
                 else:
-                    message = f"Node '{self.identifier}' could not connect to the websocket, encountered a " \
+                    message = f"Node '{self.identifier}' could not connect to its websocket, encountered a " \
                               f"'{error.status}' status code error."
             else:
-                message = f"Node '{self.identifier}' raised '{error.__class__.__name__}' while connecting to the " \
+                message = f"Node '{self.identifier}' raised '{error.__class__.__name__}' while connecting to its " \
                           f"websocket."
             LOGGER.error(message)
             raise NodeConnectionError(message)
@@ -221,7 +221,7 @@ class Node(Generic[BotT, PlayerT]):
                     if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
                         LOGGER.warning(
                             f"Node '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times "
-                            f"with no success. Will not attempt to reconnect again."
+                            f"with no success. It will not attempt to reconnect again."
                         )
                         await self._reset_state()
                         break
