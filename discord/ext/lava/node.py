@@ -81,9 +81,9 @@ class Node(Generic[BotT, PlayerT]):
         self._should_close_session: bool = False
         self._session: aiohttp.ClientSession | None = session
 
+        self._backoff: Backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._task: asyncio.Task[None] | None = None
-        self._backoff: Backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
 
         self._identifier: str = "".join(random.sample(string.ascii_uppercase, 20))
         self._session_id: str | None = None
@@ -108,6 +108,9 @@ class Node(Generic[BotT, PlayerT]):
     def is_connected(self) -> bool:
         return self._websocket is not None and self._websocket.closed is False
 
+    def is_ready(self) -> bool:
+        return self.is_connected() is True and self.session_id is not None
+
     # connection management
 
     async def connect(self) -> None:
@@ -115,46 +118,47 @@ class Node(Generic[BotT, PlayerT]):
         if self.is_connected():
             raise NodeAlreadyConnected(f"Node '{self.identifier}' is already connected.")
 
-        if self._session is None:
+        if self._session is None or self._session.closed is True:
             self._should_close_session = True
             self._session = aiohttp.ClientSession()
 
-        from . import __version__
-        assert self._bot.user is not None
-
-        url = self._ws_url or f"ws://{self._host}:{self._port}/v3/websocket"
-        headers = {
-            "Authorization": self._password,
-            "User-Id":       str(self._bot.user.id),
-            "Client-Name":   f"discord-ext-lava/{__version__}"
-        }
-
         try:
-            websocket = await self._session.ws_connect(url, headers=headers)
+            from . import __version__
+            websocket = await self._session.ws_connect(
+                self._ws_url or f"ws://{self._host}:{self._port}/v3/websocket",
+                headers={
+                    "Authorization": self._password,
+                    "User-Id":       str(self._bot.user.id),  # type: ignore
+                    "Client-Name":   f"discord-ext-lava/{__version__}"
+                }
+            )
+
         except Exception as error:
             if isinstance(error, aiohttp.WSServerHandshakeError):
-                match error.status:
-                    case 401:
-                        message = f"Incorrect password for '{url}'."
-                    case 403 | 404:
-                        message = f"Error while connecting to '{url}', if using the `ws_url` parameter please make " \
-                                  f"sure its path is correct."
-                    case _:
-                        message = f"Error while connecting to '{url}', encountered a '{error.status}' status code " \
-                                  f"error."
+                if error.status == 401:
+                    message = f"Node '{self.identifier}' could not connect to the websocket due to an incorrect " \
+                              f"password. "
+                elif error.status in {403, 404}:
+                    message = f"Node '{self.identifier}' could not connect to the websocket, if you're using the " \
+                              f"`ws_url` parameter please make sure its path is correct."
+                else:
+                    message = f"Node '{self.identifier}' could not connect to the websocket, encountered a " \
+                              f"'{error.status}' status code error."
             else:
-                message = f"Error while connecting to '{url}'."
+                message = f"Node '{self.identifier}' raised '{error.__class__.__name__}' while connecting to the " \
+                          f"websocket."
             LOGGER.error(message)
             raise NodeConnectionError(message)
 
+        self._backoff.reset()
         self._websocket = websocket
 
         if self._task is None or self._task.done() is True:
             self._task = asyncio.create_task(self._listen())
 
-        self._backoff.reset()
+    async def _reset_state(self) -> None:
 
-    async def _clear_state(self) -> None:
+        self._backoff.reset()
 
         if self._task is not None and self._task.done() is False:
             self._task.cancel()
@@ -168,7 +172,19 @@ class Node(Generic[BotT, PlayerT]):
             await self._session.close()
         self._session = None
 
-        self._backoff.reset()
+    async def _process_payload(self, payload: Payload) -> None:
+
+        LOGGER.debug(f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{json.dumps(payload, indent=4)}")
+
+        if payload["op"] == "ready":
+            self._session_id = payload["sessionId"]
+            LOGGER.info(f"Node '{self.identifier}' is ready.")
+            return
+        elif payload["op"] == "stats":
+            self._stats = Stats(payload)
+            return
+
+        # TODO: Handle 'playerUpdate' and 'event'.
 
     async def _listen(self) -> None:
 
@@ -179,49 +195,45 @@ class Node(Generic[BotT, PlayerT]):
 
             if message.type is aiohttp.WSMsgType.CLOSED:
 
-                if self.is_connected():
-                    continue
-
+                # Log a warning for the first reconnect attempt.
                 if self._backoff.tries == 0:
                     LOGGER.warning(
-                        f"Node '{self.identifier}' was unexpectedly disconnected from it's websocket. It will now "
+                        f"Node '{self.identifier}' was unexpectedly disconnected from its websocket. It will now "
                         f"attempt to reconnect up to {self._backoff.max_tries} times with a backoff delay."
                     )
 
+                # Calculate the backoff delay and sleep.
                 LOGGER.warning(
-                    f"Node '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection in "
-                    f"{(delay := self._backoff.calculate()):.2f} seconds."
+                    f"Node '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection "
+                    f"in {(delay := self._backoff.calculate()):.2f} seconds."
                 )
                 await asyncio.sleep(delay)
 
                 try:
+                    # Attempt to reconnect to the websocket.
                     await self.connect()
+
                 except NodeConnectionError as error:
+                    # Print the error manually because we don't want an error to be raised inside the task.
                     traceback.print_exception(type(error), error, error.__traceback__)
 
-                if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
-                    LOGGER.warning(
-                        f"Node '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times with no "
-                        f"success. Will not attempt to reconnect again."
-                    )
-                    break
+                    # Cancel the task (and reset other vars) to stop further reconnection attempts.
+                    if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
+                        LOGGER.warning(
+                            f"Node '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times "
+                            f"with no success. Will not attempt to reconnect again."
+                        )
+                        await self._reset_state()
+                        break
 
-            else:
-                asyncio.create_task(
-                    self._process_payload(self._json_loads(message.data))  # type: ignore
-                )
+                    # Continue to the next reconnection attempt.
+                    continue
 
-        await self._clear_state()
+                else:
+                    # If no error was raised, continue the outer loop as we should've reconnected.
+                    LOGGER.info(f"Node '{self.identifier}' was able to reconnect to its websocket.")
+                    continue
 
-    async def _process_payload(self, payload: Payload) -> None:
-
-        LOGGER.debug(f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{json.dumps(payload, indent=4)}")
-
-        if payload["op"] == "ready":
-            self._session_id = payload["sessionId"]
-            return
-        elif payload["op"] == "stats":
-            self._stats = Stats(payload)
-            return
-
-        # TODO: Handle 'playerUpdate' and 'event'.
+            asyncio.create_task(
+                self._process_payload(self._json_loads(message.data))  # type: ignore
+            )
