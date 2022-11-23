@@ -1,41 +1,30 @@
-from __future__ import annotations
-
 import asyncio
 import json
 import logging
 import random
 import string
 import traceback
-from collections.abc import Callable
-from typing import Any, Generic
+from typing import Generic
 
 import aiohttp
 import spotipy
-from discord.ext import commands
-from typing_extensions import TypeVar
 
 from .backoff import Backoff
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
+from .types.common import JSONDumps, JSONLoads, PlayerT
 from .types.payloads import Payload
+from .utilities import ordinal
 
 
 __all__ = (
     "Node",
 )
 
-BotT = TypeVar("BotT", bound=commands.Bot | commands.AutoShardedBot, default=commands.Bot)
-PlayerT = TypeVar("PlayerT", bound=Any, default=Any)
-
-JSONDumps = Callable[..., str]
-JSONLoads = Callable[..., dict[str, Any]]
-
 LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.node")
 
-ordinal: Callable[[int], str] = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
 
-
-class Node(Generic[BotT, PlayerT]):
+class Node(Generic[PlayerT]):
 
     def __init__(
         self,
@@ -45,7 +34,7 @@ class Node(Generic[BotT, PlayerT]):
         ws_url: str | None = None,
         rest_url: str | None = None,
         password: str,
-        bot: BotT,
+        user_id: int,
         json_dumps: JSONDumps | None = None,
         json_loads: JSONLoads | None = None,
         spotify_client_id: str | None = None,
@@ -65,7 +54,7 @@ class Node(Generic[BotT, PlayerT]):
         self._rest_url: str | None = rest_url
 
         self._password: str = password
-        self._bot: BotT = bot
+        self._user_id: int = user_id
 
         self._json_dumps: JSONDumps = json_dumps or json.dumps
         self._json_loads: JSONLoads = json_loads or json.loads
@@ -88,6 +77,7 @@ class Node(Generic[BotT, PlayerT]):
         self._identifier: str = "".join(random.sample(string.ascii_uppercase, 20))
         self._session_id: str | None = None
         self._stats: Stats | None = None
+        self._players: dict[int, PlayerT] = {}
 
     # properties
 
@@ -102,6 +92,10 @@ class Node(Generic[BotT, PlayerT]):
     @property
     def stats(self) -> Stats | None:
         return self._stats
+
+    @property
+    def players(self) -> dict[int, PlayerT]:
+        return self._players
 
     # utility methods
 
@@ -128,7 +122,7 @@ class Node(Generic[BotT, PlayerT]):
                 self._ws_url or f"ws://{self._host}:{self._port}/v3/websocket",
                 headers={
                     "Authorization": self._password,
-                    "User-Id":       str(self._bot.user.id),  # type: ignore
+                    "User-Id":       str(self._user_id),
                     "Client-Name":   f"discord-ext-lava/{__version__}"
                 }
             )
