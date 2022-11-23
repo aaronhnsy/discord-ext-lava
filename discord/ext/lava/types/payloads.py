@@ -73,7 +73,7 @@ class TrackEndEventPayload(_BaseEvent):
     reason: Literal["FINISHED", "LOAD_FAILED", "STOPPED", "REPLACED", "CLEANUP"]
 
 
-class TrackExceptionData(TypedDict):
+class TrackExceptionEventData(TypedDict):
     message: str | None
     severity: Literal["COMMON", "SUSPICIOUS", "FATAL"]
     cause: str
@@ -82,7 +82,7 @@ class TrackExceptionData(TypedDict):
 class TrackExceptionEventPayload(_BaseEvent):
     type: Literal["TrackExceptionEvent"]
     encodedTrack: str
-    exception: TrackExceptionData
+    exception: TrackExceptionEventData
 
 
 class TrackStuckEventPayload(_BaseEvent):
