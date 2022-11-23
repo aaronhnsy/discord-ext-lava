@@ -67,7 +67,7 @@ jishaku = "*"
 
 
 [tool.pyright]
-include                = ["discord/ext/lava", "tests"]
+include                = ["discord/ext/lava"]
 pythonVersion          = "3.10"
 typeCheckingMode       = "strict"
 useLibraryCodeForTypes = true
