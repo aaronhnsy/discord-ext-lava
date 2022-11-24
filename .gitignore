@@ -6,5 +6,4 @@ tests/
 dist/
 _build/
 build/
-
-lavalink/Lavalink.jar
+lavalink/
