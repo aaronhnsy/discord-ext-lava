@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -39,7 +41,6 @@ class Node(Generic[PlayerT]):
         json_loads: JSONLoads | None = None,
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
-        session: aiohttp.ClientSession | None = None,
     ) -> None:
 
         if (host is None or port is None) and (ws_url is None or rest_url is None):
@@ -67,12 +68,11 @@ class Node(Generic[PlayerT]):
         else:
             self._spotify: spotipy.Client | None = None
 
-        self._should_close_session: bool = False
-        self._session: aiohttp.ClientSession | None = session
-
         self._backoff: Backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
-        self._websocket: aiohttp.ClientWebSocketResponse | None = None
+
         self._task: asyncio.Task[None] | None = None
+        self._session: aiohttp.ClientSession | None = None
+        self._websocket: aiohttp.ClientWebSocketResponse | None = None
 
         self._identifier: str = "".join(random.sample(string.ascii_uppercase, 20))
         self._session_id: str | None = None
@@ -112,8 +112,7 @@ class Node(Generic[PlayerT]):
         if self.is_connected():
             raise NodeAlreadyConnected(f"Node '{self.identifier}' is already connected.")
 
-        if self._session is None or self._session.closed is True:
-            self._should_close_session = True
+        if self._session is None:
             self._session = aiohttp.ClientSession()
 
         try:
@@ -162,7 +161,7 @@ class Node(Generic[PlayerT]):
             await self._websocket.close()
         self._websocket = None
 
-        if self._session is not None and self._should_close_session is True:
+        if self._session is not None:
             await self._session.close()
         self._session = None
 

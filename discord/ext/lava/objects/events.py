@@ -1,4 +1,4 @@
-from .._types.payloads import (
+from .._types import (
     EventPayload, TrackEndEventPayload, TrackExceptionEventData, TrackExceptionEventPayload, TrackStartEventPayload,
     TrackStuckEventPayload, WebSocketClosedEventPayload,
 )

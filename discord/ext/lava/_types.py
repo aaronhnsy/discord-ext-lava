@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Mapping, Sequence
+from typing import TYPE_CHECKING
 
 import discord
 from typing_extensions import Literal, NotRequired, TypeVar, TypedDict
 
-from .player import Player
+if TYPE_CHECKING:
+    from .player import Player  # type: ignore
 
 
 # Ready OP
@@ -112,13 +113,14 @@ class WebSocketClosedEventPayload(TypedDict):
     byRemote: bool
 
 
-EventPayload = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | \
-               WebSocketClosedEventPayload
-
+EventPayload = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | WebSocketClosedEventPayload
 Payload = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
 
-ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
-PlayerT = TypeVar("PlayerT", bound=Player, default=Player)
+JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+JSON_ro = Mapping[str, "JSON_ro"] | Sequence["JSON_ro"] | str | int | float | bool | None
 
-JSONDumps = Callable[..., str]
-JSONLoads = Callable[..., dict[str, Any]]
+JSONDumps = Callable[[JSON], str]
+JSONLoads = Callable[..., JSON]
+
+ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
+PlayerT = TypeVar("PlayerT", bound="Player", default="Player")

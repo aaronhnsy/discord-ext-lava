@@ -1,10 +1,10 @@
+from __future__ import annotations
+
+import logging
 from typing import Generic
 
 import discord
-from discord.types.voice import (
-    GuildVoiceState as VoiceStateUpdatePayload,
-    VoiceServerUpdate as VoiceServerUpdatePayload,
-)
+from discord.types.voice import GuildVoiceState, VoiceServerUpdate
 from typing_extensions import Self
 
 from ._types import ClientT
@@ -14,6 +14,9 @@ from .node import Node
 __all__ = (
     "Player",
 )
+
+
+LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.player")
 
 
 class Player(discord.VoiceProtocol, Generic[ClientT]):
@@ -40,10 +43,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # abstract base methods
 
-    async def on_voice_server_update(self, data: VoiceServerUpdatePayload, /) -> None:
+    async def on_voice_server_update(self, data: VoiceServerUpdate, /) -> None:
         raise NotImplementedError
 
-    async def on_voice_state_update(self, data: VoiceStateUpdatePayload, /) -> None:
+    async def on_voice_state_update(self, data: GuildVoiceState, /) -> None:
         raise NotImplementedError
 
     async def connect(
