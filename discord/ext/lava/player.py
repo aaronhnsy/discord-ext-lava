@@ -7,7 +7,7 @@ from discord.types.voice import (
 )
 from typing_extensions import Self
 
-from .types.common import ClientT
+from ._types import ClientT
 from .node import Node
 
 

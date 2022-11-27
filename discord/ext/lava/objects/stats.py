@@ -1,4 +1,4 @@
-from ..types.payloads import CPUStatsData, FrameStatsData, MemoryStatsData, StatsPayload
+from .._types.payloads import CPUStatsData, FrameStatsData, MemoryStatsData, StatsPayload
 
 
 __all__ = (

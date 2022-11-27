@@ -26,11 +26,6 @@ import random
 from collections.abc import Callable
 
 
-__all__ = (
-    "Backoff",
-)
-
-
 class Backoff:
 
     def __init__(

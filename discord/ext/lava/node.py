@@ -9,17 +9,17 @@ from typing import Generic
 import aiohttp
 import spotipy
 
-from .backoff import Backoff
+from ._backoff import Backoff
+from ._types import JSONDumps, JSONLoads, Payload, PlayerT
+from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
-from .types.common import JSONDumps, JSONLoads, PlayerT
-from .types.payloads import Payload
-from .utilities import ordinal
 
 
 __all__ = (
     "Node",
 )
+
 
 LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.node")
 

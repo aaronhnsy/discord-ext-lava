@@ -72,6 +72,5 @@ pythonVersion          = "3.10"
 typeCheckingMode       = "strict"
 useLibraryCodeForTypes = true
 
-reportPrivateUsage      = false
 reportUnknownMemberType = false
 reportImportCycles      = false

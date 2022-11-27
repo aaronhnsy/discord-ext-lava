@@ -1,4 +1,12 @@
-from typing_extensions import Literal, NotRequired, TypedDict
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
+
+import discord
+from typing_extensions import Literal, NotRequired, TypeVar, TypedDict
+
+from .player import Player
 
 
 # Ready OP
@@ -55,19 +63,19 @@ class StatsPayload(TypedDict):
     frameStats: FrameStatsData | None
 
 
-# Event OP
+# Event OPs
 
-class _BaseEvent(TypedDict):
+
+class TrackStartEventPayload(TypedDict):
     op: Literal["event"]
     guildId: str
-
-
-class TrackStartEventPayload(_BaseEvent):
     type: Literal["TrackStartEvent"]
     encodedTrack: str
 
 
-class TrackEndEventPayload(_BaseEvent):
+class TrackEndEventPayload(TypedDict):
+    op: Literal["event"]
+    guildId: str
     type: Literal["TrackEndEvent"]
     encodedTrack: str
     reason: Literal["FINISHED", "LOAD_FAILED", "STOPPED", "REPLACED", "CLEANUP"]
@@ -79,24 +87,38 @@ class TrackExceptionEventData(TypedDict):
     cause: str
 
 
-class TrackExceptionEventPayload(_BaseEvent):
+class TrackExceptionEventPayload(TypedDict):
+    op: Literal["event"]
+    guildId: str
     type: Literal["TrackExceptionEvent"]
     encodedTrack: str
     exception: TrackExceptionEventData
 
 
-class TrackStuckEventPayload(_BaseEvent):
+class TrackStuckEventPayload(TypedDict):
+    op: Literal["event"]
+    guildId: str
     type: Literal["TrackStuckEvent"]
     encodedTrack: str
     thresholdMs: int
 
 
-class WebSocketClosedEventPayload(_BaseEvent):
+class WebSocketClosedEventPayload(TypedDict):
+    op: Literal["event"]
+    guildId: str
     type: Literal["WebSocketClosedEvent"]
     code: int
     reason: str
     byRemote: bool
 
 
-EventPayload = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | WebSocketClosedEventPayload
+EventPayload = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | \
+               WebSocketClosedEventPayload
+
 Payload = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
+
+ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
+PlayerT = TypeVar("PlayerT", bound=Player, default=Player)
+
+JSONDumps = Callable[..., str]
+JSONLoads = Callable[..., dict[str, Any]]
