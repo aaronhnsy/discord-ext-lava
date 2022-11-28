@@ -7,7 +7,7 @@ import discord
 from discord.types.voice import GuildVoiceState, VoiceServerUpdate
 from typing_extensions import Self
 
-from ._types import ClientT
+from ._types import ClientT, EventHandler
 from .node import Node
 
 
@@ -25,6 +25,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.client: ClientT = discord.utils.MISSING
         self.channel: discord.abc.Connectable = discord.utils.MISSING
 
+        self._event_handlers: dict[str, EventHandler | None] = {}
+
         self._node: Node = node
 
     def __call__(self, client: ClientT, channel: discord.abc.Connectable, /) -> Self:
@@ -41,13 +43,26 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     def node(self) -> Node:
         return self._node
 
-    # abstract base methods
+    # events
+
+    """
+
+    @classmethod
+    def event_handler(cls, name: str | None = None) -> Callable[[EventHandler], EventHandler]:
+
+        def decorator(function: EventHandler) -> EventHandler:
+            if isinstance(function, staticmethod):
+                function = function.__func__
+                
+    """
 
     async def on_voice_server_update(self, data: VoiceServerUpdate, /) -> None:
         raise NotImplementedError
 
     async def on_voice_state_update(self, data: GuildVoiceState, /) -> None:
         raise NotImplementedError
+
+    # methods
 
     async def connect(
         self, *,

@@ -167,15 +167,32 @@ class Node(Generic[PlayerT]):
 
     async def _process_payload(self, payload: Payload) -> None:
 
-        LOGGER.debug(f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{json.dumps(payload, indent=4)}")
+        LOGGER.debug(
+            f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{json.dumps(payload, indent=4)}"
+        )
 
         if payload["op"] == "ready":
             self._session_id = payload["sessionId"]
             LOGGER.info(f"Node '{self.identifier}' is ready.")
             return
+
         elif payload["op"] == "stats":
             self._stats = Stats(payload)
             return
+
+        elif payload["op"] == "event":
+
+            if not (player := self._players.get(int(payload["guildId"]))):
+                LOGGER.warning(
+                    f"Node '{self.identifier}' received a '{payload['type']}' event for non-existent player with "
+                    f"id '{payload['guildId']}'."
+                )
+                return
+
+            if not (handler := player._event_handlers[payload["type"]]):
+                return
+
+            await handler(payload)
 
         # TODO: Handle 'playerUpdate' and 'event'.
 

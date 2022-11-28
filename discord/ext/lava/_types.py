@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 import discord
@@ -18,7 +18,7 @@ class ReadyPayload(TypedDict):
     sessionId: str
 
 
-# Player OP
+# Player Update OP
 
 class PlayerStateData(TypedDict):
     time: int
@@ -115,6 +115,8 @@ class WebSocketClosedEventPayload(TypedDict):
 
 EventPayload = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | WebSocketClosedEventPayload
 Payload = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
+
+EventHandler = Callable[[EventPayload], Awaitable[None]]
 
 JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 JSON_ro = Mapping[str, "JSON_ro"] | Sequence["JSON_ro"] | str | int | float | bool | None
