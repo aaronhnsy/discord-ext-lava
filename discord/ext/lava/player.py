@@ -45,6 +45,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     def node(self) -> Node:
         return self._node
 
+    @property
+    def guild(self) -> discord.Guild:
+        return self.channel.guild
+
     # events
 
     _EVENT_MAPPING: Mapping[
@@ -66,12 +70,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             dispatch_name, event = event
             event = event(payload)  # pyright: ignore - payload type can't be narrowed correctly
         else:
-            dispatch_name, event = payload["type"], payload
+            dispatch_name, event = event_type, payload
 
         self.client.dispatch(f"lava_{dispatch_name}", event)
-        LOGGER.info(
-            f"Player '{self.channel.guild.id}' dispatched a '{event_type}' event to '{dispatch_name}' listeners."
-        )
+        LOGGER.info(f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
 
     # abcs
 
