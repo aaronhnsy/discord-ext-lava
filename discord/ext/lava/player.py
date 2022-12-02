@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Generic
+from typing import Generic, Mapping
 
 import discord
 from discord.types.voice import GuildVoiceState, VoiceServerUpdate
 from typing_extensions import Self
 
-from ._types import ClientT, EventHandler
+from ._types import ClientT, EventPayload, VoiceChannel
 from .node import Node
+from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
 
 
 __all__ = (
@@ -23,15 +24,16 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     def __init__(self, *, node: Node) -> None:
         self.client: ClientT = discord.utils.MISSING
-        self.channel: discord.abc.Connectable = discord.utils.MISSING
-
-        self._event_handlers: dict[str, EventHandler | None] = {}
+        self.channel: VoiceChannel = discord.utils.MISSING
 
         self._node: Node = node
 
+        self._voice_server_update_data: VoiceServerUpdate | None = None
+        self._session_id: str | None = None
+
     def __call__(self, client: ClientT, channel: discord.abc.Connectable, /) -> Self:
         self.client = client
-        self.channel = channel
+        self.channel = channel  # type: ignore
         return self
 
     def __repr__(self) -> str:
@@ -45,24 +47,39 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # events
 
-    """
+    _EVENT_MAPPING: Mapping[
+        str,
+        tuple[str, type[TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebsocketClosedEvent]]
+    ] = {
+        "TrackStartEvent":      ("track_start", TrackStartEvent),
+        "TrackEndEvent":        ("track_end", TrackEndEvent),
+        "TrackExceptionEvent":  ("track_exception", TrackExceptionEvent),
+        "TrackStuckEvent":      ("track_stuck", TrackStuckEvent),
+        "WebSocketClosedEvent": ("web_socket_closed", WebsocketClosedEvent),
+    }
 
-    @classmethod
-    def event_handler(cls, name: str | None = None) -> Callable[[EventHandler], EventHandler]:
+    async def _handle_event(self, payload: EventPayload, /) -> None:
 
-        def decorator(function: EventHandler) -> EventHandler:
-            if isinstance(function, staticmethod):
-                function = function.__func__
-                
-    """
+        event_type = payload["type"]
+
+        if event := self._EVENT_MAPPING.get(event_type):
+            dispatch_name, event = event
+            event = event(payload)  # pyright: ignore - payload type can't be narrowed correctly
+        else:
+            dispatch_name, event = payload["type"], payload
+
+        self.client.dispatch(f"lava_{dispatch_name}", event)
+        LOGGER.info(
+            f"Player '{self.channel.guild.id}' dispatched a '{event_type}' event to '{dispatch_name}' listeners."
+        )
+
+    # abcs
 
     async def on_voice_server_update(self, data: VoiceServerUpdate, /) -> None:
-        raise NotImplementedError
+        pass
 
     async def on_voice_state_update(self, data: GuildVoiceState, /) -> None:
-        raise NotImplementedError
-
-    # methods
+        pass
 
     async def connect(
         self, *,
@@ -71,10 +88,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self_deaf: bool = False,
         self_mute: bool = True,
     ) -> None:
-        raise NotImplementedError
+        pass
 
     async def disconnect(
         self, *,
         force: bool = False
     ) -> None:
-        raise NotImplementedError
+        pass

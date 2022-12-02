@@ -79,6 +79,9 @@ class Node(Generic[PlayerT]):
         self._stats: Stats | None = None
         self._players: dict[int, PlayerT] = {}
 
+    def __repr__(self) -> str:
+        return "<discord.ext.lava.Node>"
+
     # properties
 
     @property
@@ -189,12 +192,9 @@ class Node(Generic[PlayerT]):
                 )
                 return
 
-            if not (handler := player._event_handlers[payload["type"]]):
-                return
+            await player._handle_event(payload)
 
-            await handler(payload)
-
-        # TODO: Handle 'playerUpdate' and 'event'.
+        # TODO: Handle 'playerUpdate'
 
     async def _listen(self) -> None:
 

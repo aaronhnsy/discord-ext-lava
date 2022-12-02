@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, Mapping, Sequence
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeAlias
 
 import discord
 from typing_extensions import Literal, NotRequired, TypeVar, TypedDict
@@ -104,7 +104,7 @@ class TrackStuckEventPayload(TypedDict):
     thresholdMs: int
 
 
-class WebSocketClosedEventPayload(TypedDict):
+class WebsocketClosedEventPayload(TypedDict):
     op: Literal["event"]
     guildId: str
     type: Literal["WebSocketClosedEvent"]
@@ -113,16 +113,14 @@ class WebSocketClosedEventPayload(TypedDict):
     byRemote: bool
 
 
-EventPayload = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | WebSocketClosedEventPayload
-Payload = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
+EventPayload: TypeAlias = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | WebsocketClosedEventPayload
+Payload: TypeAlias = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
 
-EventHandler = Callable[[EventPayload], Awaitable[None]]
+JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+JSONDumps: TypeAlias = Callable[[JSON], str]
+JSONLoads: TypeAlias = Callable[..., JSON]
 
-JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
-JSON_ro = Mapping[str, "JSON_ro"] | Sequence["JSON_ro"] | str | int | float | bool | None
-
-JSONDumps = Callable[[JSON], str]
-JSONLoads = Callable[..., JSON]
+VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
 
 ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player")
