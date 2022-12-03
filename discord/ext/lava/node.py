@@ -6,24 +6,33 @@ import logging
 import random
 import string
 import traceback
-from typing import Generic
+from collections.abc import Callable
+from typing import Generic, TypeAlias, TYPE_CHECKING
 
 import aiohttp
 import spotipy
+from typing_extensions import TypeVar
 
 from ._backoff import Backoff
-from ._types import JSONDumps, JSONLoads, Payload, PlayerT
 from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
+from .types import JSON, Payload
+
+if TYPE_CHECKING:
+    from .player import Player
 
 
 __all__ = (
     "Node",
 )
 
-
 LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.node")
+
+PlayerT = TypeVar("PlayerT", bound="Player", default="Player")
+
+JSONDumps: TypeAlias = Callable[[JSON], str]
+JSONLoads: TypeAlias = Callable[..., JSON]
 
 
 class Node(Generic[PlayerT]):

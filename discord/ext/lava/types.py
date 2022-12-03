@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TypeAlias
 
-import discord
-from typing_extensions import Literal, NotRequired, TypeVar, TypedDict
-
-if TYPE_CHECKING:
-    from .player import Player  # type: ignore
+from typing_extensions import Literal, NotRequired, TypedDict
 
 
 # Ready OP
@@ -117,10 +112,3 @@ EventPayload: TypeAlias = TrackStartEventPayload | TrackEndEventPayload | TrackE
 Payload: TypeAlias = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
 
 JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
-JSONDumps: TypeAlias = Callable[[JSON], str]
-JSONLoads: TypeAlias = Callable[..., JSON]
-
-VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
-
-ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
-PlayerT = TypeVar("PlayerT", bound="Player", default="Player")

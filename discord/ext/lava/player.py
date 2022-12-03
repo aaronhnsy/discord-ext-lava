@@ -1,23 +1,28 @@
 from __future__ import annotations
 
 import logging
-from typing import Generic, Mapping
+from collections.abc import Mapping
+from typing import Generic, TypeAlias
 
 import discord
 from discord.types.voice import GuildVoiceState, VoiceServerUpdate
-from typing_extensions import Self
+from typing_extensions import Self, TypeVar
 
-from ._types import ClientT, EventPayload, VoiceChannel
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
+from .types import EventPayload
 
 
 __all__ = (
     "Player",
 )
 
-
 LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.player")
+
+ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
+
+VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
+Event: TypeAlias = TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebsocketClosedEvent
 
 
 class Player(discord.VoiceProtocol, Generic[ClientT]):
@@ -28,11 +33,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
         self._node: Node = node
 
-        self._voice_server_update_data: VoiceServerUpdate | None = None
-        self._session_id: str | None = None
-
-    def __call__(self, client: ClientT, channel: discord.abc.Connectable, /) -> Self:
-        self.client = client
+    def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
+        self.client = client # type: ignore
         self.channel = channel  # type: ignore
         return self
 
@@ -42,19 +44,20 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     # properties
 
     @property
-    def node(self) -> Node:
-        return self._node
+    def bot(self) -> ClientT:
+        return self.client
 
     @property
     def guild(self) -> discord.Guild:
         return self.channel.guild
 
+    @property
+    def node(self) -> Node:
+        return self._node
+
     # events
 
-    _EVENT_MAPPING: Mapping[
-        str,
-        tuple[str, type[TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebsocketClosedEvent]]
-    ] = {
+    _EVENT_MAPPING: Mapping[str, tuple[str, type[Event]]] = {
         "TrackStartEvent":      ("track_start", TrackStartEvent),
         "TrackEndEvent":        ("track_end", TrackEndEvent),
         "TrackExceptionEvent":  ("track_exception", TrackExceptionEvent),
@@ -73,7 +76,9 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             dispatch_name, event = event_type, payload
 
         self.client.dispatch(f"lava_{dispatch_name}", event)
-        LOGGER.info(f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
+        LOGGER.info(
+            f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners."
+        )
 
     # abcs
 
