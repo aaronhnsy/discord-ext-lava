@@ -8,5 +8,5 @@ pip install discord-ext-lava
 
 ## Support
 - [Documentation](https://discord-ext-lava.readthedocs.io/)
-- [GitHub](https://github.com/Axelware/discord-ext-lava)
+- [GitHub](https://github.com/Axelancerr/discord-ext-lava)
 - [Discord](https://discord.com/invite/w9f6NkQbde)

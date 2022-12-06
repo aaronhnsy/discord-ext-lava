@@ -76,9 +76,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             dispatch_name, event = event_type, payload
 
         self.client.dispatch(f"lava_{dispatch_name}", event)
-        LOGGER.info(
-            f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners."
-        )
+        LOGGER.info(f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
 
     # abcs
 
