@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from ..types import CPUStatsData, FrameStatsData, MemoryStatsData, StatsPayload
+from ..types.objects.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsPayload
 
 
-__all__ = (
-    "Stats",
-)
+__all__: list[str] = ["Stats"]
 
 
 class Stats:
@@ -32,4 +30,4 @@ class Stats:
         self.frames_deficit: int = frame_stats.get("deficit", -1)
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.objects.Stats players={self.players}, playing_players={self.playing_players}>"
+        return f"<discord.ext.lava.Stats players={self.players}, playing_players={self.playing_players}>"

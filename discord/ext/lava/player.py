@@ -5,23 +5,19 @@ from collections.abc import Mapping
 from typing import Generic, TypeAlias
 
 import discord
-from discord.types.voice import GuildVoiceState, VoiceServerUpdate
+import discord.types.voice
 from typing_extensions import Self, TypeVar
 
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
-from .types import EventPayload
+from .types.common import VoiceChannel
+from .types.objects.events import EventPayload
 
 
-__all__ = (
-    "Player",
-)
-
-LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.player")
+__all__: list[str] = ["Player"]
+__log__: logging.Logger = logging.getLogger("discord-ext-lava.player")
 
 ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
-
-VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
 Event: TypeAlias = TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebsocketClosedEvent
 
 
@@ -76,14 +72,14 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             dispatch_name, event = event_type, payload
 
         self.client.dispatch(f"lava_{dispatch_name}", event)
-        LOGGER.info(f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
+        __log__.info(f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
 
     # abcs
 
-    async def on_voice_server_update(self, data: VoiceServerUpdate, /) -> None:
+    async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
         pass
 
-    async def on_voice_state_update(self, data: GuildVoiceState, /) -> None:
+    async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState, /) -> None:
         pass
 
     async def connect(

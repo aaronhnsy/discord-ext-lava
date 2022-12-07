@@ -6,8 +6,7 @@ import logging
 import random
 import string
 import traceback
-from collections.abc import Callable
-from typing import Generic, TYPE_CHECKING, TypeAlias
+from typing import Generic, TYPE_CHECKING
 
 import aiohttp
 import spotipy
@@ -17,22 +16,17 @@ from ._backoff import Backoff
 from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
-from .types import JSON, Payload
+from .types.payloads import Payload
+from .types.common import JSONDumps, JSONLoads
 
 if TYPE_CHECKING:
-    from .player import Player
+    from .player import Player  # type: ignore
 
 
-__all__ = (
-    "Node",
-)
-
-LOGGER: logging.Logger = logging.getLogger("discord-ext-lava.node")
+__all__: list[str] = ["Node"]
+__log__: logging.Logger = logging.getLogger("discord-ext-lava.node")
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player")
-
-JSONDumps: TypeAlias = Callable[[JSON], str]
-JSONLoads: TypeAlias = Callable[..., JSON]
 
 
 class Node(Generic[PlayerT]):
@@ -152,7 +146,7 @@ class Node(Generic[PlayerT]):
             else:
                 message = f"Node '{self.identifier}' raised '{error.__class__.__name__}' while connecting to its " \
                           f"websocket."
-            LOGGER.error(message)
+            __log__.error(message)
             raise NodeConnectionError(message)
 
         self._backoff.reset()
@@ -179,13 +173,13 @@ class Node(Generic[PlayerT]):
 
     async def _process_payload(self, payload: Payload) -> None:
 
-        LOGGER.debug(
+        __log__.debug(
             f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{json.dumps(payload, indent=4)}"
         )
 
         if payload["op"] == "ready":
             self._session_id = payload["sessionId"]
-            LOGGER.info(f"Node '{self.identifier}' is ready.")
+            __log__.info(f"Node '{self.identifier}' is ready.")
             return
 
         elif payload["op"] == "stats":
@@ -195,7 +189,7 @@ class Node(Generic[PlayerT]):
         elif payload["op"] == "event":
 
             if not (player := self._players.get(int(payload["guildId"]))):
-                LOGGER.warning(
+                __log__.warning(
                     f"Node '{self.identifier}' received a '{payload['type']}' event for non-existent player with "
                     f"id '{payload['guildId']}'."
                 )
@@ -216,13 +210,13 @@ class Node(Generic[PlayerT]):
 
                 # Log a warning for the first reconnect attempt.
                 if self._backoff.tries == 0:
-                    LOGGER.warning(
+                    __log__.warning(
                         f"Node '{self.identifier}' was unexpectedly disconnected from its websocket. It will now "
                         f"attempt to reconnect up to {self._backoff.max_tries} times with a backoff delay."
                     )
 
                 # Calculate the backoff delay and sleep.
-                LOGGER.warning(
+                __log__.warning(
                     f"Node '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection "
                     f"in {(delay := self._backoff.calculate()):.2f} seconds."
                 )
@@ -238,7 +232,7 @@ class Node(Generic[PlayerT]):
 
                     # Cancel the task (and reset other vars) to stop further reconnection attempts.
                     if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
-                        LOGGER.warning(
+                        __log__.warning(
                             f"Node '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times "
                             f"with no success. It will not attempt to reconnect again."
                         )
@@ -250,7 +244,7 @@ class Node(Generic[PlayerT]):
 
                 else:
                     # If no error was raised, continue the outer loop as we should've reconnected.
-                    LOGGER.info(f"Node '{self.identifier}' was able to reconnect to its websocket.")
+                    __log__.info(f"Node '{self.identifier}' was able to reconnect to its websocket.")
                     continue
 
             asyncio.create_task(

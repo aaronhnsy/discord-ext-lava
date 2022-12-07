@@ -3,10 +3,10 @@ from __future__ import annotations
 import enum
 
 
-__all__ = (
+__all__: list[str] = [
     "TrackEndReason",
     "TrackExceptionSeverity",
-)
+]
 
 
 class TrackEndReason(enum.Enum):

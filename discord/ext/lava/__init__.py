@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Final, Literal, NamedTuple
+from typing import Literal, NamedTuple
 
 from .enums import *
 from .exceptions import *
@@ -18,16 +18,16 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-__version_info__: Final[VersionInfo] = VersionInfo(major=0, minor=6, micro=0, releaselevel="final", serial=0)
-__version__: Final[str] = "0.6.0"
+__version_info__: VersionInfo = VersionInfo(major=0, minor=6, micro=0, releaselevel="final", serial=0)
+__version__: str = "0.6.0"
 
-__title__: Final[str] = "discord-ext-lava"
-__url__: Final[str] = "https://github.com/Axelancerr/discord-ext-lava"
+__title__: str = "discord-ext-lava"
+__url__: str = "https://github.com/Axelancerr/discord-ext-lava"
 
-__author__: Final[str] = "Aaron Hennessey (Axelancerr)"
-__email__: Final[str] = "axelancerr@gmail.com"
+__author__: str = "Aaron Hennessey (Axelancerr)"
+__email__: str = "axelancerr@gmail.com"
 
-__license__: Final[str] = "MIT"
-__copyright__: Final[str] = "Copyright (c) 2019-2022 Aaron Hennessey (Axelancerr)"
+__license__: str = "MIT"
+__copyright__: str = "Copyright (c) 2019-2022 Aaron Hennessey (Axelancerr)"
 
-logging.getLogger(__name__)
+logging.getLogger("discord-ext-lava")

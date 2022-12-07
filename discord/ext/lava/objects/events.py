@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from ..enums import TrackEndReason, TrackExceptionSeverity
-from ..types import (
+from ..types.objects.events import (
     EventPayload, TrackEndEventPayload, TrackExceptionEventData, TrackExceptionEventPayload, TrackStartEventPayload,
     TrackStuckEventPayload, WebsocketClosedEventPayload,
 )
 
 
-__all__ = (
+__all__: list[str] = [
     "TrackStartEvent",
     "TrackEndEvent",
     "TrackExceptionEvent",
     "TrackStuckEvent",
     "WebsocketClosedEvent"
-)
+]
 
 
 class _BaseEvent:
