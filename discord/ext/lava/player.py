@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from typing import Generic, TypeAlias
+from typing import Any, Generic, TypeAlias
+import json as _json
 
 import discord
 import discord.types.voice
 from typing_extensions import Self, TypeVar
 
+from . import NodeNotReady
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
 from .types.common import VoiceChannel
@@ -28,6 +30,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.channel: VoiceChannel = discord.utils.MISSING
 
         self._node: Node = node
+
+        self._voice_state: dict[str, Any] = {}
 
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
         self.client = client  # type: ignore
@@ -72,15 +76,20 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             dispatch_name, event = event_type, payload
 
         self.client.dispatch(f"lava_{dispatch_name}", event)
-        __log__.info(f"Player '{self.guild.id}' dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
+        __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
 
     # abcs
 
     async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
-        pass
+        __log__.debug(f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n{_json.dumps(data, indent=4)}")
+        self._voice_state["token"] = data["token"]
+        self._voice_state["endpoint"] = data["endpoint"]
+        await self._update_player()
 
     async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState, /) -> None:
-        pass
+        __log__.debug(f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n{_json.dumps(data, indent=4)}")
+        self._voice_state["sessionId"] = data["session_id"]
+        await self._update_player()
 
     async def connect(
         self, *,
@@ -89,10 +98,27 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self_deaf: bool = False,
         self_mute: bool = True,
     ) -> None:
-        pass
+        await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
+        __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) connected to voice channel '{self.channel.name}' ({self.channel.id}).")
 
     async def disconnect(
         self, *,
         force: bool = False
     ) -> None:
         pass
+
+    # rest api
+
+    async def _update_player(self) -> None:
+
+        if self.node.is_ready() is False:
+            raise NodeNotReady(f"Node '{self.node.identifier}' is not ready.")
+
+        data = {}
+        if all(key in self._voice_state for key in ["token", "endpoint", "sessionId"]):
+            data["voice"] = self._voice_state
+
+        await self._node._request(
+            "PATCH", f"sessions/{self.node._session_id}/players/{self.guild.id}",
+            json=data
+        )

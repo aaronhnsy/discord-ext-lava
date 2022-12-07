@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-import json
+import json as _json
 import logging
 import random
 import string
 import traceback
-from typing import Generic, TYPE_CHECKING
+from typing import Generic, Literal, TYPE_CHECKING
 
 import aiohttp
+import discord.utils
 import spotipy
 from typing_extensions import TypeVar
 
@@ -17,7 +18,7 @@ from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
 from .types.payloads import Payload
-from .types.common import JSONDumps, JSONLoads
+from .types.common import JSON, JSONDumps, JSONLoads
 
 if TYPE_CHECKING:
     from .player import Player  # type: ignore
@@ -60,8 +61,8 @@ class Node(Generic[PlayerT]):
         self._password: str = password
         self._user_id: int = user_id
 
-        self._json_dumps: JSONDumps = json_dumps or json.dumps
-        self._json_loads: JSONLoads = json_loads or json.loads
+        self._json_dumps: JSONDumps = json_dumps or _json.dumps
+        self._json_loads: JSONLoads = json_loads or _json.loads
 
         if spotify_client_id is not None and spotify_client_secret is not None:
             self._spotify: spotipy.Client | None = spotipy.Client(
@@ -111,7 +112,7 @@ class Node(Generic[PlayerT]):
     def is_ready(self) -> bool:
         return self.is_connected() is True and self.session_id is not None
 
-    # connection management
+    # websocket
 
     async def connect(self) -> None:
 
@@ -124,7 +125,7 @@ class Node(Generic[PlayerT]):
         try:
             from . import __version__
             websocket = await self._session.ws_connect(
-                self._ws_url or f"ws://{self._host}:{self._port}/v3/websocket",
+                f"{self._ws_url or f'ws://{self._host}:{self._port}'}/v3/websocket",
                 headers={
                     "Authorization": self._password,
                     "User-Id":       str(self._user_id),
@@ -174,7 +175,7 @@ class Node(Generic[PlayerT]):
     async def _process_payload(self, payload: Payload) -> None:
 
         __log__.debug(
-            f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{json.dumps(payload, indent=4)}"
+            f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{_json.dumps(payload, indent=4)}"
         )
 
         if payload["op"] == "ready":
@@ -250,3 +251,48 @@ class Node(Generic[PlayerT]):
             asyncio.create_task(
                 self._process_payload(self._json_loads(message.data))  # type: ignore
             )
+
+    # rest api
+
+    async def _request(
+        self,
+        method: Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"],
+        path: str,
+        data: str | None = None,
+        json: JSON | None = None,
+    ) -> JSON:
+
+        if self._session is None:
+            self._session = aiohttp.ClientSession()
+
+        headers = {
+            "Authorization": self._password
+        }
+        if json is not None:
+            data = self._json_dumps(json)
+            headers["Content-Type"] = "application/json"
+
+        response: aiohttp.ClientResponse = discord.utils.MISSING
+
+        for tries in range(5):
+            try:
+                async with self._session.request(
+                    method, f"{self._rest_url or f'http://{self._host}:{self._port}'}/v3/{path}",
+                    headers=headers, data=data
+                ) as response:
+                    if 200 <= response.status < 300:
+                        __log__.debug(f"{method} @ '{response.url}' -> {response.status}")
+                        return await response.json(loads=self._json_loads)
+
+            except OSError as error:
+                if tries >= 4 or error.errno not in (54, 10054):
+                    raise
+
+            delay = 1 + tries * 2
+
+            __log__.warning(f"{method} @ '{response.url}' -> {response.status}, retrying in {delay}s.")
+            await asyncio.sleep(delay)
+
+        message = f"{method} @ '{response.url}' -> {response.status}, all five retries used."
+        __log__.error(message)
+        # raise HTTPError(response, message=message)

@@ -5,6 +5,7 @@ __all__: list[str] = [
     "LavaError",
     "NodeAlreadyConnected",
     "NodeConnectionError",
+    "NodeNotReady",
 ]
 
 
@@ -17,4 +18,8 @@ class NodeAlreadyConnected(LavaError):
 
 
 class NodeConnectionError(LavaError):
+    pass
+
+
+class NodeNotReady(LavaError):
     pass
