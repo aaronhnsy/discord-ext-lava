@@ -7,7 +7,7 @@ import random
 import string
 import traceback
 from collections.abc import Callable
-from typing import Generic, TypeAlias, TYPE_CHECKING
+from typing import Generic, TYPE_CHECKING, TypeAlias
 
 import aiohttp
 import spotipy
