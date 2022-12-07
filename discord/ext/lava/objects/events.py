@@ -1,8 +1,10 @@
+from __future__ import annotations
+
+from ..enums import TrackEndReason, TrackExceptionSeverity
 from ..types import (
     EventPayload, TrackEndEventPayload, TrackExceptionEventData, TrackExceptionEventPayload, TrackStartEventPayload,
     TrackStuckEventPayload, WebsocketClosedEventPayload,
 )
-from ..enums import TrackEndReason, TrackExceptionSeverity
 
 
 __all__ = (

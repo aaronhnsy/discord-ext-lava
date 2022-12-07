@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ..types import CPUStatsData, FrameStatsData, MemoryStatsData, StatsPayload
 
 

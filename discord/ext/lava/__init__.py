@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Final, Literal, NamedTuple
 
@@ -27,6 +29,5 @@ __email__: Final[str] = "axelancerr@gmail.com"
 
 __license__: Final[str] = "MIT"
 __copyright__: Final[str] = "Copyright (c) 2019-2022 Aaron Hennessey (Axelancerr)"
-
 
 logging.getLogger(__name__)
