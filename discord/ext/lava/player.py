@@ -1,19 +1,19 @@
 from __future__ import annotations
 
+import json as _json
 import logging
 from collections.abc import Mapping
 from typing import Any, Generic, TypeAlias
-import json as _json
 
 import discord
 import discord.types.voice
 from typing_extensions import Self, TypeVar
 
-from . import NodeNotReady
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
 from .types.common import VoiceChannel
 from .types.objects.events import EventPayload
+from .types.payloads import PlayerUpdatePayload
 
 
 __all__: list[str] = ["Player"]
@@ -29,13 +29,16 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.client: ClientT = discord.utils.MISSING
         self.channel: VoiceChannel = discord.utils.MISSING
 
-        self._node: Node = node
+        self._token: str | None = None
+        self._endpoint: str | None = None
+        self._session_id: str | None = None
 
-        self._voice_state: dict[str, Any] = {}
+        self._node: Node = node
 
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
         self.client = client  # type: ignore
         self.channel = channel  # type: ignore
+        self._node._players[self.guild.id] = self  # type: ignore
         return self
 
     def __repr__(self) -> str:
@@ -44,18 +47,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     # properties
 
     @property
-    def bot(self) -> ClientT:
-        return self.client
-
-    @property
     def guild(self) -> discord.Guild:
         return self.channel.guild
 
-    @property
-    def node(self) -> Node:
-        return self._node
-
-    # events
+    # payload handlers
 
     _EVENT_MAPPING: Mapping[str, tuple[str, type[Event]]] = {
         "TrackStartEvent":      ("track_start", TrackStartEvent),
@@ -78,47 +73,69 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.client.dispatch(f"lava_{dispatch_name}", event)
         __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
 
-    # abcs
+    async def _handle_player_update(self, payload: PlayerUpdatePayload, /) -> None:
+        ...
+
+    # rest api
+
+    async def _update_player(self, data: dict[str, Any]) -> None:
+
+        if not self._node.is_ready():
+            await self._node._ready_event.wait()
+
+        await self._node._request(
+            "PATCH", f"/sessions/{self._node._session_id}/players/{self.guild.id}",
+            data=data
+        )
+
+    #
 
     async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
-        __log__.debug(f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n{_json.dumps(data, indent=4)}")
-        self._voice_state["token"] = data["token"]
-        self._voice_state["endpoint"] = data["endpoint"]
-        await self._update_player()
+        __log__.debug(
+            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n"
+            f"{_json.dumps(data, indent=4)}"
+        )
+        self._token = data["token"]
+        self._endpoint = data["endpoint"]
+        await self._update_voice_state()
 
     async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState, /) -> None:
-        __log__.debug(f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n{_json.dumps(data, indent=4)}")
-        self._voice_state["sessionId"] = data["session_id"]
-        await self._update_player()
+        __log__.debug(
+            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n"
+            f"{_json.dumps(data, indent=4)}"
+        )
+
+        if (channel_id := data["channel_id"]) is None:
+            del self._node._players[self.guild.id]
+            return
+        self.channel = self.client.get_channel(int(channel_id))  # type: ignore
+
+        self._session_id = data["session_id"]
+        await self._update_voice_state()
+
+    async def _update_voice_state(self) -> None:
+
+        if self._token is None or self._endpoint is None or self._session_id is None:
+            return
+
+        await self._update_player({"voice": {"token": self._token, "endpoint": self._endpoint, "sessionId": self._session_id}})
+
+    #
 
     async def connect(
         self, *,
         timeout: float | None = None,
         reconnect: bool | None = None,
         self_deaf: bool = False,
-        self_mute: bool = True,
+        self_mute: bool = False,
     ) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
+        await self.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
         __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) connected to voice channel '{self.channel.name}' ({self.channel.id}).")
 
     async def disconnect(
         self, *,
         force: bool = False
     ) -> None:
-        pass
-
-    # rest api
-
-    async def _update_player(self) -> None:
-
-        if self.node.is_ready() is False:
-            raise NodeNotReady(f"Node '{self.node.identifier}' is not ready.")
-
-        data = {}
-        if all(key in self._voice_state for key in ["token", "endpoint", "sessionId"]):
-            data["voice"] = self._voice_state
-
-        await self._node._request(
-            "PATCH", f"sessions/{self.node._session_id}/players/{self.guild.id}",
-            json=data
-        )
+        channel = self.channel
+        await channel.guild.change_voice_state(channel=None)
+        __log__.info(f"Player for '{channel.guild.name}' ({channel.guild.id}) disconnected from voice channel '{channel.name}' ({channel.id}).")

@@ -6,7 +6,7 @@ import logging
 import random
 import string
 import traceback
-from typing import Generic, Literal, TYPE_CHECKING
+from typing import Generic, TYPE_CHECKING
 
 import aiohttp
 import discord.utils
@@ -17,8 +17,10 @@ from ._backoff import Backoff
 from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
-from .types.payloads import Payload
 from .types.common import JSON, JSONDumps, JSONLoads
+from .types.payloads import Payload
+from .types.rest import HTTPMethod
+
 
 if TYPE_CHECKING:
     from .player import Player  # type: ignore
@@ -77,6 +79,8 @@ class Node(Generic[PlayerT]):
         self._task: asyncio.Task[None] | None = None
         self._session: aiohttp.ClientSession | None = None
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
+
+        self._ready_event: asyncio.Event = asyncio.Event()
 
         self._identifier: str = "".join(random.sample(string.ascii_uppercase, 20))
         self._session_id: str | None = None
@@ -174,31 +178,29 @@ class Node(Generic[PlayerT]):
 
     async def _process_payload(self, payload: Payload) -> None:
 
-        __log__.debug(
-            f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{_json.dumps(payload, indent=4)}"
-        )
+        __log__.debug(f"Node '{self.identifier}' received a '{payload['op']}' payload.\n{_json.dumps(payload, indent=4)}")
 
         if payload["op"] == "ready":
             self._session_id = payload["sessionId"]
+            self._ready_event.set()
             __log__.info(f"Node '{self.identifier}' is ready.")
             return
+
+        elif payload["op"] == "playerUpdate":
+            if not (player := self._players.get(int(payload["guildId"]))):
+                __log__.warning(f"Node '{self.identifier}' received a player update for non-existent player with id '{payload['guildId']}'.")
+                return
+            await player._handle_player_update(payload)
 
         elif payload["op"] == "stats":
             self._stats = Stats(payload)
             return
 
         elif payload["op"] == "event":
-
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(
-                    f"Node '{self.identifier}' received a '{payload['type']}' event for non-existent player with "
-                    f"id '{payload['guildId']}'."
-                )
+                __log__.warning(f"Node '{self.identifier}' received a '{payload['type']}' event for non-existent player with id '{payload['guildId']}'.")
                 return
-
             await player._handle_event(payload)
-
-        # TODO: Handle 'playerUpdate'
 
     async def _listen(self) -> None:
 
@@ -256,41 +258,36 @@ class Node(Generic[PlayerT]):
 
     async def _request(
         self,
-        method: Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"],
+        method: HTTPMethod,
         path: str,
-        data: str | None = None,
-        json: JSON | None = None,
+        /, *,
+        data: JSON | None = None
     ) -> JSON:
 
         if self._session is None:
             self._session = aiohttp.ClientSession()
 
+        url = f"{self._rest_url or f'http://{self._host}:{self._port}'}/v3{path}"
         headers = {
-            "Authorization": self._password
+            "Authorization": self._password,
+            "Content-Type":  "application/json"
         }
-        if json is not None:
-            data = self._json_dumps(json)
-            headers["Content-Type"] = "application/json"
+        json_data = self._json_dumps(data)
 
         response: aiohttp.ClientResponse = discord.utils.MISSING
 
         for tries in range(5):
             try:
-                async with self._session.request(
-                    method, f"{self._rest_url or f'http://{self._host}:{self._port}'}/v3/{path}",
-                    headers=headers, data=data
-                ) as response:
+                async with self._session.request(method=method, url=url, headers=headers, data=json_data) as response:
+                    __log__.debug(f"{method} @ '{response.url}' -> {response.status}.\n{_json.dumps(data, indent=4)}")
                     if 200 <= response.status < 300:
-                        __log__.debug(f"{method} @ '{response.url}' -> {response.status}")
                         return await response.json(loads=self._json_loads)
 
             except OSError as error:
                 if tries >= 4 or error.errno not in (54, 10054):
                     raise
 
-            delay = 1 + tries * 2
-
-            __log__.warning(f"{method} @ '{response.url}' -> {response.status}, retrying in {delay}s.")
+            __log__.warning(f"{method} @ '{response.url}' -> {response.status}, retrying in {(delay := 1 + tries * 2)}s.")
             await asyncio.sleep(delay)
 
         message = f"{method} @ '{response.url}' -> {response.status}, all five retries used."
