@@ -3,7 +3,7 @@ from __future__ import annotations
 import json as _json
 import logging
 from collections.abc import Mapping
-from typing import Generic, TypeAlias
+from typing import Generic, TypeAlias, cast
 
 import discord
 import discord.types.voice
@@ -11,10 +11,10 @@ from typing_extensions import Self, TypeVar
 
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
-from .types.common import VoiceChannel
+from .types.common import JSON, VoiceChannel
 from .types.objects.events import EventPayload
 from .types.payloads import PlayerUpdatePayload
-from .types.rest import HTTPRequestData
+from .types.rest import UpdatePlayerData
 
 
 __all__: list[str] = ["Player"]
@@ -79,14 +79,14 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # rest api
 
-    async def _update_player(self, data: HTTPRequestData) -> None:
+    async def _update_player(self, data: UpdatePlayerData) -> None:
 
         if not self._node.is_ready():
             await self._node._ready_event.wait()
 
         await self._node._request(
             "PATCH", f"/sessions/{self._node.session_id}/players/{self.guild.id}",
-            data=data
+            data=cast(JSON, data)
         )
 
     # voice state

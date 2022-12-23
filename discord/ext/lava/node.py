@@ -19,7 +19,7 @@ from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
 from .types.common import JSON, JSONDumps, JSONLoads
 from .types.payloads import Payload
-from .types.rest import HTTPMethod, HTTPRequestData
+from .types.rest import HTTPMethod
 
 
 if TYPE_CHECKING:
@@ -264,7 +264,7 @@ class Node(Generic[PlayerT]):
         method: HTTPMethod,
         path: str,
         /, *,
-        data: HTTPRequestData | None = None
+        data: JSON | None = None
     ) -> JSON:
 
         if self._session is None:
@@ -275,7 +275,7 @@ class Node(Generic[PlayerT]):
             "Authorization": self._password,
             "Content-Type":  "application/json"
         }
-        json_data = self._json_dumps(data)  # type: ignore
+        json_data = self._json_dumps(data)
 
         response: aiohttp.ClientResponse = discord.utils.MISSING
 

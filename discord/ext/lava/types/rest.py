@@ -4,6 +4,8 @@ from typing import Literal, TypedDict
 
 from typing_extensions import NotRequired
 
+from .objects.filters import FiltersData
+
 
 HTTPMethod = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
 
@@ -16,7 +18,14 @@ class VoiceStateData(TypedDict):
     ping: NotRequired[int]
 
 
-class HTTPRequestData(TypedDict):
+class UpdatePlayerData(TypedDict):
+    encodedTrack: NotRequired[str | None]
+    identifier: NotRequired[str]
+    position: NotRequired[int]
+    endTime: NotRequired[int]
+    volume: NotRequired[int]
+    paused: NotRequired[bool]
+    filters: NotRequired[FiltersData]
     voice: NotRequired[VoiceStateData]
 
 
