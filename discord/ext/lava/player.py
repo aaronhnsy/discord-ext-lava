@@ -1,20 +1,18 @@
-from __future__ import annotations
-
 import json as _json
 import logging
 from collections.abc import Mapping
-from typing import Generic, TypeAlias, cast
+from typing import Generic, TypeAlias, TypeVar, cast
 
 import discord
 import discord.types.voice
-from typing_extensions import Self, TypeVar
+from typing_extensions import Self
 
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
 from .types.common import JSON, VoiceChannel
-from .types.objects.events import EventPayload
-from .types.payloads import PlayerUpdatePayload
+from .types.objects.events import EventData
 from .types.rest import UpdatePlayerData
+from .types.websocket import PlayerUpdateData
 
 
 __all__: list[str] = ["Player"]
@@ -61,7 +59,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         "WebSocketClosedEvent": ("web_socket_closed", WebsocketClosedEvent),
     }
 
-    async def _handle_event_payload(self, payload: EventPayload, /) -> None:
+    async def _handle_event_payload(self, payload: EventData, /) -> None:
 
         event_type = payload["type"]
 
@@ -74,7 +72,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.client.dispatch(f"lava_{dispatch_name}", event)
         __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
 
-    async def _handle_player_update_payload(self, payload: PlayerUpdatePayload, /) -> None:
+    async def _handle_player_update_payload(self, payload: PlayerUpdateData, /) -> None:
         ...
 
     # rest api

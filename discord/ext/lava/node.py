@@ -1,25 +1,22 @@
-from __future__ import annotations
-
 import asyncio
 import json as _json
 import logging
 import random
 import string
 import traceback
-from typing import Generic, TYPE_CHECKING
+from typing import Generic, TYPE_CHECKING, TypeVar
 
 import aiohttp
 import discord.utils
 import spotipy
-from typing_extensions import TypeVar
 
 from ._backoff import Backoff
 from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.stats import Stats
 from .types.common import JSON, JSONDumps, JSONLoads
-from .types.payloads import Payload
 from .types.rest import HTTPMethod
+from .types.websocket import Payload
 
 
 if TYPE_CHECKING:

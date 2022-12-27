@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from ..types.objects.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsPayload
+from ..types.objects.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsData
 
 
 __all__: list[str] = ["Stats"]
@@ -8,7 +6,7 @@ __all__: list[str] = ["Stats"]
 
 class Stats:
 
-    def __init__(self, data: StatsPayload) -> None:
+    def __init__(self, data: StatsData) -> None:
         self.players: int = data["players"]
         self.playing_players: int = data["playingPlayers"]
         self.uptime: int = data["uptime"]

@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 from ..enums import TrackEndReason, TrackExceptionSeverity
 from ..types.objects.events import (
-    EventPayload, TrackEndEventPayload, TrackExceptionEventData, TrackExceptionEventPayload, TrackStartEventPayload,
-    TrackStuckEventPayload, WebsocketClosedEventPayload,
+    EventData, TrackEndEventData, TrackExceptionEventData,
+    TrackStartEventData, TrackStuckEventData, WebsocketClosedEventData,
 )
+from ..types.rest import ExceptionData
 
 
 __all__: list[str] = [
@@ -20,7 +19,7 @@ class _BaseEvent:
 
     __slots__ = ("type", "guild_id",)
 
-    def __init__(self, data: EventPayload) -> None:
+    def __init__(self, data: EventData) -> None:
         self.type: str = data["type"]
         self.guild_id: str = data["guildId"]
 
@@ -29,7 +28,7 @@ class TrackStartEvent(_BaseEvent):
 
     __slots__ = ("encoded_track",)
 
-    def __init__(self, data: TrackStartEventPayload) -> None:
+    def __init__(self, data: TrackStartEventData) -> None:
         super().__init__(data)
         self.encoded_track: str = data["encodedTrack"]
 
@@ -41,7 +40,7 @@ class TrackEndEvent(_BaseEvent):
 
     __slots__ = ("encoded_track", "reason",)
 
-    def __init__(self, data: TrackEndEventPayload) -> None:
+    def __init__(self, data: TrackEndEventData) -> None:
         super().__init__(data)
         self.encoded_track: str = data["encodedTrack"]
         self.reason: TrackEndReason = TrackEndReason(data["reason"])
@@ -55,11 +54,11 @@ class TrackExceptionEvent(_BaseEvent):
 
     __slots__ = ("encoded_track", "message", "severity", "cause",)
 
-    def __init__(self, data: TrackExceptionEventPayload) -> None:
+    def __init__(self, data: TrackExceptionEventData) -> None:
         super().__init__(data)
         self.encoded_track: str = data["encodedTrack"]
 
-        exception: TrackExceptionEventData = data["exception"]
+        exception: ExceptionData = data["exception"]
         self.message: str | None = exception["message"]
         self.severity: TrackExceptionSeverity = TrackExceptionSeverity(exception["severity"])
         self.cause: str = exception["cause"]
@@ -74,7 +73,7 @@ class TrackStuckEvent(_BaseEvent):
 
     __slots__ = ("encoded_track", "threshold_ms",)
 
-    def __init__(self, data: TrackStuckEventPayload) -> None:
+    def __init__(self, data: TrackStuckEventData) -> None:
         super().__init__(data)
         self.encoded_track: str = data["encodedTrack"]
         self.threshold_ms: int = data["thresholdMs"]
@@ -88,7 +87,7 @@ class WebsocketClosedEvent(_BaseEvent):
 
     __slots__ = ("code", "reason", "by_remote",)
 
-    def __init__(self, data: WebsocketClosedEventPayload) -> None:
+    def __init__(self, data: WebsocketClosedEventData) -> None:
         super().__init__(data)
         self.code: int = data["code"]
         self.reason: str = data["reason"]

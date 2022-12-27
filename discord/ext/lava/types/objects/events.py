@@ -1,52 +1,46 @@
-from __future__ import annotations
-
 from typing import Literal, TypeAlias, TypedDict
 
+from ..rest import ExceptionData
 
-class TrackStartEventPayload(TypedDict):
+
+class TrackStartEventData(TypedDict):
     op: Literal["event"]
-    guildId: str
     type: Literal["TrackStartEvent"]
+    guildId: str
     encodedTrack: str
 
 
-class TrackEndEventPayload(TypedDict):
+class TrackEndEventData(TypedDict):
     op: Literal["event"]
-    guildId: str
     type: Literal["TrackEndEvent"]
+    guildId: str
     encodedTrack: str
     reason: Literal["FINISHED", "LOAD_FAILED", "STOPPED", "REPLACED", "CLEANUP"]
 
 
 class TrackExceptionEventData(TypedDict):
-    message: str | None
-    severity: Literal["COMMON", "SUSPICIOUS", "FATAL"]
-    cause: str
-
-
-class TrackExceptionEventPayload(TypedDict):
     op: Literal["event"]
-    guildId: str
     type: Literal["TrackExceptionEvent"]
-    encodedTrack: str
-    exception: TrackExceptionEventData
-
-
-class TrackStuckEventPayload(TypedDict):
-    op: Literal["event"]
     guildId: str
+    encodedTrack: str
+    exception: ExceptionData
+
+
+class TrackStuckEventData(TypedDict):
+    op: Literal["event"]
     type: Literal["TrackStuckEvent"]
+    guildId: str
     encodedTrack: str
     thresholdMs: int
 
 
-class WebsocketClosedEventPayload(TypedDict):
+class WebsocketClosedEventData(TypedDict):
     op: Literal["event"]
-    guildId: str
     type: Literal["WebSocketClosedEvent"]
+    guildId: str
     code: int
     reason: str
     byRemote: bool
 
 
-EventPayload: TypeAlias = TrackStartEventPayload | TrackEndEventPayload | TrackExceptionEventPayload | TrackStuckEventPayload | WebsocketClosedEventPayload
+EventData: TypeAlias = TrackStartEventData | TrackEndEventData | TrackExceptionEventData | TrackStuckEventData | WebsocketClosedEventData

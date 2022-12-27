@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Literal, TypedDict
 
 
@@ -22,7 +20,7 @@ class FrameStatsData(TypedDict):
     deficit: int
 
 
-class StatsPayload(TypedDict):
+class StatsData(TypedDict):
     op: Literal["stats"]
     players: int
     playingPlayers: int
