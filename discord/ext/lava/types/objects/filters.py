@@ -1,4 +1,6 @@
-from typing_extensions import NotRequired, TypedDict
+from typing import TypedDict
+
+from typing_extensions import NotRequired
 
 
 class EqualizerBandData(TypedDict):
