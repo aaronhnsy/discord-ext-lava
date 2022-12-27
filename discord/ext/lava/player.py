@@ -1,11 +1,11 @@
 import json as _json
 import logging
 from collections.abc import Mapping
-from typing import Generic, TypeAlias, TypeVar, cast
+from typing import Generic, TypeAlias, cast
 
 import discord
 import discord.types.voice
-from typing_extensions import Self
+from typing_extensions import Self, TypeVar
 
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent

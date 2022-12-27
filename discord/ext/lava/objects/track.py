@@ -1,4 +1,6 @@
-from typing import Generic, TypeVar, TypedDict, cast
+from typing import Generic, TypedDict, cast
+
+from typing_extensions import TypeVar
 
 from ..types.objects.track import TrackData
 

@@ -4,11 +4,12 @@ import logging
 import random
 import string
 import traceback
-from typing import Generic, TYPE_CHECKING, TypeVar
+from typing import Generic, TYPE_CHECKING
 
 import aiohttp
 import discord.utils
 import spotipy
+from typing_extensions import TypeVar
 
 from ._backoff import Backoff
 from ._utilities import ordinal
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 
 __all__: list[str] = ["Node"]
 __log__: logging.Logger = logging.getLogger("discord-ext-lava.node")
+
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player")
 
