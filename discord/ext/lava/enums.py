@@ -1,9 +1,9 @@
 import enum
 
 
-__all__: list[str] = [
+__all__ = [
     "TrackEndReason",
-    "TrackExceptionSeverity",
+    "ExceptionSeverity",
 ]
 
 
@@ -15,7 +15,7 @@ class TrackEndReason(enum.Enum):
     CLEANUP = "CLEANUP"
 
 
-class TrackExceptionSeverity(enum.Enum):
+class ExceptionSeverity(enum.Enum):
     COMMON = "COMMON"
     SUSPICIOUS = "SUSPICIOUS"
     FATAL = "FATAL"

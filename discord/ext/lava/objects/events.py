@@ -1,42 +1,42 @@
-from ..enums import TrackEndReason, TrackExceptionSeverity
-from ..types.objects.events import (
-    EventData, TrackEndEventData, TrackExceptionEventData,
-    TrackStartEventData, TrackStuckEventData, WebsocketClosedEventData,
+from .types.events import (
+    EventData, EventType, ExceptionData, TrackEndEventData, TrackExceptionEventData, TrackStartEventData,
+    TrackStuckEventData, WebSocketClosedEventData,
 )
-from ..types.rest import ExceptionData
+from ..enums import ExceptionSeverity, TrackEndReason
 
 
-__all__: list[str] = [
+__all__ = [
     "TrackStartEvent",
     "TrackEndEvent",
     "TrackExceptionEvent",
     "TrackStuckEvent",
-    "WebsocketClosedEvent"
+    "WebSocketClosedEvent",
 ]
 
 
-class _BaseEvent:
+class _EventBase:
 
     __slots__ = ("type", "guild_id",)
 
     def __init__(self, data: EventData) -> None:
-        self.type: str = data["type"]
+        self.type: EventType = data["type"]
         self.guild_id: str = data["guildId"]
 
+    def __repr__(self) -> str:
+        return f"<discord.ext.lava.{self.__class__.__name__}: " \
+               f"{', '.join(f'{attr}={getattr(self, attr)}' for attr in self.__slots__)}>"
 
-class TrackStartEvent(_BaseEvent):
 
-    __slots__ = ("encoded_track",)
+class TrackStartEvent(_EventBase):
+
+    __slots__ = ("encoded_track", )
 
     def __init__(self, data: TrackStartEventData) -> None:
         super().__init__(data)
         self.encoded_track: str = data["encodedTrack"]
 
-    def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackStartEvent guild_id='{self.guild_id}', encoded_track='{self.encoded_track}'>"
 
-
-class TrackEndEvent(_BaseEvent):
+class TrackEndEvent(_EventBase):
 
     __slots__ = ("encoded_track", "reason",)
 
@@ -45,12 +45,8 @@ class TrackEndEvent(_BaseEvent):
         self.encoded_track: str = data["encodedTrack"]
         self.reason: TrackEndReason = TrackEndReason(data["reason"])
 
-    def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackEndEvent guild_id='{self.guild_id}', encoded_track='{self.encoded_track}', " \
-               f"reason={self.reason}>"
 
-
-class TrackExceptionEvent(_BaseEvent):
+class TrackExceptionEvent(_EventBase):
 
     __slots__ = ("encoded_track", "message", "severity", "cause",)
 
@@ -60,16 +56,11 @@ class TrackExceptionEvent(_BaseEvent):
 
         exception: ExceptionData = data["exception"]
         self.message: str | None = exception["message"]
-        self.severity: TrackExceptionSeverity = TrackExceptionSeverity(exception["severity"])
+        self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
         self.cause: str = exception["cause"]
 
-    def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackExceptionEvent guild_id='{self.guild_id}', " \
-               f"encoded_track='{self.encoded_track}', message={self.message!r}, severity={self.severity}, " \
-               f"cause='{self.cause}'>"
 
-
-class TrackStuckEvent(_BaseEvent):
+class TrackStuckEvent(_EventBase):
 
     __slots__ = ("encoded_track", "threshold_ms",)
 
@@ -78,21 +69,13 @@ class TrackStuckEvent(_BaseEvent):
         self.encoded_track: str = data["encodedTrack"]
         self.threshold_ms: int = data["thresholdMs"]
 
-    def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackStuckEvent guild_id='{self.guild_id}', " \
-               f"encoded_track='{self.encoded_track}', threshold_ms={self.threshold_ms}>"
 
-
-class WebsocketClosedEvent(_BaseEvent):
+class WebSocketClosedEvent(_EventBase):
 
     __slots__ = ("code", "reason", "by_remote",)
 
-    def __init__(self, data: WebsocketClosedEventData) -> None:
+    def __init__(self, data: WebSocketClosedEventData) -> None:
         super().__init__(data)
         self.code: int = data["code"]
         self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
-
-    def __repr__(self) -> str:
-        return f"<discord.ext.lava.WebsocketClosedEvent guild_id='{self.guild_id}', code={self.code}, " \
-               f"reason='{self.reason}', by_remote={self.by_remote}>"

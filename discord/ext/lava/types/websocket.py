@@ -2,8 +2,8 @@ from typing import Literal, TypeAlias, TypedDict
 
 from typing_extensions import NotRequired
 
-from .objects.events import EventData
-from .objects.stats import StatsData
+from ..objects.types.events import EventData
+from ..objects.types.stats import StatsData
 
 
 # Ready OP

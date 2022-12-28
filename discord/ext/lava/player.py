@@ -1,30 +1,29 @@
 import json as _json
 import logging
 from collections.abc import Mapping
-from typing import Generic, TypeAlias
+from typing import Generic
 
 import discord
 import discord.types.voice
 from typing_extensions import Self, TypeVar
 
-from .node import Node
-from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
+from .link import Link
+from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
 from .types.common import VoiceChannel
-from .types.objects.events import EventData
+from .objects.types.events import EventData
 from .types.rest import UpdatePlayerRequestData
 from .types.websocket import PlayerUpdateData
 
 
-__all__: list[str] = ["Player"]
-__log__: logging.Logger = logging.getLogger("discord-ext-lava.player")
+__all__ = ["Player"]
+__log__ = logging.getLogger("discord-ext-lava.player")
 
-ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client)
-Event: TypeAlias = TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebsocketClosedEvent
+ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client, covariant=True)
 
 
 class Player(discord.VoiceProtocol, Generic[ClientT]):
 
-    def __init__(self, *, node: Node) -> None:
+    def __init__(self, *, link: Link) -> None:
         self.client: ClientT = discord.utils.MISSING
         self.channel: VoiceChannel = discord.utils.MISSING
 
@@ -32,7 +31,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self._endpoint: str | None = None
         self._session_id: str | None = None
 
-        self._node: Node = node
+        self._link: Link = link
 
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
         self.client = client  # type: ignore
@@ -51,12 +50,12 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # websocket payload handlers
 
-    _EVENT_MAPPING: Mapping[str, tuple[str, type[Event]]] = {
+    _EVENT_MAPPING: Mapping[str, tuple[str, type[TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebSocketClosedEvent]]] = {
         "TrackStartEvent":      ("track_start", TrackStartEvent),
         "TrackEndEvent":        ("track_end", TrackEndEvent),
         "TrackExceptionEvent":  ("track_exception", TrackExceptionEvent),
         "TrackStuckEvent":      ("track_stuck", TrackStuckEvent),
-        "WebSocketClosedEvent": ("web_socket_closed", WebsocketClosedEvent),
+        "WebSocketClosedEvent": ("web_socket_closed", WebSocketClosedEvent),
     }
 
     async def _handle_event_payload(self, payload: EventData, /) -> None:
@@ -79,11 +78,11 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def _update_player(self, data: UpdatePlayerRequestData, /) -> None:
 
-        if not self._node.is_ready():
-            await self._node._ready_event.wait()
+        if not self._link.is_ready():
+            await self._link._ready_event.wait()
 
-        await self._node._request(
-            "PATCH", f"/sessions/{self._node.session_id}/players/{self.guild.id}",
+        await self._link._request(
+            "PATCH", f"/sessions/{self._link.session_id}/players/{self.guild.id}",
             data=data
         )
 
@@ -112,7 +111,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         )
 
         if (channel_id := data["channel_id"]) is None:
-            del self._node._players[self.guild.id]
+            del self._link._players[self.guild.id]
             return
         self.channel = self.client.get_channel(int(channel_id))  # type: ignore
 

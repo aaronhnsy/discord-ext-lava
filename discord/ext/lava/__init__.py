@@ -3,7 +3,7 @@ from typing import Literal, NamedTuple
 
 from .enums import *
 from .exceptions import *
-from .node import *
+from .link import *
 from .objects import *
 from .player import *
 

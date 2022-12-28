@@ -16,22 +16,22 @@ from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
 from .objects.search import Search
 from .objects.stats import Stats
-from .objects.track import Track, TrackExtrasT
+from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads
-from .types.rest import RestMethod, RestRequestData, TrackLoadingResponseData
+from .types.rest import RestMethod, RestRequestData
 from .types.websocket import Payload
 
 
 if TYPE_CHECKING:
     from .player import Player  # type: ignore
 
-__all__: list[str] = ["Node"]
-__log__: logging.Logger = logging.getLogger("discord-ext-lava.node")
+__all__ = ["Link"]
+__log__ = logging.getLogger("discord-ext-lava.node")
 
-PlayerT = TypeVar("PlayerT", bound="Player", default="Player")
+PlayerT = TypeVar("PlayerT", bound="Player", default="Player", covariant=True)
 
 
-class Node(Generic[PlayerT, TrackExtrasT]):
+class Link(Generic[PlayerT]):
 
     def __init__(
         self,
@@ -308,8 +308,6 @@ class Node(Generic[PlayerT, TrackExtrasT]):
         self,
         _type: Literal["album", "playlist", "artist", "track"],
         _id: str,
-        *,
-        extras: TrackExtrasT | None = None
     ) -> Search:
 
         assert self._spotify is not None
@@ -318,16 +316,16 @@ class Node(Generic[PlayerT, TrackExtrasT]):
             match _type:
                 case "album":
                     result = await self._spotify.get_full_album(_id)
-                    tracks = [Track._from_spotify_track(result, track, extras) for track in result.tracks]
+                    tracks = [Track._from_spotify_track(result, track) for track in result.tracks]
                 case "playlist":
                     result = await self._spotify.get_full_playlist(_id)
-                    tracks = [Track._from_spotify_track(result, track, extras) for track in result.tracks]
+                    tracks = [Track._from_spotify_track(result, track) for track in result.tracks]
                 case "artist":
                     result = await self._spotify.get_artist(_id)
-                    tracks = [Track._from_spotify_track(result, track, extras) for track in await self._spotify.get_artist_top_tracks(_id)]
+                    tracks = [Track._from_spotify_track(result, track) for track in await self._spotify.get_artist_top_tracks(_id)]
                 case "track":
                     result = await self._spotify.get_track(_id)
-                    tracks = [Track._from_spotify_track(result, result, extras)]
+                    tracks = [Track._from_spotify_track(result, result)]
                 case _:
                     raise ValueError("unhandled spotify search type")
         except spotipy.NotFound:
@@ -336,26 +334,3 @@ class Node(Generic[PlayerT, TrackExtrasT]):
             raise
 
         return Search(result=result, tracks=tracks)
-
-    async def _lavalink_search(
-        self,
-        search: str,
-        /, *,
-        extras: TrackExtrasT | None = None
-    ) -> None:
-
-        data: TrackLoadingResponseData = cast(
-            TrackLoadingResponseData,
-            await self._request(
-                "GET", f"/loadtracks",
-                parameters={"identifier": search}
-            )
-        )
-
-    async def search(
-        self,
-        search: str,
-        /, *,
-        extras: TrackExtrasT | None = None,
-    ) -> None:
-        ...

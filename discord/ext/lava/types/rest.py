@@ -2,10 +2,10 @@ from typing import Literal, TypeAlias, TypedDict
 
 from typing_extensions import NotRequired
 
-from .objects.filters import FiltersData
-from .objects.playlist import PlaylistInfoData
-from .objects.stats import StatsData
-from .objects.track import TrackData
+from ..objects.types.filters import FiltersData
+from ..objects.types.playlist import PlaylistInfoData
+from ..objects.types.stats import StatsData
+from ..objects.types.track import TrackData
 
 
 # GET /v4/sessions/{sessionId}/players

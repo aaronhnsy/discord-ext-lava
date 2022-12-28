@@ -3,13 +3,13 @@ from __future__ import annotations
 import abc
 import collections
 
-from ..types.objects.filters import (
+from .types.filters import (
     ChannelMixData, DistortionData, EqualizerData, FiltersData, KaraokeData, LowPassData, RotationData, TimescaleData,
     TremoloData, VibratoData,
 )
 
 
-__all__: list[str] = [
+__all__ = [
     "Equalizer",
     "Karaoke",
     "Timescale",
@@ -23,12 +23,13 @@ __all__: list[str] = [
 ]
 
 
-class _BaseFilter(metaclass=abc.ABCMeta):
+class _FilterBase(metaclass=abc.ABCMeta):
 
     __slots__ = ()
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.{self.__class__.__name__} {', '.join(f'{attr[1:]}={getattr(self, attr, None)}' for attr in self.__slots__)}>"
+        return f"<discord.ext.lava.{self.__class__.__name__} " \
+               f"{', '.join(f'{attr[1:]}={getattr(self, attr)}' for attr in self.__slots__)}>"
 
     @property
     @abc.abstractmethod
@@ -36,7 +37,7 @@ class _BaseFilter(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class Equalizer(_BaseFilter):
+class Equalizer(_FilterBase):
 
     __slots__ = ("_bands",)
 
@@ -53,9 +54,9 @@ class Equalizer(_BaseFilter):
         return [{"band": band, "gain": self._bands[band]} for band in range(15)]
 
 
-class Karaoke(_BaseFilter):
+class Karaoke(_FilterBase):
 
-    __slots__ = ("_level", "_mono_level", "_filter_band", "_filter_width")
+    __slots__ = ("_level", "_mono_level", "_filter_band", "_filter_width",)
 
     def __init__(
         self,
@@ -80,9 +81,9 @@ class Karaoke(_BaseFilter):
         }
 
 
-class Timescale(_BaseFilter):
+class Timescale(_FilterBase):
 
-    __slots__ = ("_pitch", "_speed", "_rate")
+    __slots__ = ("_pitch", "_speed", "_rate",)
 
     def __init__(
         self,
@@ -112,9 +113,9 @@ class Timescale(_BaseFilter):
         }
 
 
-class Tremolo(_BaseFilter):
+class Tremolo(_FilterBase):
 
-    __slots__ = ("_frequency", "_depth")
+    __slots__ = ("_frequency", "_depth",)
 
     def __init__(
         self,
@@ -139,9 +140,9 @@ class Tremolo(_BaseFilter):
         }
 
 
-class Vibrato(_BaseFilter):
+class Vibrato(_FilterBase):
 
-    __slots__ = ("_frequency", "_depth")
+    __slots__ = ("_frequency", "_depth",)
 
     def __init__(
         self,
@@ -166,7 +167,7 @@ class Vibrato(_BaseFilter):
         }
 
 
-class Rotation(_BaseFilter):
+class Rotation(_FilterBase):
 
     __slots__ = ("_speed",)
 
@@ -178,9 +179,11 @@ class Rotation(_BaseFilter):
         return {"rotationHz": self._speed}
 
 
-class Distortion(_BaseFilter):
+class Distortion(_FilterBase):
 
-    __slots__ = ("_sin_offset", "_sin_scale", "_cos_offset", "_cos_scale", "_tan_offset", "_tan_scale", "_offset", "_scale",)
+    __slots__ = (
+        "_sin_offset", "_sin_scale", "_cos_offset", "_cos_scale", "_tan_offset", "_tan_scale", "_offset", "_scale",
+    )
 
     def __init__(
         self,
@@ -217,7 +220,7 @@ class Distortion(_BaseFilter):
         }
 
 
-class ChannelMix(_BaseFilter):
+class ChannelMix(_FilterBase):
 
     __slots__ = ("_left_to_left", "_left_to_right", "_right_to_left", "_right_to_right",)
 
@@ -278,7 +281,7 @@ class ChannelMix(_BaseFilter):
         return cls(left_to_left=0.0, left_to_right=0.5, right_to_left=0.0, right_to_right=0.5)
 
 
-class LowPass(_BaseFilter):
+class LowPass(_FilterBase):
 
     __slots__ = ("_smoothing",)
 
@@ -292,9 +295,12 @@ class LowPass(_BaseFilter):
         return {"smoothing": self._smoothing}
 
 
-class Filter(_BaseFilter):
+class Filter(_FilterBase):
 
-    __slots__ = ("_filter", "_equalizer", "_karaoke", "_timescale", "_tremolo", "_vibrato", "_rotation", "_distortion", "_channel_mix", "_low_pass")
+    __slots__ = (
+        "_filter", "_equalizer", "_karaoke", "_timescale", "_tremolo", "_vibrato", "_rotation", "_distortion",
+        "_channel_mix", "_low_pass",
+    )
 
     def __init__(
         self,

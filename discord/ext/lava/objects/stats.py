@@ -1,7 +1,7 @@
-from ..types.objects.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsData
+from .types.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsData
 
 
-__all__: list[str] = ["Stats"]
+__all__ = ["Stats"]
 
 
 class Stats:
