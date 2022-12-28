@@ -1,7 +1,7 @@
 import json as _json
 import logging
 from collections.abc import Mapping
-from typing import Generic, TypeAlias, cast
+from typing import Generic, TypeAlias
 
 import discord
 import discord.types.voice
@@ -9,9 +9,9 @@ from typing_extensions import Self, TypeVar
 
 from .node import Node
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebsocketClosedEvent
-from .types.common import JSON, VoiceChannel
+from .types.common import VoiceChannel
 from .types.objects.events import EventData
-from .types.rest import UpdatePlayerData
+from .types.rest import UpdatePlayerRequestData
 from .types.websocket import PlayerUpdateData
 
 
@@ -77,14 +77,14 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # rest api
 
-    async def _update_player(self, data: UpdatePlayerData) -> None:
+    async def _update_player(self, data: UpdatePlayerRequestData, /) -> None:
 
         if not self._node.is_ready():
             await self._node._ready_event.wait()
 
         await self._node._request(
             "PATCH", f"/sessions/{self._node.session_id}/players/{self.guild.id}",
-            data=cast(JSON, data)
+            data=data
         )
 
     # voice state

@@ -4,7 +4,7 @@ import logging
 import random
 import string
 import traceback
-from typing import Generic, TYPE_CHECKING
+from typing import Generic, Literal, TYPE_CHECKING, cast
 
 import aiohttp
 import discord.utils
@@ -14,24 +14,24 @@ from typing_extensions import TypeVar
 from ._backoff import Backoff
 from ._utilities import ordinal
 from .exceptions import NodeAlreadyConnected, NodeConnectionError
+from .objects.search import Search
 from .objects.stats import Stats
+from .objects.track import Track, TrackExtrasT
 from .types.common import JSON, JSONDumps, JSONLoads
-from .types.rest import HTTPMethod
+from .types.rest import RestMethod, RestRequestData, TrackLoadingResponseData
 from .types.websocket import Payload
 
 
 if TYPE_CHECKING:
     from .player import Player  # type: ignore
 
-
 __all__: list[str] = ["Node"]
 __log__: logging.Logger = logging.getLogger("discord-ext-lava.node")
-
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player")
 
 
-class Node(Generic[PlayerT]):
+class Node(Generic[PlayerT, TrackExtrasT]):
 
     def __init__(
         self,
@@ -128,7 +128,7 @@ class Node(Generic[PlayerT]):
         try:
             from . import __version__
             websocket = await self._session.ws_connect(
-                f"{self._ws_url or f'ws://{self._host}:{self._port}'}/v3/websocket",
+                f"{self._ws_url or f'ws://{self._host}:{self._port}'}/v4/websocket",
                 headers={
                     "Authorization": self._password,
                     "User-Id":       str(self._user_id),
@@ -175,7 +175,7 @@ class Node(Generic[PlayerT]):
             await self._session.close()
         self._session = None
 
-    async def _process_payload(self, payload: Payload) -> None:
+    async def _process_payload(self, payload: Payload, /) -> None:
 
         __log__.debug(
             f"Node '{self.identifier}' received a '{payload['op']}' payload.\n"
@@ -260,27 +260,33 @@ class Node(Generic[PlayerT]):
 
     async def _request(
         self,
-        method: HTTPMethod,
+        method: RestMethod,
         path: str,
         /, *,
-        data: JSON | None = None
+        parameters: dict[str, str] | None = None,
+        data: RestRequestData | None = None,
     ) -> JSON:
 
         if self._session is None:
             self._session = aiohttp.ClientSession()
 
-        url = f"{self._rest_url or f'http://{self._host}:{self._port}'}/v3{path}"
+        url = f"{self._rest_url or f'http://{self._host}:{self._port}'}/v4{path}"
         headers = {
             "Authorization": self._password,
             "Content-Type":  "application/json"
         }
-        json_data = self._json_dumps(data)
+        json = self._json_dumps(cast(JSON, data)) if data is not None else None
 
         response: aiohttp.ClientResponse = discord.utils.MISSING
 
         for tries in range(5):
             try:
-                async with self._session.request(method=method, url=url, headers=headers, data=json_data) as response:
+                async with self._session.request(
+                    method, url,
+                    headers=headers,
+                    parameters=parameters,
+                    data=json
+                ) as response:
                     __log__.debug(f"{method} @ '{response.url}' -> {response.status}.\n{_json.dumps(data, indent=4)}")
                     if 200 <= response.status < 300:
                         return await response.json(loads=self._json_loads)
@@ -295,4 +301,61 @@ class Node(Generic[PlayerT]):
 
         message = f"{method} @ '{response.url}' -> {response.status}, all five retries used."
         __log__.error(message)
+        raise
         # raise HTTPError(response, message=message)
+
+    async def _spotify_search(
+        self,
+        _type: Literal["album", "playlist", "artist", "track"],
+        _id: str,
+        *,
+        extras: TrackExtrasT | None = None
+    ) -> Search:
+
+        assert self._spotify is not None
+
+        try:
+            match _type:
+                case "album":
+                    result = await self._spotify.get_full_album(_id)
+                    tracks = [Track._from_spotify_track(result, track, extras) for track in result.tracks]
+                case "playlist":
+                    result = await self._spotify.get_full_playlist(_id)
+                    tracks = [Track._from_spotify_track(result, track, extras) for track in result.tracks]
+                case "artist":
+                    result = await self._spotify.get_artist(_id)
+                    tracks = [Track._from_spotify_track(result, track, extras) for track in await self._spotify.get_artist_top_tracks(_id)]
+                case "track":
+                    result = await self._spotify.get_track(_id)
+                    tracks = [Track._from_spotify_track(result, result, extras)]
+                case _:
+                    raise ValueError("unhandled spotify search type")
+        except spotipy.NotFound:
+            raise
+        except spotipy.HTTPError:
+            raise
+
+        return Search(result=result, tracks=tracks)
+
+    async def _lavalink_search(
+        self,
+        search: str,
+        /, *,
+        extras: TrackExtrasT | None = None
+    ) -> None:
+
+        data: TrackLoadingResponseData = cast(
+            TrackLoadingResponseData,
+            await self._request(
+                "GET", f"/loadtracks",
+                parameters={"identifier": search}
+            )
+        )
+
+    async def search(
+        self,
+        search: str,
+        /, *,
+        extras: TrackExtrasT | None = None,
+    ) -> None:
+        ...

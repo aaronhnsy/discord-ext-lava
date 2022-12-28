@@ -1,23 +1,15 @@
-from typing import Literal, TypedDict
+from typing import Literal, TypeAlias, TypedDict
 
 from typing_extensions import NotRequired
 
 from .objects.filters import FiltersData
 from .objects.playlist import PlaylistInfoData
+from .objects.stats import StatsData
 from .objects.track import TrackData
 
 
-HTTPMethod = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
-
-
-class ErrorData(TypedDict):
-    timestamp: int
-    status: int
-    error: str
-    trace: NotRequired[str]
-    message: str
-    path: str
-
+# GET /v4/sessions/{sessionId}/players
+# returns 200 - GetPlayerResponseData
 
 class VoiceStateData(TypedDict):
     token: str
@@ -27,10 +19,7 @@ class VoiceStateData(TypedDict):
     ping: NotRequired[int]
 
 
-# GET /v4/sessions/{sessionId}/players
-# GET /v4/sessions/{sessionId}/players/{guildId}
-
-class Player(TypedDict):
+class GetPlayerResponseData(TypedDict):
     guildId: str
     track: TrackData | None
     volume: int
@@ -39,9 +28,15 @@ class Player(TypedDict):
     filters: FiltersData
 
 
-# PATCH /v4/sessions/{sessionId}/players/{guildId}
+# GET /v4/sessions/{sessionId}/players/{guildId}
+# returns 200 - GetPlayersResponseData
+GetPlayersResponseData: TypeAlias = list[GetPlayerResponseData]
 
-class UpdatePlayerData(TypedDict):
+
+# PATCH /v4/sessions/{sessionId}/players/{guildId}
+# returns 200 - UpdatePlayerResponseData
+
+class UpdatePlayerRequestData(TypedDict):
     encodedTrack: NotRequired[str | None]
     identifier: NotRequired[str]
     position: NotRequired[int]
@@ -52,14 +47,29 @@ class UpdatePlayerData(TypedDict):
     filters: NotRequired[FiltersData]
 
 
+UpdatePlayerResponseData: TypeAlias = GetPlayerResponseData
+
+
 # DELETE /v4/sessions/{sessionId}/players/{guildId}
+# returns 204 - no content
 ...
 
+
 # PATCH /v4/sessions/{sessionId}
-...
+# returns 200 - UpdateSessionResponseData
+
+class UpdateSessionRequestData(TypedDict):
+    resuming: NotRequired[bool]
+    timeout: NotRequired[int]
+
+
+class UpdateSessionResponseData(TypedDict):
+    resuming: bool
+    timeout: int
 
 
 # GET /v4/loadtracks
+# returns 200 - TrackLoadingResponseData
 
 class ExceptionData(TypedDict):
     message: str | None
@@ -67,7 +77,7 @@ class ExceptionData(TypedDict):
     cause: str
 
 
-class TrackLoadingResultData(TypedDict):
+class TrackLoadingResponseData(TypedDict):
     loadType: Literal["TRACK_LOADED", "PLAYLIST_LOADED", "SEARCH_RESULT", "NO_MATCHES", "LOAD_FAILED"]
     playlistInfo: PlaylistInfoData | None
     tracks: list[TrackData]
@@ -75,13 +85,18 @@ class TrackLoadingResultData(TypedDict):
 
 
 # GET /v4/decodetrack
-...
+# returns 200 - DecodeTrackResponseData
+DecodeTrackResponseData: TypeAlias = TrackData
+
 
 # POST /v4/decodetracks
-...
+# returns 200 - DecodeTracksResponseData
+DecodeTracksRequestData: TypeAlias = list[str]
+DecodeTracksResponseData: TypeAlias = list[TrackData]
 
 
 # GET /v4/info
+# returns 200 - LavalinkInfoResponseData
 
 class LavalinkVersionData(TypedDict):
     semver: str
@@ -102,7 +117,7 @@ class LavalinkPluginData(TypedDict):
     version: str
 
 
-class LavalinkInfoData(TypedDict):
+class LavalinkInfoResponseData(TypedDict):
     version: LavalinkVersionData
     buildTime: int
     git: LavalinkGitData
@@ -114,13 +129,15 @@ class LavalinkInfoData(TypedDict):
 
 
 # GET /v4/stats
-...
+StatsResponseData: TypeAlias = StatsData
+
 
 # GET /version
-...
+VersionResponseData: TypeAlias = str
 
 
 # GET /v4/routeplanner/status
+# returns 200 - RoutePlannerStatusResponseData
 
 class IpBlockData(TypedDict):
     type: Literal["Inet4Address", "Inet6Address"]
@@ -143,16 +160,37 @@ class RoutePlannerDetailsData(TypedDict):
     blockIndex: str
 
 
-RoutePlannerStatusData = TypedDict(
-    "RoutePlannerStatusData",
+RoutePlannerStatusResponseData = TypedDict(
+    "RoutePlannerStatusResponseData",
     {
         "class":   Literal["RotatingIpRoutePlanner", "NanoIpRoutePlanner", "RotatingNanoIpRoutePlanner"] | None,
         "details": RoutePlannerDetailsData | None
     }
 )
 
+
 # POST /v4/routeplanner/free/address
-...
+# returns 204 - no content
+
+class FreeAddressRequestData(TypedDict):
+    address: str
+
 
 # POST /v4/routeplanner/free/all
+# returns 204 - no content
 ...
+
+
+class ErrorData(TypedDict):
+    timestamp: int
+    status: int
+    error: str
+    trace: NotRequired[str]
+    message: str
+    path: str
+
+
+RestMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
+RestRequestData: TypeAlias = UpdatePlayerRequestData | UpdateSessionRequestData | DecodeTracksRequestData | FreeAddressRequestData
+
+
