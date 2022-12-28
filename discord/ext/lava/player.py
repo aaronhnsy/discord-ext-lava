@@ -36,7 +36,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
         self.client = client  # type: ignore
         self.channel = channel  # type: ignore
-        self._node._players[self.guild.id] = self  # type: ignore
+        self._link._players[self.guild.id] = self  # type: ignore
         return self
 
     def __repr__(self) -> str:

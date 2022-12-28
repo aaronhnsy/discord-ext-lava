@@ -13,7 +13,7 @@ from typing_extensions import TypeVar
 
 from ._backoff import Backoff
 from ._utilities import ordinal
-from .exceptions import NodeAlreadyConnected, NodeConnectionError
+from .exceptions import LinkAlreadyConnected, LinkConnectionError
 from .objects.search import Search
 from .objects.stats import Stats
 from .objects.track import Track
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from .player import Player  # type: ignore
 
 __all__ = ["Link"]
-__log__ = logging.getLogger("discord-ext-lava.node")
+__log__ = logging.getLogger("discord-ext-lava.link")
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player", covariant=True)
 
@@ -87,7 +87,7 @@ class Link(Generic[PlayerT]):
         self._players: dict[int, PlayerT] = {}
 
     def __repr__(self) -> str:
-        return "<discord.ext.lava.Node>"
+        return "<discord.ext.lava.Link>"
 
     # properties
 
@@ -120,7 +120,7 @@ class Link(Generic[PlayerT]):
     async def connect(self) -> None:
 
         if self.is_connected():
-            raise NodeAlreadyConnected(f"Node '{self.identifier}' is already connected.")
+            raise LinkAlreadyConnected(f"Link '{self.identifier}' is already connected.")
 
         if self._session is None:
             self._session = aiohttp.ClientSession()
@@ -139,19 +139,19 @@ class Link(Generic[PlayerT]):
         except Exception as error:
             if isinstance(error, aiohttp.WSServerHandshakeError):
                 if error.status == 401:
-                    message = f"Node '{self.identifier}' could not connect to its websocket due to an incorrect " \
+                    message = f"Link '{self.identifier}' could not connect to its websocket due to an incorrect " \
                               f"password. "
                 elif error.status in {403, 404}:
-                    message = f"Node '{self.identifier}' could not connect to its websocket, if you're using the " \
+                    message = f"Link '{self.identifier}' could not connect to its websocket, if you're using the " \
                               f"`ws_url` parameter please make sure its path is correct."
                 else:
-                    message = f"Node '{self.identifier}' could not connect to its websocket, encountered a " \
+                    message = f"Link '{self.identifier}' could not connect to its websocket, encountered a " \
                               f"'{error.status}' status code error."
             else:
-                message = f"Node '{self.identifier}' raised '{error.__class__.__name__}' while connecting to its " \
+                message = f"Link '{self.identifier}' raised '{error.__class__.__name__}' while connecting to its " \
                           f"websocket."
             __log__.error(message)
-            raise NodeConnectionError(message)
+            raise LinkConnectionError(message)
 
         self._backoff.reset()
         self._websocket = websocket
@@ -178,19 +178,19 @@ class Link(Generic[PlayerT]):
     async def _process_payload(self, payload: Payload, /) -> None:
 
         __log__.debug(
-            f"Node '{self.identifier}' received a '{payload['op']}' payload.\n"
+            f"Link '{self.identifier}' received a '{payload['op']}' payload.\n"
             f"{_json.dumps(payload, indent=4)}"
         )
 
         if payload["op"] == "ready":
             self._session_id = payload["sessionId"]
             self._ready_event.set()
-            __log__.info(f"Node '{self.identifier}' is ready.")
+            __log__.info(f"Link '{self.identifier}' is ready.")
             return
 
         elif payload["op"] == "playerUpdate":
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(f"Node '{self.identifier}' received a player update for non-existent player with id '{payload['guildId']}'.")
+                __log__.warning(f"Link '{self.identifier}' received a player update for non-existent player with id '{payload['guildId']}'.")
                 return
             await player._handle_player_update_payload(payload)
 
@@ -200,7 +200,7 @@ class Link(Generic[PlayerT]):
 
         elif payload["op"] == "event":
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(f"Node '{self.identifier}' received a '{payload['type']}' event for non-existent player with id '{payload['guildId']}'.")
+                __log__.warning(f"Link '{self.identifier}' received a '{payload['type']}' event for non-existent player with id '{payload['guildId']}'.")
                 return
             await player._handle_event_payload(payload)
 
@@ -216,13 +216,13 @@ class Link(Generic[PlayerT]):
                 # Log a warning for the first reconnect attempt.
                 if self._backoff.tries == 0:
                     __log__.warning(
-                        f"Node '{self.identifier}' was unexpectedly disconnected from its websocket. It will now "
+                        f"Link '{self.identifier}' was unexpectedly disconnected from its websocket. It will now "
                         f"attempt to reconnect up to {self._backoff.max_tries} times with a backoff delay."
                     )
 
                 # Calculate the backoff delay and sleep.
                 __log__.warning(
-                    f"Node '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection "
+                    f"Link '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection "
                     f"in {(delay := self._backoff.calculate()):.2f} seconds."
                 )
                 await asyncio.sleep(delay)
@@ -231,14 +231,14 @@ class Link(Generic[PlayerT]):
                     # Attempt to reconnect to the websocket.
                     await self.connect()
 
-                except NodeConnectionError as error:
+                except LinkConnectionError as error:
                     # Print the error manually because we don't want an error to be raised inside the task.
                     traceback.print_exception(type(error), error, error.__traceback__)
 
                     # Cancel the task (and reset other vars) to stop further reconnection attempts.
                     if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
                         __log__.warning(
-                            f"Node '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times "
+                            f"Link '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times "
                             f"with no success. It will not attempt to reconnect again."
                         )
                         await self._reset_state()
@@ -249,7 +249,7 @@ class Link(Generic[PlayerT]):
 
                 else:
                     # If no error was raised, continue the outer loop as we should've reconnected.
-                    __log__.info(f"Node '{self.identifier}' was able to reconnect to its websocket.")
+                    __log__.info(f"Link '{self.identifier}' was able to reconnect to its websocket.")
                     continue
 
             asyncio.create_task(
