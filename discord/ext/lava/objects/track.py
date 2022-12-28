@@ -38,7 +38,7 @@ class Track:
         return f"discord.ext.lava.Track identifier='{self.identifier}', title='{self.title}', " \
                f"author='{self.author}', length={self.length}>"
 
-    # utilities
+    # utility methods
 
     def is_seekable(self) -> bool:
         return self._is_seekable

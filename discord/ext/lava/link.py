@@ -18,7 +18,7 @@ from .objects.search import Search
 from .objects.stats import Stats
 from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads
-from .types.rest import RestMethod, RestRequestData
+from .types.rest.requests import RequestData, RequestMethod
 from .types.websocket import Payload
 
 
@@ -260,11 +260,11 @@ class Link(Generic[PlayerT]):
 
     async def _request(
         self,
-        method: RestMethod,
+        method: RequestMethod,
         path: str,
         /, *,
         parameters: dict[str, str] | None = None,
-        data: RestRequestData | None = None,
+        data: RequestData | None = None,
     ) -> JSON:
 
         if self._session is None:
@@ -308,6 +308,7 @@ class Link(Generic[PlayerT]):
         self,
         _type: Literal["album", "playlist", "artist", "track"],
         _id: str,
+        /,
     ) -> Search:
 
         assert self._spotify is not None

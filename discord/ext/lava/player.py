@@ -11,7 +11,7 @@ from .link import Link
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
 from .types.common import VoiceChannel
 from .objects.types.events import EventData
-from .types.rest import UpdatePlayerRequestData
+from .types.rest.requests import UpdatePlayerData
 from .types.websocket import PlayerUpdateData
 
 
@@ -76,7 +76,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # rest api
 
-    async def _update_player(self, data: UpdatePlayerRequestData, /) -> None:
+    async def _update_player(self, data: UpdatePlayerData, /) -> None:
 
         if not self._link.is_ready():
             await self._link._ready_event.wait()
