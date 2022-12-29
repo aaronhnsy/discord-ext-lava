@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TypeAlias
+from typing import Literal, TypeAlias
 
 import discord
 import spotipy
@@ -12,5 +12,5 @@ JSONLoads: TypeAlias = Callable[..., JSON]
 
 VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
 
-SpotifyTrack: TypeAlias = spotipy.SimpleTrack | spotipy.Track | spotipy.PlaylistTrack
-SpotifyResult: TypeAlias = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track
+SpotifySearchType: TypeAlias = Literal["album", "playlist", "artist", "track"]
+SpotifySource: TypeAlias = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track

@@ -1,13 +1,13 @@
-from .types.playlist import PlaylistInfoData
+from .types.playlist import PlaylistData
 
 
-__all__ = ["PlaylistInfo"]
+__all__ = ["Playlist"]
 
 
-class PlaylistInfo:
+class Playlist:
 
     __slots__ = ("name", "selected_track",)
 
-    def __init__(self, data: PlaylistInfoData) -> None:
+    def __init__(self, data: PlaylistData) -> None:
         self.name: str = data["name"]
         self.selected_track: int = data["selectedTrack"]

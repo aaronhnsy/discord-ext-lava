@@ -4,7 +4,7 @@ import discord.utils
 import spotipy
 
 from .types.track import TrackData
-from ..types.common import SpotifyResult, SpotifyTrack
+from ..types.common import SpotifySource
 
 
 __all__ = ["Track"]
@@ -51,8 +51,8 @@ class Track:
     @classmethod
     def _from_spotify_track(
         cls,
-        result: SpotifyResult,
-        track: SpotifyTrack,
+        source: SpotifySource,
+        track: spotipy.SimpleTrack | spotipy.Track | spotipy.PlaylistTrack,
     ) -> Track:
 
         title = track.name or "Unknown"
@@ -63,8 +63,8 @@ class Track:
         # from the album result itself. Unfortunately this also means you can't
         # get an isrc for these tracks.
         if isinstance(track, spotipy.SimpleTrack):
-            assert isinstance(result, spotipy.Album)
-            artwork_url = result.images[0].url if result.images else None
+            assert isinstance(source, spotipy.Album)
+            artwork_url = source.images[0].url if source.images else None
             isrc = None
         else:
             artwork_url = track.album.images[0].url if track.album.images else None

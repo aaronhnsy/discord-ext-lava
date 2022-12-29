@@ -16,7 +16,7 @@ class ReadyData(TypedDict):
 
 # Player Update OP
 
-class PlayerUpdateStateData(TypedDict):
+class PlayerStateData(TypedDict):
     time: int
     position: NotRequired[int]
     connected: bool
@@ -26,7 +26,7 @@ class PlayerUpdateStateData(TypedDict):
 class PlayerUpdateData(TypedDict):
     op: Literal["playerUpdate"]
     guildId: str
-    state: PlayerUpdateStateData
+    state: PlayerStateData
 
 
 # Payloads

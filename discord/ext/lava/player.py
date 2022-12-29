@@ -8,9 +8,12 @@ import discord.types.voice
 from typing_extensions import Self, TypeVar
 
 from .link import Link
-from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
-from .types.common import VoiceChannel
+from .objects.events import (
+    Event, TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent,
+    WebSocketClosedEvent,
+)
 from .objects.types.events import EventData
+from .types.common import VoiceChannel
 from .types.rest.requests import UpdatePlayerData
 from .types.websocket import PlayerUpdateData
 
@@ -34,9 +37,9 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self._link: Link = link
 
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
-        self.client = client  # type: ignore
-        self.channel = channel  # type: ignore
-        self._link._players[self.guild.id] = self  # type: ignore
+        self.client = client  # pyright: ignore
+        self.channel = channel  # pyright: ignore
+        self._link._players[self.guild.id] = self
         return self
 
     def __repr__(self) -> str:
@@ -50,7 +53,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     # websocket payload handlers
 
-    _EVENT_MAPPING: Mapping[str, tuple[str, type[TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebSocketClosedEvent]]] = {
+    _EVENT_MAPPING: Mapping[str, tuple[str, type[Event]]] = {
         "TrackStartEvent":      ("track_start", TrackStartEvent),
         "TrackEndEvent":        ("track_end", TrackEndEvent),
         "TrackExceptionEvent":  ("track_exception", TrackExceptionEvent),
@@ -64,12 +67,15 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
         if event := self._EVENT_MAPPING.get(event_type):
             dispatch_name, event = event
-            event = event(payload)  # pyright: ignore - payload type can't be narrowed correctly
+            event = event(payload)  # pyright: ignore
         else:
             dispatch_name, event = event_type, payload
 
         self.client.dispatch(f"lava_{dispatch_name}", event)
-        __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{event_type}' event to 'on_lava_{dispatch_name}' listeners.")
+        __log__.info(
+            f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{event_type}' event to "
+            f"'on_lava_{dispatch_name}' listeners."
+        )
 
     async def _handle_player_update_payload(self, payload: PlayerUpdateData, /) -> None:
         ...
@@ -93,7 +99,9 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if self._token is None or self._endpoint is None or self._session_id is None:
             return
 
-        await self._update_player({"voice": {"token": self._token, "endpoint": self._endpoint, "sessionId": self._session_id}})
+        await self._update_player(
+            {"voice": {"token": self._token, "endpoint": self._endpoint, "sessionId": self._session_id}}
+        )
 
     async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
         __log__.debug(
@@ -113,7 +121,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if (channel_id := data["channel_id"]) is None:
             del self._link._players[self.guild.id]
             return
-        self.channel = self.client.get_channel(int(channel_id))  # type: ignore
+        self.channel = self.client.get_channel(int(channel_id))  # pyright: ignore
 
         self._session_id = data["session_id"]
         await self._update_voice_state()
@@ -128,7 +136,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self_mute: bool = False,
     ) -> None:
         await self.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
-        __log__.info(f"Player for '{self.guild.name}' ({self.guild.id}) connected to voice channel '{self.channel.name}' ({self.channel.id}).")
+        __log__.info(
+            f"Player for '{self.guild.name}' ({self.guild.id}) connected to voice channel "
+            f"'{self.channel.name}' ({self.channel.id})."
+        )
 
     async def disconnect(
         self, *,
@@ -136,4 +147,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     ) -> None:
         channel = self.channel
         await channel.guild.change_voice_state(channel=None)
-        __log__.info(f"Player for '{channel.guild.name}' ({channel.guild.id}) disconnected from voice channel '{channel.name}' ({channel.id}).")
+        __log__.info(
+            f"Player for '{channel.guild.name}' ({channel.guild.id}) disconnected from voice channel "
+            f"'{channel.name}' ({channel.id})."
+        )

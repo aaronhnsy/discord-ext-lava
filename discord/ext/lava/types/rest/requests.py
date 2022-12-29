@@ -48,7 +48,7 @@ class UpdateSessionData(TypedDict):
 
 # GET: "/v4/loadtracks"
 
-class TrackLoadingQueryParameters(TypedDict):
+class SearchQueryParameters(TypedDict):
     identifier: str
 
 
@@ -95,7 +95,7 @@ class ErrorQueryParameters(TypedDict):
 RequestMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
 
 RequestQueryParameters: TypeAlias = (
-    UpdatePlayerQueryParameters | TrackLoadingQueryParameters | DecodeTrackQueryParameters | ErrorQueryParameters
+    UpdatePlayerQueryParameters | SearchQueryParameters | DecodeTrackQueryParameters | ErrorQueryParameters
 )
 RequestData: TypeAlias = (
     UpdatePlayerData | UpdateSessionData | DecodeTracksData | FreeAddressData

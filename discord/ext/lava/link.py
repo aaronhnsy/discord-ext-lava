@@ -4,7 +4,7 @@ import logging
 import random
 import string
 import traceback
-from typing import Generic, Literal, TYPE_CHECKING, cast
+from typing import Generic, TYPE_CHECKING, cast
 
 import aiohttp
 import discord.utils
@@ -12,13 +12,15 @@ import spotipy
 from typing_extensions import TypeVar
 
 from ._backoff import Backoff
-from ._utilities import ordinal
-from .exceptions import LinkAlreadyConnected, LinkConnectionError
-from .objects.search import Search
+from ._utilities import ordinal, spotify_url_regex
+from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchFailed
+from .objects.playlist import Playlist
+from .objects.result import Result
 from .objects.stats import Stats
 from .objects.track import Track
-from .types.common import JSON, JSONDumps, JSONLoads
-from .types.rest.requests import RequestData, RequestMethod
+from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
+from .types.rest.requests import RequestData, RequestMethod, RequestQueryParameters
+from .types.rest.responses import SearchData
 from .types.websocket import Payload
 
 
@@ -190,7 +192,10 @@ class Link(Generic[PlayerT]):
 
         elif payload["op"] == "playerUpdate":
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(f"Link '{self.identifier}' received a player update for non-existent player with id '{payload['guildId']}'.")
+                __log__.warning(
+                    f"Link '{self.identifier}' received a player update for non-existent player with id "
+                    f"'{payload['guildId']}'."
+                )
                 return
             await player._handle_player_update_payload(payload)
 
@@ -200,7 +205,10 @@ class Link(Generic[PlayerT]):
 
         elif payload["op"] == "event":
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(f"Link '{self.identifier}' received a '{payload['type']}' event for non-existent player with id '{payload['guildId']}'.")
+                __log__.warning(
+                    f"Link '{self.identifier}' received a '{payload['type']}' event for non-existent player with id "
+                    f"'{payload['guildId']}'."
+                )
                 return
             await player._handle_event_payload(payload)
 
@@ -208,7 +216,10 @@ class Link(Generic[PlayerT]):
 
         while True:
 
-            assert isinstance(self._websocket, aiohttp.ClientWebSocketResponse)
+            if self._websocket is None:
+                await self._reset_state()
+                break
+
             message = await self._websocket.receive()
 
             if message.type is aiohttp.WSMsgType.CLOSED:
@@ -253,7 +264,7 @@ class Link(Generic[PlayerT]):
                     continue
 
             asyncio.create_task(
-                self._process_payload(self._json_loads(message.data))  # type: ignore
+                self._process_payload(self._json_loads(message.data))  # pyright: ignore
             )
 
     # rest api
@@ -263,7 +274,7 @@ class Link(Generic[PlayerT]):
         method: RequestMethod,
         path: str,
         /, *,
-        parameters: dict[str, str] | None = None,
+        parameters: RequestQueryParameters | None = None,
         data: RequestData | None = None,
     ) -> JSON:
 
@@ -306,32 +317,77 @@ class Link(Generic[PlayerT]):
 
     async def _spotify_search(
         self,
-        _type: Literal["album", "playlist", "artist", "track"],
+        _type: SpotifySearchType,
         _id: str,
         /,
-    ) -> Search:
+    ) -> Result:
 
         assert self._spotify is not None
 
         try:
             match _type:
                 case "album":
-                    result = await self._spotify.get_full_album(_id)
-                    tracks = [Track._from_spotify_track(result, track) for track in result.tracks]
+                    source = await self._spotify.get_full_album(_id)
+                    tracks = [Track._from_spotify_track(source, track) for track in source.tracks]
                 case "playlist":
-                    result = await self._spotify.get_full_playlist(_id)
-                    tracks = [Track._from_spotify_track(result, track) for track in result.tracks]
+                    source = await self._spotify.get_full_playlist(_id)
+                    tracks = [Track._from_spotify_track(source, track) for track in source.tracks]
                 case "artist":
-                    result = await self._spotify.get_artist(_id)
-                    tracks = [Track._from_spotify_track(result, track) for track in await self._spotify.get_artist_top_tracks(_id)]
+                    source = await self._spotify.get_artist(_id)
+                    tracks = [
+                        Track._from_spotify_track(source, track) for track in
+                        await self._spotify.get_artist_top_tracks(_id)
+                    ]
                 case "track":
-                    result = await self._spotify.get_track(_id)
-                    tracks = [Track._from_spotify_track(result, result)]
-                case _:
-                    raise ValueError("unhandled spotify search type")
-        except spotipy.NotFound:
-            raise
-        except spotipy.HTTPError:
-            raise
+                    source = await self._spotify.get_track(_id)
+                    tracks = [Track._from_spotify_track(source, source)]
 
-        return Search(result=result, tracks=tracks)
+        except spotipy.NotFound:
+            raise NoSearchResults(search=_id)
+        except spotipy.HTTPError as error:
+            raise SearchFailed(
+                {
+                    "message":  "Error while accessing the Spotify API.",
+                    "severity": "SUSPICIOUS",
+                    "cause":    error.message
+                }
+            )
+
+        # noinspection PyUnboundLocalVariable
+        return Result(source=source, tracks=tracks)
+
+    async def _lavalink_search(
+        self,
+        search: str,
+        /,
+    ) -> Result:
+
+        data: SearchData = cast(
+            SearchData,
+            await self._request(
+                "GET", "/loadtracks",
+                parameters={"identifier": search}
+            )
+        )
+
+        match data["loadType"]:
+            case "TRACK_LOADED":
+                source = Track(data["tracks"][0])
+                tracks = [source]
+            case "PLAYLIST_LOADED" | "SEARCH_RESULT":
+                tracks = [Track(track) for track in data["tracks"]]
+                source = Playlist(playlist) if (playlist := data["playlistInfo"]) else tracks
+            case "NO_MATCHES":
+                raise NoSearchResults(search=search)
+            case "LOAD_FAILED":
+                assert data["exception"] is not None
+                raise SearchFailed(data["exception"])
+
+        # noinspection PyUnboundLocalVariable
+        return Result(source=source, tracks=tracks)
+
+    async def search(self, search: str, /) -> Result:
+        if self._spotify is not None and (match := spotify_url_regex.match(search)):
+            return await self._spotify_search(cast(SpotifySearchType, match.group("type")), match.group("id"))
+        else:
+            return await self._lavalink_search(search)

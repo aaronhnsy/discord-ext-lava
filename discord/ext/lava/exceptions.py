@@ -1,9 +1,14 @@
+from .enums import ExceptionSeverity
+from .types.rest.responses import SearchExceptionData
+
 
 __all__ = [
     "LavaError",
     "LinkAlreadyConnected",
     "LinkConnectionError",
     "LinkNotReady",
+    "SearchFailed",
+    "NoSearchResults",
 ]
 
 
@@ -21,3 +26,21 @@ class LinkConnectionError(LavaError):
 
 class LinkNotReady(LavaError):
     pass
+
+
+class SearchError(LavaError):
+    pass
+
+
+class SearchFailed(SearchError):
+
+    def __init__(self, exception: SearchExceptionData) -> None:
+        self.message: str | None = exception["message"]
+        self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
+        self.cause: str = exception["cause"]
+
+
+class NoSearchResults(SearchError):
+
+    def __init__(self, *, search: str) -> None:
+        self.search = search

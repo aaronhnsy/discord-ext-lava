@@ -3,7 +3,7 @@ from typing import Literal, TypeAlias, TypedDict
 from typing_extensions import NotRequired
 
 from ...objects.types.filters import FiltersData
-from ...objects.types.playlist import PlaylistInfoData
+from ...objects.types.playlist import PlaylistData
 from ...objects.types.stats import StatsData
 from ...objects.types.track import TrackData
 
@@ -53,17 +53,17 @@ class UpdatedSessionData(TypedDict):
 
 # GET "/v4/loadtracks"
 
-class TrackLoadingExceptionData(TypedDict):
+class SearchExceptionData(TypedDict):
     message: str | None
     severity: Literal["COMMON", "SUSPICIOUS", "FATAL"]
     cause: str
 
 
-class TrackLoadingResultData(TypedDict):
+class SearchData(TypedDict):
     loadType: Literal["TRACK_LOADED", "PLAYLIST_LOADED", "SEARCH_RESULT", "NO_MATCHES", "LOAD_FAILED"]
-    playlistInfo: PlaylistInfoData | None
+    playlistInfo: PlaylistData | None
     tracks: list[TrackData]
-    exception: TrackLoadingExceptionData | None
+    exception: SearchExceptionData | None
 
 
 # GET: "/v4/decodetrack"

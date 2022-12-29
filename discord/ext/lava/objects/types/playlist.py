@@ -1,6 +1,6 @@
 from typing import TypedDict
 
 
-class PlaylistInfoData(TypedDict):
+class PlaylistData(TypedDict):
     name: str
     selectedTrack: int
