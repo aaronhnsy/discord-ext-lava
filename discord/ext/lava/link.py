@@ -295,7 +295,7 @@ class Link(Generic[PlayerT]):
                 async with self._session.request(
                     method, url,
                     headers=headers,
-                    parameters=parameters,
+                    params=parameters,
                     data=json
                 ) as response:
                     __log__.debug(f"{method} @ '{response.url}' -> {response.status}.\n{_json.dumps(data, indent=4)}")
@@ -387,7 +387,7 @@ class Link(Generic[PlayerT]):
         return Result(source=source, tracks=tracks)
 
     async def search(self, search: str, /) -> Result:
-        if self._spotify is not None and (match := spotify_url_regex.match(search)):
+        if self._spotify is not None and (match := spotify_url_regex.match(search)) is not None:
             return await self._spotify_search(cast(SpotifySearchType, match.group("type")), match.group("id"))
         else:
             return await self._lavalink_search(search)

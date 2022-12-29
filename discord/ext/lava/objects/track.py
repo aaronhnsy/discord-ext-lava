@@ -35,7 +35,7 @@ class Track:
         self._is_stream: bool = info["isStream"]
 
     def __repr__(self) -> str:
-        return f"discord.ext.lava.Track identifier='{self.identifier}', title='{self.title}', " \
+        return f"<discord.ext.lava.Track identifier='{self.identifier}', title='{self.title}', " \
                f"author='{self.author}', length={self.length}>"
 
     # utility methods

@@ -20,3 +20,6 @@ class Result:
     ) -> None:
         self.source: ResultSource = source
         self.tracks: list[Track] = tracks
+
+    def __repr__(self) -> str:
+        return f"<discord.ext.lava.Result source={self.source}>"
