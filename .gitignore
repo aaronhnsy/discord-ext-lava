@@ -2,8 +2,11 @@
 *.log*
 
 .idea/
-tests/
+
 dist/
-_build/
+
 build/
+_build/
+
+tests/
 lavalink/
