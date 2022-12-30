@@ -1,13 +1,22 @@
 import re
-from collections.abc import Callable
+
+import aiohttp
+
+from .types.common import JSON, JSONLoads
 
 
-ordinal: Callable[[int], str] = (
-    lambda number:
-        "%d%s" % (number, "tsnrhtdd"[(number / 10 % 10 != 1) * (number % 10 < 4) * number % 10::4])
-)
+def ordinal(number: int) -> str:
+    return "%d%s" % (number, "tsnrhtdd"[(number / 10 % 10 != 1) * (number % 10 < 4) * number % 10::4])
 
-spotify_url_regex: re.Pattern[str] = re.compile(
+
+async def json_or_text(response: aiohttp.ClientResponse, json_loads: JSONLoads) -> JSON | str:
+    text = await response.text(encoding="utf-8")
+    if response.headers.get("Content-Type") in ["application/json", "application/json; charset=utf-8"]:
+        return json_loads(text)
+    return text
+
+
+SPOTIFY_REGEX: re.Pattern[str] = re.compile(
     r"(https?://open.)?"
     r"(spotify)"
     r"(.com/|:)"

@@ -14,7 +14,7 @@ from ...objects.types.filters import FiltersData
 
 # PATCH: "/v4/sessions/{sessionId}/players/{guildId}"
 
-class UpdatePlayerQueryParameters(TypedDict):
+class UpdatePlayerParameters(TypedDict):
     noReplace: bool
 
 
@@ -48,13 +48,13 @@ class UpdateSessionData(TypedDict):
 
 # GET: "/v4/loadtracks"
 
-class SearchQueryParameters(TypedDict):
+class SearchParameters(TypedDict):
     identifier: str
 
 
 # GET: "/v4/decodetrack"
 
-class DecodeTrackQueryParameters(TypedDict):
+class DecodeTrackParameters(TypedDict):
     encodedTrack: str
 
 
@@ -86,7 +86,7 @@ class FreeAddressData(TypedDict):
 
 # Errors
 
-class ErrorQueryParameters(TypedDict):
+class ErrorParameters(TypedDict):
     trace: bool
 
 
@@ -94,9 +94,22 @@ class ErrorQueryParameters(TypedDict):
 
 RequestMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
 
-RequestQueryParameters: TypeAlias = (
-    UpdatePlayerQueryParameters | SearchQueryParameters | DecodeTrackQueryParameters | ErrorQueryParameters
+RequestHeaders = TypedDict(
+    "RequestHeaders",
+    {
+        "Authorization": str,
+        "Content-Type":  NotRequired[Literal["application/json"]]
+    }
+)
+RequestParameters: TypeAlias = (
+    UpdatePlayerParameters | SearchParameters | DecodeTrackParameters | ErrorParameters
 )
 RequestData: TypeAlias = (
     UpdatePlayerData | UpdateSessionData | DecodeTracksData | FreeAddressData
 )
+
+
+class RequestKwargs(TypedDict):
+    headers: RequestHeaders
+    params: NotRequired[RequestParameters | None]
+    data: NotRequired[str | None]

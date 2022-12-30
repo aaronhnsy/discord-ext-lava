@@ -1,36 +1,49 @@
 import asyncio
+import functools
 import json as _json
 import logging
 import random
 import string
 import traceback
-from typing import Generic, TYPE_CHECKING, cast
+from collections.abc import Callable
+from typing import Generic, ParamSpec, TYPE_CHECKING, cast
 
 import aiohttp
-import discord.utils
 import spotipy
 from typing_extensions import TypeVar
 
 from ._backoff import Backoff
-from ._utilities import ordinal, spotify_url_regex
+from ._utilities import SPOTIFY_REGEX, json_or_text, ordinal
 from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchFailed
 from .objects.playlist import Playlist
 from .objects.result import Result
 from .objects.stats import Stats
 from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
-from .types.rest.requests import RequestData, RequestMethod, RequestQueryParameters
+from .types.rest.requests import RequestData, RequestKwargs, RequestMethod, RequestParameters
 from .types.rest.responses import SearchData
 from .types.websocket import Payload
-
 
 if TYPE_CHECKING:
     from .player import Player  # type: ignore
 
+
 __all__ = ["Link"]
-__log__ = logging.getLogger("discord-ext-lava.link")
+
+__ws_log__ = logging.getLogger("discord.ext.lava.websocket")
+__rest_log__ = logging.getLogger("discord.ext.lava.rest")
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player", covariant=True)
+P = ParamSpec("P")
+
+
+class DeferredMessage:
+
+    def __init__(self, callable: Callable[P, str], *args: P.args, **kwargs: P.kwargs) -> None:
+        self.callable: functools.partial[str] = functools.partial(callable, *args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.callable()}"
 
 
 class Link(Generic[PlayerT]):
@@ -152,7 +165,7 @@ class Link(Generic[PlayerT]):
             else:
                 message = f"Link '{self.identifier}' raised '{error.__class__.__name__}' while connecting to its " \
                           f"websocket."
-            __log__.error(message)
+            __ws_log__.error(message)
             raise LinkConnectionError(message)
 
         self._backoff.reset()
@@ -179,7 +192,7 @@ class Link(Generic[PlayerT]):
 
     async def _process_payload(self, payload: Payload, /) -> None:
 
-        __log__.debug(
+        __ws_log__.debug(
             f"Link '{self.identifier}' received a '{payload['op']}' payload.\n"
             f"{_json.dumps(payload, indent=4)}"
         )
@@ -187,17 +200,17 @@ class Link(Generic[PlayerT]):
         if payload["op"] == "ready":
             self._session_id = payload["sessionId"]
             self._ready_event.set()
-            __log__.info(f"Link '{self.identifier}' is ready.")
+            __ws_log__.info(f"Link '{self.identifier}' is ready.")
             return
 
         elif payload["op"] == "playerUpdate":
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(
+                __ws_log__.warning(
                     f"Link '{self.identifier}' received a player update for non-existent player with id "
                     f"'{payload['guildId']}'."
                 )
                 return
-            await player._handle_player_update_payload(payload)
+            await player._handle_player_update(payload)
 
         elif payload["op"] == "stats":
             self._stats = Stats(payload)
@@ -205,12 +218,12 @@ class Link(Generic[PlayerT]):
 
         elif payload["op"] == "event":
             if not (player := self._players.get(int(payload["guildId"]))):
-                __log__.warning(
+                __ws_log__.warning(
                     f"Link '{self.identifier}' received a '{payload['type']}' event for non-existent player with id "
                     f"'{payload['guildId']}'."
                 )
                 return
-            await player._handle_event_payload(payload)
+            await player._handle_event(payload)
 
     async def _listen(self) -> None:
 
@@ -226,13 +239,13 @@ class Link(Generic[PlayerT]):
 
                 # Log a warning for the first reconnect attempt.
                 if self._backoff.tries == 0:
-                    __log__.warning(
+                    __ws_log__.warning(
                         f"Link '{self.identifier}' was unexpectedly disconnected from its websocket. It will now "
                         f"attempt to reconnect up to {self._backoff.max_tries} times with a backoff delay."
                     )
 
                 # Calculate the backoff delay and sleep.
-                __log__.warning(
+                __ws_log__.warning(
                     f"Link '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection "
                     f"in {(delay := self._backoff.calculate()):.2f} seconds."
                 )
@@ -248,7 +261,7 @@ class Link(Generic[PlayerT]):
 
                     # Cancel the task (and reset other vars) to stop further reconnection attempts.
                     if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
-                        __log__.warning(
+                        __ws_log__.warning(
                             f"Link '{self.identifier}' has attempted to reconnect {self._backoff.max_tries} times "
                             f"with no success. It will not attempt to reconnect again."
                         )
@@ -260,67 +273,54 @@ class Link(Generic[PlayerT]):
 
                 else:
                     # If no error was raised, continue the outer loop as we should've reconnected.
-                    __log__.info(f"Link '{self.identifier}' was able to reconnect to its websocket.")
+                    __ws_log__.info(f"Link '{self.identifier}' was able to reconnect to its websocket.")
                     continue
 
             asyncio.create_task(
-                self._process_payload(self._json_loads(message.data))  # pyright: ignore
+                self._process_payload(
+                    cast(Payload, self._json_loads(message.data))
+                )
             )
 
-    # rest api
+    # rest
 
     async def _request(
         self,
         method: RequestMethod,
         path: str,
         /, *,
-        parameters: RequestQueryParameters | None = None,
+        parameters: RequestParameters | None = None,
         data: RequestData | None = None,
     ) -> JSON:
 
         if self._session is None:
             self._session = aiohttp.ClientSession()
 
-        url = f"{self._rest_url or f'http://{self._host}:{self._port}'}/v4{path}"
-        headers = {
-            "Authorization": self._password,
-            "Content-Type":  "application/json"
-        }
-        json = self._json_dumps(cast(JSON, data)) if data is not None else None
+        url = f"{(self._rest_url or f'http://{self._host}:{self._port}/').removesuffix('/')}{path}"
 
-        response: aiohttp.ClientResponse = discord.utils.MISSING
+        kwargs: RequestKwargs = {"headers": {"Authorization": self._password}}
+        if parameters is not None:
+            kwargs["params"] = parameters
+        if data is not None:
+            kwargs["headers"]["Content-Type"] = "application/json"
+            kwargs["data"] = self._json_dumps(cast(JSON, data))
 
-        for tries in range(5):
-            try:
-                async with self._session.request(
-                    method, url,
-                    headers=headers,
-                    params=parameters,
-                    data=json
-                ) as response:
-                    __log__.debug(f"{method} @ '{response.url}' -> {response.status}.\n{_json.dumps(data, indent=4)}")
-                    if 200 <= response.status < 300:
-                        return await response.json(loads=self._json_loads)
+        __rest_log__.debug(
+            f"Starting request: {method} -> '{url}'.\nParameters:\n%s\nData:\n%s",
+            DeferredMessage(_json.dumps, parameters or {}, indent=4),
+            DeferredMessage(_json.dumps, data or {}, indent=4),
+        )
 
-            except OSError as error:
-                if tries >= 4 or error.errno not in (54, 10054):
-                    raise
+        async with self._session.request(method, url, **kwargs) as response:
+            response_data = await json_or_text(response, json_loads=self._json_loads)
+            __rest_log__.debug(
+                f"Finished request: {method} -> '{url}' -> {response.status}.\n%s",
+                DeferredMessage(_json.dumps, response_data, indent=4)
+            )
+            if 200 <= response.status < 300:
+                return response_data
 
-            delay = 1 + tries * 2
-            __log__.warning(f"{method} @ '{response.url}' -> {response.status}, retrying in {delay}s.")
-            await asyncio.sleep(delay)
-
-        message = f"{method} @ '{response.url}' -> {response.status}, all five retries used."
-        __log__.error(message)
-        raise
-        # raise HTTPError(response, message=message)
-
-    async def _spotify_search(
-        self,
-        _type: SpotifySearchType,
-        _id: str,
-        /,
-    ) -> Result:
+    async def _spotify_search(self, _type: SpotifySearchType, _id: str, /) -> Result:
 
         assert self._spotify is not None
 
@@ -356,20 +356,15 @@ class Link(Generic[PlayerT]):
         # noinspection PyUnboundLocalVariable
         return Result(source=source, tracks=tracks)
 
-    async def _lavalink_search(
-        self,
-        search: str,
-        /,
-    ) -> Result:
+    async def _lavalink_search(self, search: str, /) -> Result:
 
         data: SearchData = cast(
             SearchData,
             await self._request(
-                "GET", "/loadtracks",
+                "GET", "/v4/loadtracks",
                 parameters={"identifier": search}
             )
         )
-
         match data["loadType"]:
             case "TRACK_LOADED":
                 source = Track(data["tracks"][0])
@@ -387,7 +382,6 @@ class Link(Generic[PlayerT]):
         return Result(source=source, tracks=tracks)
 
     async def search(self, search: str, /) -> Result:
-        if self._spotify is not None and (match := spotify_url_regex.match(search)) is not None:
-            return await self._spotify_search(cast(SpotifySearchType, match.group("type")), match.group("id"))
-        else:
-            return await self._lavalink_search(search)
+        if (match := SPOTIFY_REGEX.match(search)) is not None and self._spotify is not None:
+            return await self._spotify_search(match.group("type"), match.group("id"))  # pyright: ignore
+        return await self._lavalink_search(search)

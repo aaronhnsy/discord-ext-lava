@@ -19,7 +19,7 @@ from .types.websocket import PlayerUpdateData
 
 
 __all__ = ["Player"]
-__log__ = logging.getLogger("discord-ext-lava.player")
+__log__ = logging.getLogger("discord.ext.lava.player")
 
 ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client, covariant=True)
 
@@ -61,7 +61,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         "WebSocketClosedEvent": ("web_socket_closed", WebSocketClosedEvent),
     }
 
-    async def _handle_event_payload(self, payload: EventData, /) -> None:
+    async def _handle_event(self, payload: EventData, /) -> None:
 
         event_type = payload["type"]
 
@@ -77,7 +77,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             f"'on_lava_{dispatch_name}' listeners."
         )
 
-    async def _handle_player_update_payload(self, payload: PlayerUpdateData, /) -> None:
+    async def _handle_player_update(self, payload: PlayerUpdateData, /) -> None:
         ...
 
     # rest api
@@ -88,7 +88,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             await self._link._ready_event.wait()
 
         await self._link._request(
-            "PATCH", f"/sessions/{self._link.session_id}/players/{self.guild.id}",
+            "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
             data=data
         )
 
@@ -100,7 +100,13 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             return
 
         await self._update_player(
-            {"voice": {"token": self._token, "endpoint": self._endpoint, "sessionId": self._session_id}}
+            {
+                "voice": {
+                    "token":     self._token,
+                    "endpoint":  self._endpoint,
+                    "sessionId": self._session_id
+                }
+            }
         )
 
     async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:

@@ -28,4 +28,4 @@ __email__: str = "axelancerr@gmail.com"
 __license__: str = "MIT"
 __copyright__: str = "Copyright (c) 2019-2022 Aaron Hennessey (Axelancerr)"
 
-logging.getLogger("discord-ext-lava")
+logging.getLogger("discord.ext.lava")
