@@ -58,7 +58,8 @@ furo               = "2022.12.7"
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-jishaku = "*"
+colorama = "*"
+jishaku  = "*"
 
 
 [tool.poetry.urls]
