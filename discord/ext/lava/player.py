@@ -7,6 +7,7 @@ import discord
 import discord.types.voice
 from typing_extensions import Self, TypeVar
 
+from ._utilities import DeferredMessage
 from .link import Link
 from .objects.events import (
     Event, TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent,
@@ -111,8 +112,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
         __log__.debug(
-            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n"
-            f"{_json.dumps(data, indent=4)}"
+            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n%s",
+            DeferredMessage(_json.dumps, data, indent=4),
         )
         self._token = data["token"]
         self._endpoint = data["endpoint"]
@@ -120,8 +121,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState, /) -> None:
         __log__.debug(
-            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n"
-            f"{_json.dumps(data, indent=4)}"
+            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n%s",
+            DeferredMessage(_json.dumps, data, indent=4),
         )
 
         if (channel_id := data["channel_id"]) is None:

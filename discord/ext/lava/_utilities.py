@@ -1,8 +1,14 @@
+import functools
 import re
+from collections.abc import Callable
+from typing import ParamSpec
 
 import aiohttp
 
 from .types.common import JSON, JSONLoads
+
+
+P = ParamSpec("P")
 
 
 def ordinal(number: int) -> str:
@@ -14,6 +20,15 @@ async def json_or_text(response: aiohttp.ClientResponse, json_loads: JSONLoads) 
     if response.headers.get("Content-Type") in ["application/json", "application/json; charset=utf-8"]:
         return json_loads(text)
     return text
+
+
+class DeferredMessage:
+
+    def __init__(self, callable: Callable[P, str], *args: P.args, **kwargs: P.kwargs) -> None:
+        self.callable: functools.partial[str] = functools.partial(callable, *args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.callable()}"
 
 
 SPOTIFY_REGEX: re.Pattern[str] = re.compile(

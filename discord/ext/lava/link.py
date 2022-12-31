@@ -1,19 +1,17 @@
 import asyncio
-import functools
 import json as _json
 import logging
 import random
 import string
 import traceback
-from collections.abc import Callable
-from typing import Generic, ParamSpec, TYPE_CHECKING, cast
+from typing import Generic, TYPE_CHECKING, cast
 
 import aiohttp
 import spotipy
 from typing_extensions import TypeVar
 
 from ._backoff import Backoff
-from ._utilities import SPOTIFY_REGEX, json_or_text, ordinal
+from ._utilities import DeferredMessage, SPOTIFY_REGEX, json_or_text, ordinal
 from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchFailed
 from .objects.playlist import Playlist
 from .objects.result import Result
@@ -34,16 +32,6 @@ __ws_log__ = logging.getLogger("discord.ext.lava.websocket")
 __rest_log__ = logging.getLogger("discord.ext.lava.rest")
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player", covariant=True)
-P = ParamSpec("P")
-
-
-class DeferredMessage:
-
-    def __init__(self, callable: Callable[P, str], *args: P.args, **kwargs: P.kwargs) -> None:
-        self.callable: functools.partial[str] = functools.partial(callable, *args, **kwargs)
-
-    def __str__(self) -> str:
-        return f"{self.callable()}"
 
 
 class Link(Generic[PlayerT]):
@@ -193,8 +181,8 @@ class Link(Generic[PlayerT]):
     async def _process_payload(self, payload: Payload, /) -> None:
 
         __ws_log__.debug(
-            f"Link '{self.identifier}' received a '{payload['op']}' payload.\n"
-            f"{_json.dumps(payload, indent=4)}"
+            f"Link '{self.identifier}' received a '{payload['op']}' payload.\n%s",
+            DeferredMessage(_json.dumps, payload, indent=4),
         )
 
         if payload["op"] == "ready":
