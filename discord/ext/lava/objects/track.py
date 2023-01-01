@@ -49,13 +49,25 @@ class Track:
 
     @classmethod
     def _from_spotify_track(cls, track: spotipy.Track | spotipy.PlaylistTrack) -> Track:
-        title = track.name or "Unknown"
-        author = ", ".join(artist.name for artist in track.artists) if track.artists else "Unknown"
+
+        if track.is_local:
+            identifier = track.uri
+            author = track.artists[0].name or "Unknown"
+            title = track.name or "Unknown"
+            artwork_url = None
+            isrc = None
+        else:
+            identifier = track.id
+            author = ", ".join(artist.name for artist in track.artists)
+            title = track.name
+            artwork_url = track.album.images[0].url if len(track.album.images) > 0 else None
+            isrc = track.external_ids.get("isrc")
+
         return Track(
             {
                 "encoded": discord.utils.MISSING,
                 "info":    {
-                    "identifier": track.id or str(hash(f"{title} - {author} - {track.duration_ms}")),
+                    "identifier": identifier,
                     "isSeekable": True,
                     "author":     author,
                     "length":     track.duration_ms,
@@ -63,8 +75,8 @@ class Track:
                     "position":   0,
                     "title":      title,
                     "uri":        track.uri,
-                    "artworkUrl": track.album.images[0].url if track.album.images else None,
-                    "isrc":       track.external_ids.get("isrc"),
+                    "artworkUrl": artwork_url,
+                    "isrc":       isrc,
                     "sourceName": "spotify",
                 }
             }
