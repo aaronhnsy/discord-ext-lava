@@ -1,13 +1,16 @@
 import functools
+import itertools
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import ParamSpec
 
 import aiohttp
+from typing_extensions import TypeVar
 
 from .types.common import JSON, JSONLoads
 
 
+T = TypeVar("T")
 P = ParamSpec("P")
 
 
@@ -29,6 +32,11 @@ class DeferredMessage:
 
     def __str__(self) -> str:
         return f"{self.callable()}"
+
+
+def chunks(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+    it = iter(iterable)
+    return iter(lambda: tuple(itertools.islice(it, n)), ())
 
 
 SPOTIFY_REGEX: re.Pattern[str] = re.compile(

@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import json as _json
 import logging
 import random
@@ -11,7 +12,7 @@ import spotipy
 from typing_extensions import TypeVar
 
 from ._backoff import Backoff
-from ._utilities import DeferredMessage, SPOTIFY_REGEX, json_or_text, ordinal
+from ._utilities import DeferredMessage, SPOTIFY_REGEX, chunks, json_or_text, ordinal
 from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchFailed
 from .objects.playlist import Playlist
 from .objects.result import Result
@@ -316,19 +317,30 @@ class Link(Generic[PlayerT]):
             match _type:
                 case "album":
                     source = await self._spotify.get_full_album(_id)
-                    tracks = [Track._from_spotify_track(source, track) for track in source.tracks]
+                    tracks = [
+                        Track._from_spotify_track(track) for track in
+                        itertools.chain.from_iterable(
+                            [
+                                filter(
+                                    None,
+                                    (await self._spotify.get_tracks([track.id for track in chunk])).values()
+                                )
+                                for chunk in chunks(source.tracks, 50)
+                            ]
+                        )
+                    ]
                 case "playlist":
                     source = await self._spotify.get_full_playlist(_id)
-                    tracks = [Track._from_spotify_track(source, track) for track in source.tracks]
+                    tracks = [Track._from_spotify_track(track) for track in source.tracks]
                 case "artist":
                     source = await self._spotify.get_artist(_id)
                     tracks = [
-                        Track._from_spotify_track(source, track) for track in
+                        Track._from_spotify_track(track) for track in
                         await self._spotify.get_artist_top_tracks(_id)
                     ]
                 case "track":
                     source = await self._spotify.get_track(_id)
-                    tracks = [Track._from_spotify_track(source, source)]
+                    tracks = [Track._from_spotify_track(source)]
 
         except spotipy.NotFound:
             raise NoSearchResults(search=_id)
