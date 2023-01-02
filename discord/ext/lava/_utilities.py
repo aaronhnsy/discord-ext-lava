@@ -2,9 +2,10 @@ import functools
 import itertools
 import re
 from collections.abc import Callable, Iterable
-from typing import ParamSpec
+from typing import Any, ParamSpec
 
 import aiohttp
+import discord.utils
 from typing_extensions import TypeVar
 
 from .types.common import JSON, JSONLoads
@@ -16,6 +17,11 @@ P = ParamSpec("P")
 
 def ordinal(number: int) -> str:
     return "%d%s" % (number, "tsnrhtdd"[(number / 10 % 10 != 1) * (number % 10 < 4) * number % 10::4])
+
+
+def chunks(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+    it = iter(iterable)
+    return iter(lambda: tuple(itertools.islice(it, n)), ())
 
 
 async def json_or_text(response: aiohttp.ClientResponse, json_loads: JSONLoads) -> JSON | str:
@@ -34,11 +40,6 @@ class DeferredMessage:
         return f"{self.callable()}"
 
 
-def chunks(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
-    it = iter(iterable)
-    return iter(lambda: tuple(itertools.islice(it, n)), ())
-
-
 SPOTIFY_REGEX: re.Pattern[str] = re.compile(
     r"(https?://open.)?"
     r"(spotify)"
@@ -49,3 +50,5 @@ SPOTIFY_REGEX: re.Pattern[str] = re.compile(
     r"([? &]si = [a-zA-Z0-9]+)?"
     r"([? &]dl_branch=[0-9]+)?"
 )
+
+MISSING: Any = discord.utils.MISSING

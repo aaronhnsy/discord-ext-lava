@@ -1,5 +1,3 @@
-from typing import TypeAlias
-
 from .types.events import (
     EventData, EventType, ExceptionData, TrackEndEventData, TrackExceptionEventData, TrackStartEventData,
     TrackStuckEventData, WebSocketClosedEventData,
@@ -13,7 +11,6 @@ __all__ = [
     "TrackExceptionEvent",
     "TrackStuckEvent",
     "WebSocketClosedEvent",
-    "Event"
 ]
 
 
@@ -32,7 +29,7 @@ class _EventBase:
 
 class TrackStartEvent(_EventBase):
 
-    __slots__ = ("encoded_track", )
+    __slots__ = ("encoded_track",)
 
     def __init__(self, data: TrackStartEventData) -> None:
         super().__init__(data)
@@ -82,6 +79,3 @@ class WebSocketClosedEvent(_EventBase):
         self.code: int = data["code"]
         self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
-
-
-Event: TypeAlias = TrackStartEvent | TrackEndEvent | TrackExceptionEvent | TrackStuckEvent | WebSocketClosedEvent

@@ -5,17 +5,17 @@ from typing_extensions import NotRequired
 from ...objects.types.filters import FiltersData
 
 
-# GET: "/v4/sessions/{sessionId}/players" - no request data
+# GET: "/v4/sessions/{sessionId}/players"
 ...
 
-# GET: "/v4/sessions/{sessionId}/players/{guildId}" - no request data
+# GET: "/v4/sessions/{sessionId}/players/{guildId}"
 ...
 
 
 # PATCH: "/v4/sessions/{sessionId}/players/{guildId}"
 
 class UpdatePlayerParameters(TypedDict):
-    noReplace: bool
+    noReplace: NotRequired[bool]
 
 
 class VoiceStateData_Request(TypedDict):
@@ -35,7 +35,7 @@ class UpdatePlayerData(TypedDict):
     filters: NotRequired[FiltersData]
 
 
-# DELETE: "/v4/sessions/{sessionId}/players/{guildId}" - no request data
+# DELETE: "/v4/sessions/{sessionId}/players/{guildId}"
 ...
 
 

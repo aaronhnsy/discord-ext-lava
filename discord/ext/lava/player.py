@@ -1,21 +1,20 @@
-import json as _json
+import json
 import logging
-from collections.abc import Mapping
 from typing import Generic
 
+# noinspection PyUnresolvedReferences
 import discord
 import discord.types.voice
 from typing_extensions import Self, TypeVar
 
-from ._utilities import DeferredMessage
+from ._utilities import DeferredMessage, MISSING
 from .link import Link
-from .objects.events import (
-    Event, TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent,
-    WebSocketClosedEvent,
-)
+from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
+from .objects.filters import Filter
+from .objects.track import Track
 from .objects.types.events import EventData
 from .types.common import VoiceChannel
-from .types.rest.requests import UpdatePlayerData
+from .types.rest.requests import UpdatePlayerData, UpdatePlayerParameters, VoiceStateData_Request
 from .types.websocket import PlayerUpdateData
 
 
@@ -28,8 +27,8 @@ ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, d
 class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     def __init__(self, *, link: Link) -> None:
-        self.client: ClientT = discord.utils.MISSING
-        self.channel: VoiceChannel = discord.utils.MISSING
+        self.client: ClientT = MISSING
+        self.channel: VoiceChannel = MISSING
 
         self._token: str | None = None
         self._endpoint: str | None = None
@@ -52,9 +51,9 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     def guild(self) -> discord.Guild:
         return self.channel.guild
 
-    # websocket payload handlers
+    # websocket
 
-    _EVENT_MAPPING: Mapping[str, tuple[str, type[Event]]] = {
+    _EVENT_MAPPING = {
         "TrackStartEvent":      ("track_start", TrackStartEvent),
         "TrackEndEvent":        ("track_end", TrackEndEvent),
         "TrackExceptionEvent":  ("track_exception", TrackExceptionEvent),
@@ -81,48 +80,34 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     async def _handle_player_update(self, payload: PlayerUpdateData, /) -> None:
         ...
 
-    # rest api
-
-    async def _update_player(self, data: UpdatePlayerData, /) -> None:
-
-        if not self._link.is_ready():
-            await self._link._ready_event.wait()
-
-        await self._link._request(
-            "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
-            data=data
-        )
-
     # voice state
 
-    async def _update_voice_state(self) -> None:
+    async def _update_player_voice_state(self) -> None:
 
         if self._token is None or self._endpoint is None or self._session_id is None:
             return
 
-        await self._update_player(
-            {
-                "voice": {
-                    "token":     self._token,
-                    "endpoint":  self._endpoint,
-                    "sessionId": self._session_id
-                }
+        await self.update(
+            voice_state={
+                "token":     self._token,
+                "endpoint":  self._endpoint,
+                "sessionId": self._session_id
             }
         )
 
     async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
         __log__.debug(
             f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n%s",
-            DeferredMessage(_json.dumps, data, indent=4),
+            DeferredMessage(json.dumps, data, indent=4),
         )
         self._token = data["token"]
         self._endpoint = data["endpoint"]
-        await self._update_voice_state()
+        await self._update_player_voice_state()
 
     async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState, /) -> None:
         __log__.debug(
             f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n%s",
-            DeferredMessage(_json.dumps, data, indent=4),
+            DeferredMessage(json.dumps, data, indent=4),
         )
 
         if (channel_id := data["channel_id"]) is None:
@@ -131,7 +116,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.channel = self.client.get_channel(int(channel_id))  # pyright: ignore
 
         self._session_id = data["session_id"]
-        await self._update_voice_state()
+        await self._update_player_voice_state()
 
     # connection
 
@@ -158,3 +143,60 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             f"Player for '{channel.guild.name}' ({channel.guild.id}) disconnected from voice channel "
             f"'{channel.name}' ({channel.id})."
         )
+
+    async def update(
+        self,
+        track: Track | None = MISSING,
+        track_identifier: str = MISSING,
+        track_position: int = MISSING,
+        track_end_time: int = MISSING,
+        replace_current_track: bool = MISSING,
+        paused: bool = MISSING,
+        volume: int = MISSING,
+        filter: Filter = MISSING,
+        voice_state: VoiceStateData_Request = MISSING,
+    ) -> None:
+
+        if not self._link.is_ready():
+            await self._link._ready_event.wait()
+
+        if track is not None and track_identifier is not MISSING:
+            raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
+
+        data: UpdatePlayerData = {}
+        if track is not MISSING:
+            data["encodedTrack"] = track.encoded if track is not None else None
+        if track_identifier is not MISSING:
+            data["identifier"] = track_identifier
+        if track_position is not MISSING:
+            data["position"] = track_position
+        if track_end_time is not MISSING:
+            data["endTime"] = track_end_time
+        if paused is not MISSING:
+            data["paused"] = paused
+        if volume is not MISSING:
+            data["volume"] = volume
+        if filter is not MISSING:
+            data["filters"] = filter.data
+        if voice_state is not MISSING:
+            data["voice"] = voice_state
+
+        parameters: UpdatePlayerParameters = {}
+        if replace_current_track is not MISSING:
+            parameters["noReplace"] = not replace_current_track
+
+        await self._link._request(
+            "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
+            data=data, parameters=parameters
+        )
+
+    # pausing
+
+    async def pause(self) -> None:
+        await self.update(paused=True)
+
+    async def set_pause_state(self, state: bool) -> None:
+        await self.update(paused=state)
+
+    async def resume(self) -> None:
+        await self.update(paused=False)
