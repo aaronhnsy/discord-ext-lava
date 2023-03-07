@@ -146,11 +146,12 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def update(
         self,
+        *,
         track: Track | None = MISSING,
         track_identifier: str = MISSING,
-        track_position: int = MISSING,
         track_end_time: int = MISSING,
         replace_current_track: bool = MISSING,
+        position: int = MISSING,
         paused: bool = MISSING,
         volume: int = MISSING,
         filter: Filter = MISSING,
@@ -163,15 +164,19 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if track is not None and track_identifier is not MISSING:
             raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
 
+        parameters: UpdatePlayerParameters = {}
+        if replace_current_track is not MISSING:
+            parameters["noReplace"] = not replace_current_track
+
         data: UpdatePlayerData = {}
         if track is not MISSING:
             data["encodedTrack"] = track.encoded if track is not None else None
         if track_identifier is not MISSING:
             data["identifier"] = track_identifier
-        if track_position is not MISSING:
-            data["position"] = track_position
         if track_end_time is not MISSING:
             data["endTime"] = track_end_time
+        if position is not MISSING:
+            data["position"] = position
         if paused is not MISSING:
             data["paused"] = paused
         if volume is not MISSING:
@@ -181,14 +186,15 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if voice_state is not MISSING:
             data["voice"] = voice_state
 
-        parameters: UpdatePlayerParameters = {}
-        if replace_current_track is not MISSING:
-            parameters["noReplace"] = not replace_current_track
-
         await self._link._request(
             "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
-            data=data, parameters=parameters
+            parameters=parameters, data=data,
         )
+
+    # position
+
+    async def set_position(self, position: int, /) -> None:
+        await self.update(position=position)
 
     # pausing
 
@@ -200,3 +206,9 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def resume(self) -> None:
         await self.update(paused=False)
+
+    # volume
+
+    async def set_volume(self, volume: int, /) -> None:
+        await self.update(volume=volume)
+
