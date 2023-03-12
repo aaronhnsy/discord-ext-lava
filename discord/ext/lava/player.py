@@ -21,7 +21,12 @@ from .types.websocket import PlayerUpdateData
 __all__ = ["Player"]
 __log__ = logging.getLogger("discord.ext.lava.player")
 
-ClientT = TypeVar("ClientT", bound=discord.Client | discord.AutoShardedClient, default=discord.Client, covariant=True)
+ClientT = TypeVar(
+    "ClientT",
+    bound=discord.Client | discord.AutoShardedClient,
+    default=discord.Client,
+    covariant=True
+)
 
 
 class Player(discord.VoiceProtocol, Generic[ClientT]):
@@ -62,7 +67,6 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     }
 
     async def _handle_event(self, payload: EventData, /) -> None:
-
         event_type = payload["type"]
 
         if event := self._EVENT_MAPPING.get(event_type):
@@ -83,10 +87,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     # voice state
 
     async def _update_player_voice_state(self) -> None:
-
         if self._token is None or self._endpoint is None or self._session_id is None:
             return
-
         await self.update(
             voice_state={
                 "token":     self._token,
@@ -109,12 +111,12 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n%s",
             DeferredMessage(json.dumps, data, indent=4),
         )
-
-        if (channel_id := data["channel_id"]) is None:  # pyright: ignore
+        """
+        if (channel_id := data["channel_id"]) is None:
             del self._link._players[self.guild.id]
             return
-        self.channel = self.client.get_channel(int(channel_id))  # pyright: ignore
-
+        self.channel = self.client.get_channel(int(channel_id))
+        """
         self._session_id = data["session_id"]
         await self._update_player_voice_state()
 
@@ -157,7 +159,6 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         filter: Filter = MISSING,
         voice_state: VoiceStateData = MISSING,
     ) -> None:
-
         if not self._link.is_ready():
             await self._link._ready_event.wait()
 

@@ -50,13 +50,11 @@ class Link(Generic[PlayerT]):
         spotify_client_id: str | None = None,
         spotify_client_secret: str | None = None,
     ) -> None:
-
         if (host is None or port is None) and (ws_url is None or rest_url is None):
             raise ValueError(
                 "You must provide either the `host` and `port` OR `ws_url` and `rest_url` parameters. "
                 "`ws_url` and `rest_url` will take precedence over `host` and `port` if both sets are provided."
             )
-
         self._host: str | None = host
         self._port: int | None = port
         self._ws_url: str | None = ws_url
@@ -77,7 +75,6 @@ class Link(Generic[PlayerT]):
             self._spotify: spotipy.Client | None = None
 
         self._backoff: Backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
-
         self._task: asyncio.Task[None] | None = None
         self._session: aiohttp.ClientSession | None = None
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
@@ -121,15 +118,12 @@ class Link(Generic[PlayerT]):
     # websocket
 
     async def connect(self) -> None:
-
         if self.is_connected():
             raise LinkAlreadyConnected(f"Link '{self.identifier}' is already connected.")
-
-        if self._session is None:
-            self._session = aiohttp.ClientSession()
-
         try:
             from . import __version__
+            if self._session is None:
+                self._session = aiohttp.ClientSession()
             websocket = await self._session.ws_connect(
                 f"{self._ws_url or f'ws://{self._host}:{self._port}'}/v4/websocket",
                 headers={
@@ -138,7 +132,6 @@ class Link(Generic[PlayerT]):
                     "Client-Name":   f"discord-ext-lava/{__version__}"
                 }
             )
-
         except Exception as error:
             if isinstance(error, aiohttp.WSServerHandshakeError):
                 if error.status == 401:
@@ -163,7 +156,6 @@ class Link(Generic[PlayerT]):
             self._task = asyncio.create_task(self._listen())
 
     async def _reset_state(self) -> None:
-
         self._backoff.reset()
 
         if self._task is not None and self._task.done() is False:
@@ -179,12 +171,10 @@ class Link(Generic[PlayerT]):
         self._session = None
 
     async def _process_payload(self, payload: Payload, /) -> None:
-
         __ws_log__.debug(
             f"Link '{self.identifier}' received a '{payload['op']}' payload.\n%s",
             DeferredMessage(_json.dumps, payload, indent=4),
         )
-
         if payload["op"] == "ready":
             self._session_id = payload["sessionId"]
             self._ready_event.set()
@@ -199,6 +189,7 @@ class Link(Generic[PlayerT]):
                 )
                 return
             await player._handle_player_update(payload)
+            return
 
         elif payload["op"] == "stats":
             self._stats = Stats(payload)
@@ -212,26 +203,21 @@ class Link(Generic[PlayerT]):
                 )
                 return
             await player._handle_event(payload)
+            return
 
     async def _listen(self) -> None:
-
         while True:
-
             if self._websocket is None:
                 await self._reset_state()
                 break
-
             message = await self._websocket.receive()
-
             if message.type is aiohttp.WSMsgType.CLOSED:
-
                 # Log a warning for the first reconnect attempt.
                 if self._backoff.tries == 0:
                     __ws_log__.warning(
                         f"Link '{self.identifier}' was unexpectedly disconnected from its websocket. It will now "
                         f"attempt to reconnect up to {self._backoff.max_tries} times with a backoff delay."
                     )
-
                 # Calculate the backoff delay and sleep.
                 __ws_log__.warning(
                     f"Link '{self.identifier}' is attempting its {ordinal(self._backoff.tries + 1)} reconnection "
@@ -242,11 +228,9 @@ class Link(Generic[PlayerT]):
                 try:
                     # Attempt to reconnect to the websocket.
                     await self.connect()
-
                 except LinkConnectionError as error:
                     # Print the error manually because we don't want an error to be raised inside the task.
                     traceback.print_exception(type(error), error, error.__traceback__)
-
                     # Cancel the task (and reset other vars) to stop further reconnection attempts.
                     if self._backoff.max_tries and self._backoff.tries == self._backoff.max_tries:
                         __ws_log__.warning(
@@ -255,10 +239,8 @@ class Link(Generic[PlayerT]):
                         )
                         await self._reset_state()
                         break
-
                     # Continue to the next reconnection attempt.
                     continue
-
                 else:
                     # If no error was raised, continue the outer loop as we should've reconnected.
                     __ws_log__.info(f"Link '{self.identifier}' was able to reconnect to its websocket.")
@@ -280,7 +262,6 @@ class Link(Generic[PlayerT]):
         parameters: RequestParameters | None = None,
         data: RequestData | None = None,
     ) -> JSON:
-
         if self._session is None:
             self._session = aiohttp.ClientSession()
 
@@ -298,7 +279,6 @@ class Link(Generic[PlayerT]):
             DeferredMessage(_json.dumps, parameters or {}, indent=4),
             DeferredMessage(_json.dumps, data or {}, indent=4),
         )
-
         async with self._session.request(method, url, **kwargs) as response:
             response_data = await json_or_text(response, json_loads=self._json_loads)
             __rest_log__.debug(
@@ -309,10 +289,8 @@ class Link(Generic[PlayerT]):
                 return response_data
 
     async def _spotify_search(self, _type: SpotifySearchType, _id: str, /) -> Result:
-
-        assert self._spotify is not None
-
         try:
+            assert self._spotify is not None
             match _type:
                 case "album":
                     source = await self._spotify.get_full_album(_id)
@@ -340,7 +318,6 @@ class Link(Generic[PlayerT]):
                 case "track":
                     source = await self._spotify.get_track(_id)
                     tracks = [Track._from_spotify_track(source)]
-
         except spotipy.NotFound:
             raise NoSearchResults(search=_id)
         except spotipy.HTTPError as error:
@@ -351,12 +328,10 @@ class Link(Generic[PlayerT]):
                     "cause":    error.message
                 }
             )
-
         # noinspection PyUnboundLocalVariable
         return Result(source=source, tracks=tracks)
 
     async def _lavalink_search(self, search: str, /) -> Result:
-
         data: SearchData = cast(
             SearchData,
             await self._request(
@@ -376,7 +351,6 @@ class Link(Generic[PlayerT]):
             case "LOAD_FAILED":
                 assert data["exception"] is not None
                 raise SearchFailed(data["exception"])
-
         # noinspection PyUnboundLocalVariable
         return Result(source=source, tracks=tracks)
 
