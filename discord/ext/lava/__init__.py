@@ -16,8 +16,8 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-__version_info__: VersionInfo = VersionInfo(major=0, minor=6, micro=0, releaselevel="final", serial=0)
-__version__: str = "0.6.0"
+__version_info__: VersionInfo = VersionInfo(major=1, minor=0, micro=0, releaselevel="alpha", serial=1)
+__version__: str = "1.0.0a1"
 
 __title__: str = "discord-ext-lava"
 __url__: str = "https://github.com/Axelancerr/discord-ext-lava"
@@ -26,6 +26,6 @@ __author__: str = "Aaron Hennessey (Axelancerr)"
 __email__: str = "axelancerr@gmail.com"
 
 __license__: str = "MIT"
-__copyright__: str = "Copyright (c) 2019-2022 Aaron Hennessey (Axelancerr)"
+__copyright__: str = "Copyright (c) 2019-present Aaron Hennessey (Axelancerr/Axel)"
 
 logging.getLogger("discord.ext.lava")
