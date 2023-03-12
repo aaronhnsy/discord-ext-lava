@@ -1,8 +1,9 @@
-from .types.events import (
-    EventData, EventType, ExceptionData, TrackEndEventData, TrackExceptionEventData, TrackStartEventData,
+from ..enums import ExceptionSeverity, TrackEndReason
+from ..types.common import ExceptionData
+from ..types.objects.events import (
+    EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStartEventData,
     TrackStuckEventData, WebSocketClosedEventData,
 )
-from ..enums import ExceptionSeverity, TrackEndReason
 
 
 __all__ = [
@@ -15,7 +16,6 @@ __all__ = [
 
 
 class _EventBase:
-
     __slots__ = ("type", "guild_id",)
 
     def __init__(self, data: EventData) -> None:
@@ -28,7 +28,6 @@ class _EventBase:
 
 
 class TrackStartEvent(_EventBase):
-
     __slots__ = ("encoded_track",)
 
     def __init__(self, data: TrackStartEventData) -> None:
@@ -37,7 +36,6 @@ class TrackStartEvent(_EventBase):
 
 
 class TrackEndEvent(_EventBase):
-
     __slots__ = ("encoded_track", "reason",)
 
     def __init__(self, data: TrackEndEventData) -> None:
@@ -47,7 +45,6 @@ class TrackEndEvent(_EventBase):
 
 
 class TrackExceptionEvent(_EventBase):
-
     __slots__ = ("encoded_track", "message", "severity", "cause",)
 
     def __init__(self, data: TrackExceptionEventData) -> None:
@@ -61,7 +58,6 @@ class TrackExceptionEvent(_EventBase):
 
 
 class TrackStuckEvent(_EventBase):
-
     __slots__ = ("encoded_track", "threshold_ms",)
 
     def __init__(self, data: TrackStuckEventData) -> None:
@@ -71,7 +67,6 @@ class TrackStuckEvent(_EventBase):
 
 
 class WebSocketClosedEvent(_EventBase):
-
     __slots__ = ("code", "reason", "by_remote",)
 
     def __init__(self, data: WebSocketClosedEventData) -> None:

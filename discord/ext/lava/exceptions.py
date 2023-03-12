@@ -1,5 +1,5 @@
 from .enums import ExceptionSeverity
-from .types.rest.responses import SearchExceptionData
+from .types.common import ExceptionData
 
 
 __all__ = [
@@ -34,7 +34,7 @@ class SearchError(LavaError):
 
 class SearchFailed(SearchError):
 
-    def __init__(self, exception: SearchExceptionData) -> None:
+    def __init__(self, exception: ExceptionData) -> None:
         self.message: str | None = exception["message"]
         self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
         self.cause: str = exception["cause"]

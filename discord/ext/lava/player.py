@@ -12,9 +12,9 @@ from .link import Link
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
 from .objects.filters import Filter
 from .objects.track import Track
-from .objects.types.events import EventData
 from .types.common import VoiceChannel
-from .types.rest.requests import UpdatePlayerData, UpdatePlayerParameters, VoiceStateData_Request
+from .types.objects.events import EventData
+from .types.rest import UpdatePlayerRequestData, UpdatePlayerRequestParameters, VoiceStateData
 from .types.websocket import PlayerUpdateData
 
 
@@ -110,7 +110,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             DeferredMessage(json.dumps, data, indent=4),
         )
 
-        if (channel_id := data["channel_id"]) is None:
+        if (channel_id := data["channel_id"]) is None:  # pyright: ignore
             del self._link._players[self.guild.id]
             return
         self.channel = self.client.get_channel(int(channel_id))  # pyright: ignore
@@ -155,7 +155,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         paused: bool = MISSING,
         volume: int = MISSING,
         filter: Filter = MISSING,
-        voice_state: VoiceStateData_Request = MISSING,
+        voice_state: VoiceStateData = MISSING,
     ) -> None:
 
         if not self._link.is_ready():
@@ -164,11 +164,11 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if track is not None and track_identifier is not MISSING:
             raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
 
-        parameters: UpdatePlayerParameters = {}
+        parameters: UpdatePlayerRequestParameters = {}
         if replace_current_track is not MISSING:
             parameters["noReplace"] = not replace_current_track
 
-        data: UpdatePlayerData = {}
+        data: UpdatePlayerRequestData = {}
         if track is not MISSING:
             data["encodedTrack"] = track.encoded if track is not None else None
         if track_identifier is not MISSING:
@@ -211,4 +211,3 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def set_volume(self, volume: int, /) -> None:
         await self.update(volume=volume)
-

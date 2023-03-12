@@ -1,4 +1,4 @@
-from .types.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsData
+from ..types.objects.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsData
 
 
 __all__ = ["Stats"]

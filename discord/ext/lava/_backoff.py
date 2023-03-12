@@ -61,9 +61,7 @@ class Backoff:
             wait = self.last_wait * 2
 
         self.last_wait = wait
-
-        if wait > self.max_wait:
-            wait = self.max_wait
+        wait = min(wait, self.max_wait)
 
         if self.max_tries and self.tries > self.max_tries:
             self.tries = 0

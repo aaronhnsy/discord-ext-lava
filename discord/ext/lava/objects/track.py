@@ -3,14 +3,13 @@ from __future__ import annotations
 import discord.utils
 import spotipy
 
-from .types.track import TrackData
+from ..types.objects.track import TrackData
 
 
 __all__ = ["Track"]
 
 
 class Track:
-
     __slots__ = (
         "encoded", "identifier", "_is_seekable", "author", "length", "_is_stream", "position", "title", "uri",
         "artwork_url", "isrc", "source", "extras",
@@ -29,7 +28,6 @@ class Track:
         self.artwork_url: str | None = info["artworkUrl"]
         self.isrc: str | None = info["isrc"]
         self.source: str = info["sourceName"]
-
         self._is_seekable: bool = info["isSeekable"]
         self._is_stream: bool = info["isStream"]
 
@@ -49,7 +47,6 @@ class Track:
 
     @classmethod
     def _from_spotify_track(cls, track: spotipy.Track | spotipy.PlaylistTrack) -> Track:
-
         if track.is_local:
             identifier = track.uri
             author = track.artists[0].name or "Unknown"
@@ -62,7 +59,6 @@ class Track:
             title = track.name
             artwork_url = track.album.images[0].url if len(track.album.images) > 0 else None
             isrc = track.external_ids.get("isrc")
-
         return Track(
             {
                 "encoded": discord.utils.MISSING,

@@ -19,8 +19,7 @@ from .objects.result import Result
 from .objects.stats import Stats
 from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
-from .types.rest.requests import RequestData, RequestKwargs, RequestMethod, RequestParameters
-from .types.rest.responses import SearchData
+from .types.rest import RequestData, RequestKwargs, RequestMethod, RequestParameters, SearchData
 from .types.websocket import Payload
 
 if TYPE_CHECKING:

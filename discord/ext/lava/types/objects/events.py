@@ -1,5 +1,7 @@
 from typing import Literal, TypeAlias, TypedDict
 
+from ..common import ExceptionData
+
 
 class TrackStartEventData(TypedDict):
     op: Literal["event"]
@@ -14,12 +16,6 @@ class TrackEndEventData(TypedDict):
     guildId: str
     encodedTrack: str
     reason: Literal["FINISHED", "LOAD_FAILED", "STOPPED", "REPLACED", "CLEANUP"]
-
-
-class ExceptionData(TypedDict):
-    message: str | None
-    severity: Literal["COMMON", "SUSPICIOUS", "FATAL"]
-    cause: str
 
 
 class TrackExceptionEventData(TypedDict):

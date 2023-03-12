@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, TypedDict
 
 import discord
 import spotipy
@@ -14,3 +14,9 @@ VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
 
 SpotifySearchType: TypeAlias = Literal["album", "playlist", "artist", "track"]
 SpotifySource: TypeAlias = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track
+
+
+class ExceptionData(TypedDict):
+    message: str | None
+    severity: Literal["COMMON", "SUSPICIOUS", "FATAL"]
+    cause: str

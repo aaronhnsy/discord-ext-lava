@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import collections
 
-from .types.filters import (
+from ..types.objects.filters import (
     ChannelMixData, DistortionData, EqualizerData, FiltersData, KaraokeData, LowPassData, RotationData, TimescaleData,
     TremoloData, VibratoData,
 )
@@ -24,7 +24,6 @@ __all__ = [
 
 
 class _FilterBase(metaclass=abc.ABCMeta):
-
     __slots__ = ()
 
     def __repr__(self) -> str:
@@ -38,7 +37,6 @@ class _FilterBase(metaclass=abc.ABCMeta):
 
 
 class Equalizer(_FilterBase):
-
     __slots__ = ("_bands",)
 
     def __init__(self, *, bands: list[tuple[int, float]] | None = None) -> None:
@@ -55,7 +53,6 @@ class Equalizer(_FilterBase):
 
 
 class Karaoke(_FilterBase):
-
     __slots__ = ("_level", "_mono_level", "_filter_band", "_filter_width",)
 
     def __init__(
@@ -82,7 +79,6 @@ class Karaoke(_FilterBase):
 
 
 class Timescale(_FilterBase):
-
     __slots__ = ("_pitch", "_speed", "_rate",)
 
     def __init__(
@@ -92,7 +88,6 @@ class Timescale(_FilterBase):
         speed: float = 1.0,
         rate: float = 1.0,
     ) -> None:
-
         if pitch < 0.0:
             raise ValueError("'pitch' must be more than or equal to 0.0.")
         if speed < 0.0:
@@ -114,7 +109,6 @@ class Timescale(_FilterBase):
 
 
 class Tremolo(_FilterBase):
-
     __slots__ = ("_frequency", "_depth",)
 
     def __init__(
@@ -123,7 +117,6 @@ class Tremolo(_FilterBase):
         frequency: float = 2.0,
         depth: float = 0.0
     ) -> None:
-
         if frequency <= 0.0:
             raise ValueError("'frequency' must be more than 0.0.")
         if depth <= 0.0 or depth > 1.0:
@@ -141,7 +134,6 @@ class Tremolo(_FilterBase):
 
 
 class Vibrato(_FilterBase):
-
     __slots__ = ("_frequency", "_depth",)
 
     def __init__(
@@ -150,7 +142,6 @@ class Vibrato(_FilterBase):
         frequency: float = 2.0,
         depth: float = 0.0
     ) -> None:
-
         if frequency <= 0.0 or frequency > 14.0:
             raise ValueError("'frequency' must be more than 0.0 and less than or equal to 14.0.")
         if depth <= 0.0 or depth > 1.0:
@@ -168,7 +159,6 @@ class Vibrato(_FilterBase):
 
 
 class Rotation(_FilterBase):
-
     __slots__ = ("_speed",)
 
     def __init__(self, *, speed: float = 0.0) -> None:
@@ -180,7 +170,6 @@ class Rotation(_FilterBase):
 
 
 class Distortion(_FilterBase):
-
     __slots__ = (
         "_sin_offset", "_sin_scale", "_cos_offset", "_cos_scale", "_tan_offset", "_tan_scale", "_offset", "_scale",
     )
@@ -221,7 +210,6 @@ class Distortion(_FilterBase):
 
 
 class ChannelMix(_FilterBase):
-
     __slots__ = ("_left_to_left", "_left_to_right", "_right_to_left", "_right_to_right",)
 
     def __init__(
@@ -232,7 +220,6 @@ class ChannelMix(_FilterBase):
         right_to_left: float = 0.0,
         right_to_right: float = 1.0,
     ) -> None:
-
         if any(
             value for value in (left_to_left, left_to_right, right_to_left, right_to_right)
             if value < 0.0 or value > 1.0
@@ -282,7 +269,6 @@ class ChannelMix(_FilterBase):
 
 
 class LowPass(_FilterBase):
-
     __slots__ = ("_smoothing",)
 
     def __init__(self, *, smoothing: float = 1.0) -> None:
@@ -296,7 +282,6 @@ class LowPass(_FilterBase):
 
 
 class Filter(_FilterBase):
-
     __slots__ = (
         "_filter", "_equalizer", "_karaoke", "_timescale", "_tremolo", "_vibrato", "_rotation", "_distortion",
         "_channel_mix", "_low_pass",
@@ -328,7 +313,6 @@ class Filter(_FilterBase):
 
     @property
     def data(self) -> FiltersData:
-
         payload: FiltersData = self._filter.data if self._filter else {}
 
         if self._equalizer:

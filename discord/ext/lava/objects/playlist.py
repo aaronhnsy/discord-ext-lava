@@ -1,11 +1,10 @@
-from .types.playlist import PlaylistData
+from ..types.objects.playlist import PlaylistData
 
 
 __all__ = ["Playlist"]
 
 
 class Playlist:
-
     __slots__ = ("name", "selected_track",)
 
     def __init__(self, data: PlaylistData) -> None:
