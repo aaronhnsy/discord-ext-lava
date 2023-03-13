@@ -3,7 +3,7 @@ from __future__ import annotations
 import discord.utils
 import spotipy
 
-from ..types.objects.track import TrackData
+from ..types.objects.track import TrackData, TrackInfoData, TrackPluginInfoData
 
 
 __all__ = ["Track"]
@@ -12,24 +12,25 @@ __all__ = ["Track"]
 class Track:
     __slots__ = (
         "encoded", "identifier", "_is_seekable", "author", "length", "_is_stream", "position", "title", "uri",
-        "artwork_url", "isrc", "source", "extras",
+        "artwork_url", "isrc", "source", "plugin_info",
     )
 
     def __init__(self, data: TrackData) -> None:
         self.encoded: str = data["encoded"]
 
-        info = data["info"]
+        info: TrackInfoData = data["info"]
         self.identifier: str = info["identifier"]
+        self._is_seekable: bool = info["isSeekable"]
         self.author: str = info["author"]
         self.length: int = info["length"]
+        self._is_stream: bool = info["isStream"]
         self.position: int = info["position"]
         self.title: str = info["title"]
         self.uri: str | None = info["uri"]
         self.artwork_url: str | None = info["artworkUrl"]
         self.isrc: str | None = info["isrc"]
         self.source: str = info["sourceName"]
-        self._is_seekable: bool = info["isSeekable"]
-        self._is_stream: bool = info["isStream"]
+        self.plugin_info: TrackPluginInfoData = data["pluginInfo"]
 
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Track identifier='{self.identifier}', title='{self.title}', " \
@@ -74,6 +75,7 @@ class Track:
                     "artworkUrl": artwork_url,
                     "isrc":       isrc,
                     "sourceName": "spotify",
-                }
+                },
+                "pluginInfo": {}
             }
         )

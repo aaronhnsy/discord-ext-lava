@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, TypeAlias, TypedDict
 
 
 class TrackInfoData(TypedDict):
@@ -15,6 +15,10 @@ class TrackInfoData(TypedDict):
     sourceName: str
 
 
+TrackPluginInfoData: TypeAlias = dict[str, Any]
+
+
 class TrackData(TypedDict):
     encoded: str
     info: TrackInfoData
+    pluginInfo: TrackPluginInfoData
