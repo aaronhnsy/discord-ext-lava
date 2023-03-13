@@ -6,16 +6,18 @@ from .objects.events import EventData
 from .objects.stats import StatsData
 
 
-# Ready OP
-
-class ReadyData(TypedDict):
+##############
+## Ready OP ##
+##############
+class ReadyPayload(TypedDict):
     op: Literal["ready"]
     resumed: bool
     sessionId: str
 
 
-# Player Update OP
-
+######################
+## Player Update OP ##
+######################
 class PlayerStateData(TypedDict):
     time: int
     position: NotRequired[int]
@@ -23,12 +25,23 @@ class PlayerStateData(TypedDict):
     ping: int
 
 
-class PlayerUpdateData(TypedDict):
+class PlayerUpdatePayload(TypedDict):
     op: Literal["playerUpdate"]
     guildId: str
     state: PlayerStateData
 
 
-# Payloads
+##############
+## Stats OP ##
+##############
+StatsPayload: TypeAlias = StatsData
 
-Payload: TypeAlias = ReadyData | PlayerUpdateData | StatsData | EventData
+##############
+## Event OP ##
+##############
+EventPayload: TypeAlias = EventData
+
+#############
+## Payload ##
+#############
+Payload: TypeAlias = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload

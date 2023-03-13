@@ -13,9 +13,8 @@ from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent,
 from .objects.filters import Filter
 from .objects.track import Track
 from .types.common import VoiceChannel
-from .types.objects.events import EventData
 from .types.rest import UpdatePlayerRequestData, UpdatePlayerRequestParameters, VoiceStateData
-from .types.websocket import PlayerUpdateData
+from .types.websocket import EventPayload, PlayerUpdatePayload
 
 
 __all__ = ["Player"]
@@ -66,7 +65,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         "WebSocketClosedEvent": ("web_socket_closed", WebSocketClosedEvent),
     }
 
-    async def _handle_event(self, payload: EventData, /) -> None:
+    async def _handle_event(self, payload: EventPayload, /) -> None:
         event_type = payload["type"]
 
         if event := self._EVENT_MAPPING.get(event_type):
@@ -81,7 +80,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             f"'on_lava_{dispatch_name}' listeners."
         )
 
-    async def _handle_player_update(self, payload: PlayerUpdateData, /) -> None:
+    async def _handle_player_update(self, payload: PlayerUpdatePayload, /) -> None:
         ...
 
     # voice state

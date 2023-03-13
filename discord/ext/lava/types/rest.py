@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypeAlias, TypedDict
+from typing import Any, Literal, Never, TypeAlias, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -86,12 +86,50 @@ class SearchRequestParameters(TypedDict):
     identifier: str
 
 
-class SearchData(TypedDict):
-    loadType: Literal["TRACK_LOADED", "PLAYLIST_LOADED", "SEARCH_RESULT", "NO_MATCHES", "LOAD_FAILED"]
-    playlistInfo: PlaylistData | None
-    pluginInfo: dict[str, Any] | None
+class TrackLoadedData(TypedDict):
+    loadType: Literal["TRACK_LOADED"]
+    playlistInfo: None
+    pluginInfo: None
     tracks: list[TrackData]
-    exception: ExceptionData | None
+    exception: None
+
+
+PlaylistPluginData: TypeAlias = dict[str, Any]
+
+
+class PlaylistLoadedData(TypedDict):
+    loadType: Literal["PLAYLIST_LOADED"]
+    playlistInfo: PlaylistData
+    pluginInfo: PlaylistPluginData
+    tracks: list[TrackData]
+    exception: None
+
+
+class SearchResultData(TypedDict):
+    loadType: Literal["SEARCH_RESULT"]
+    playlistInfo: None
+    pluginInfo: None
+    tracks: list[TrackData]
+    exception: None
+
+
+class NoMatchesData(TypedDict):
+    loadType: Literal["NO_MATCHES"]
+    playlistInfo: None
+    pluginInfo: None
+    tracks: list[Never]
+    exception: None
+
+
+class LoadFailedData(TypedDict):
+    loadType: Literal["LOAD_FAILED"]
+    playlistInfo: None
+    pluginInfo: None
+    tracks: list[Never]
+    exception: ExceptionData
+
+
+SearchData = TrackLoadedData | PlaylistLoadedData | SearchResultData | NoMatchesData | LoadFailedData
 
 
 #########################################################

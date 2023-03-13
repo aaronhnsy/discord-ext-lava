@@ -13,14 +13,17 @@ from typing_extensions import TypeVar
 
 from ._backoff import Backoff
 from ._utilities import DeferredMessage, SPOTIFY_REGEX, chunks, json_or_text, ordinal
-from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchFailed
+from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchError, SearchFailed
 from .objects.playlist import Playlist
 from .objects.result import Result
 from .objects.stats import Stats
 from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
-from .types.rest import RequestData, RequestKwargs, RequestMethod, RequestParameters, SearchData
-from .types.websocket import Payload
+from .types.rest import (
+    LoadFailedData, NoMatchesData, PlaylistLoadedData, RequestData, RequestKwargs, RequestMethod, RequestParameters,
+    SearchData, SearchResultData, TrackLoadedData,
+)
+from .types.websocket import EventPayload, Payload, PlayerUpdatePayload, ReadyPayload, StatsPayload
 
 if TYPE_CHECKING:
     from .player import Player  # type: ignore
@@ -175,35 +178,39 @@ class Link(Generic[PlayerT]):
             f"Link '{self.identifier}' received a '{payload['op']}' payload.\n%s",
             DeferredMessage(_json.dumps, payload, indent=4),
         )
-        if payload["op"] == "ready":
-            self._session_id = payload["sessionId"]
-            self._ready_event.set()
-            __ws_log__.info(f"Link '{self.identifier}' is ready.")
-            return
+        match op := payload["op"]:
+            case "ready":
+                assert isinstance(payload, ReadyPayload)
+                self._session_id = payload["sessionId"]
+                self._ready_event.set()
+                __ws_log__.info(f"Link '{self.identifier}' is ready.")
 
-        elif payload["op"] == "playerUpdate":
-            if not (player := self._players.get(int(payload["guildId"]))):
-                __ws_log__.warning(
-                    f"Link '{self.identifier}' received a player update for non-existent player with id "
-                    f"'{payload['guildId']}'."
-                )
-                return
-            await player._handle_player_update(payload)
-            return
+            case "playerUpdate":
+                assert isinstance(payload, PlayerUpdatePayload)
+                if not (player := self._players.get(int(payload["guildId"]))):
+                    __ws_log__.warning(
+                        f"Link '{self.identifier}' received a player update for a non-existent player "
+                        f"with id '{payload['guildId']}'."
+                    )
+                    return
+                await player._handle_player_update(payload)
 
-        elif payload["op"] == "stats":
-            self._stats = Stats(payload)
-            return
+            case "stats":
+                assert isinstance(payload, StatsPayload)
+                self._stats = Stats(payload)
 
-        elif payload["op"] == "event":
-            if not (player := self._players.get(int(payload["guildId"]))):
-                __ws_log__.warning(
-                    f"Link '{self.identifier}' received a '{payload['type']}' event for non-existent player with id "
-                    f"'{payload['guildId']}'."
-                )
-                return
-            await player._handle_event(payload)
-            return
+            case "event":
+                assert isinstance(payload, EventPayload)
+                if not (player := self._players.get(int(payload["guildId"]))):
+                    __ws_log__.warning(
+                        f"Link '{self.identifier}' received a '{payload['type']}' event for a non-existent player "
+                        f"with id '{payload['guildId']}'."
+                    )
+                    return
+                await player._handle_event(payload)
+
+            case _:  # pyright: ignore - lavalink could add new op codes.
+                __ws_log__.error(f"Link '{self.identifier}' received a payload with an unhandled op code: '{op}'.")
 
     async def _listen(self) -> None:
         while True:
@@ -334,27 +341,35 @@ class Link(Generic[PlayerT]):
     async def _lavalink_search(self, search: str, /) -> Result:
         data: SearchData = cast(
             SearchData,
-            await self._request(
-                "GET", "/v4/loadtracks",
-                parameters={"identifier": search}
-            )
+            await self._request("GET", "/v4/loadtracks", parameters={"identifier": search})
         )
-        match data["loadType"]:
+        match load_type := data["loadType"]:
             case "TRACK_LOADED":
+                assert isinstance(data, TrackLoadedData)
                 source = Track(data["tracks"][0])
                 tracks = [source]
-            case "PLAYLIST_LOADED" | "SEARCH_RESULT":
+            case "PLAYLIST_LOADED":
+                assert isinstance(data, PlaylistLoadedData)
+                source = Playlist(data["playlistInfo"])
                 tracks = [Track(track) for track in data["tracks"]]
-                source = Playlist(playlist) if (playlist := data["playlistInfo"]) else tracks
+            case "SEARCH_RESULT":
+                assert isinstance(data, SearchResultData)
+                source = [Track(track) for track in data["tracks"]]
+                tracks = source
             case "NO_MATCHES":
+                assert isinstance(data, NoMatchesData)
                 raise NoSearchResults(search=search)
             case "LOAD_FAILED":
-                assert data["exception"] is not None
+                assert isinstance(data, LoadFailedData)
                 raise SearchFailed(data["exception"])
-        # noinspection PyUnboundLocalVariable
+            case _:  # pyright: ignore - lavalink could add new load types
+                msg = f"Unknown load type: '{load_type}'. Please report this to the library author."
+                __rest_log__.error(msg)
+                raise SearchError(msg)
         return Result(source=source, tracks=tracks)
 
     async def search(self, search: str, /) -> Result:
         if (match := SPOTIFY_REGEX.match(search)) is not None and self._spotify is not None:
-            return await self._spotify_search(match.group("type"), match.group("id"))  # pyright: ignore
-        return await self._lavalink_search(search)
+            return await self._spotify_search(match["type"], match["id"])  # pyright: ignore
+        else:
+            return await self._lavalink_search(search)
