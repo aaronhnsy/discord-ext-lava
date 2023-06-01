@@ -16,7 +16,14 @@ SpotifySearchType: TypeAlias = Literal["album", "playlist", "artist", "track"]
 SpotifySource: TypeAlias = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track
 
 
+class PlayerStateData(TypedDict):
+    time: int
+    position: int
+    connected: bool
+    ping: int
+
+
 class ExceptionData(TypedDict):
     message: str | None
-    severity: Literal["COMMON", "SUSPICIOUS", "FATAL"]
+    severity: Literal["common", "suspicious", "fatal"]
     cause: str

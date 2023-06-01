@@ -1,17 +1,15 @@
-from typing import Any, Literal, Never, TypeAlias, TypedDict
+from typing import Literal, Never, NotRequired, TypeAlias, TypedDict
 
-from typing_extensions import NotRequired
-
-from .common import ExceptionData
+from .common import ExceptionData, PlayerStateData
 from .objects.filters import FiltersData
 from .objects.playlist import PlaylistData
 from .objects.stats import StatsData
 from .objects.track import TrackData
 
 
-############
-## Errors ##
-############
+##########
+# Errors #
+##########
 class ErrorRequestParameters(TypedDict):
     trace: NotRequired[bool]
 
@@ -25,32 +23,33 @@ class ErrorData(TypedDict):
     path: str
 
 
-############
-## Common ##
-############
+##########
+# Common #
+##########
 class VoiceStateData(TypedDict):
     token: str
     endpoint: str
     sessionId: str
 
 
-############################################################################
-## GET   ## /v4/sessions/{sessionId}/players                              ##
-## GET   ## /v4/sessions/{sessionId}/players/{guildId}                    ##
-## PATCH ## /v4/sessions/{sessionId}/players/{guildId}?{noReplace=<bool>} ##
-############################################################################
+#########################################################################
+# GET   # /v4/sessions/{sessionId}/players                              #
+# GET   # /v4/sessions/{sessionId}/players/{guildId}                    #
+# PATCH # /v4/sessions/{sessionId}/players/{guildId}?{noReplace=<bool>} #
+#########################################################################
 class PlayerData(TypedDict):
     guildId: str
     track: TrackData | None
     volume: int
     paused: bool
+    state: PlayerStateData
     voice: VoiceStateData
     filters: FiltersData
 
 
-############################################################################
-## PATCH ## /v4/sessions/{sessionId}/players/{guildId}?{noReplace=<bool>} ##
-############################################################################
+#########################################################################
+# PATCH # /v4/sessions/{sessionId}/players/{guildId}?{noReplace=<bool>} #
+#########################################################################
 class UpdatePlayerRequestParameters(TypedDict):
     noReplace: NotRequired[bool]
 
@@ -66,9 +65,9 @@ class UpdatePlayerRequestData(TypedDict):
     voice: NotRequired[VoiceStateData]
 
 
-#######################################
-## PATCH ## /v4/sessions/{sessionId} ##
-#######################################
+#####################################
+# PATCH ## /v4/sessions/{sessionId} #
+#####################################
 class UpdateSessionRequestData(TypedDict):
     resuming: NotRequired[bool]
     timeout: NotRequired[int]
@@ -86,60 +85,43 @@ class SearchRequestParameters(TypedDict):
     identifier: str
 
 
-class TrackLoadedData(TypedDict):
-    loadType: Literal["TRACK_LOADED"]
-    playlistInfo: None
-    pluginInfo: None
-    tracks: list[TrackData]
-    exception: None
+class TrackResultData(TypedDict):
+    loadType: Literal["track"]
+    data: TrackData
 
 
-PlaylistPluginData: TypeAlias = dict[str, Any]
-
-
-class PlaylistLoadedData(TypedDict):
-    loadType: Literal["PLAYLIST_LOADED"]
-    playlistInfo: PlaylistData
-    pluginInfo: PlaylistPluginData
-    tracks: list[TrackData]
-    exception: None
+class PlaylistResultData(TypedDict):
+    loadType: Literal["playlist"]
+    data: PlaylistData
 
 
 class SearchResultData(TypedDict):
-    loadType: Literal["SEARCH_RESULT"]
-    playlistInfo: None
-    pluginInfo: None
-    tracks: list[TrackData]
-    exception: None
+    loadType: Literal["search"]
+    data: list[TrackData]
 
 
-class NoMatchesData(TypedDict):
-    loadType: Literal["NO_MATCHES"]
-    playlistInfo: None
-    pluginInfo: None
-    tracks: list[Never]
-    exception: None
+class EmptyResultData(TypedDict):
+    loadType: Literal["empty"]
+    data: dict[Never, Never]
 
 
-class LoadFailedData(TypedDict):
-    loadType: Literal["LOAD_FAILED"]
-    playlistInfo: None
-    pluginInfo: None
-    tracks: list[Never]
-    exception: ExceptionData
+class ErrorResultData(TypedDict):
+    loadType: Literal["error"]
+    data: ExceptionData
 
 
-SearchData = TrackLoadedData | PlaylistLoadedData | SearchResultData | NoMatchesData | LoadFailedData
+SearchData = TrackResultData | PlaylistResultData | SearchResultData | EmptyResultData | ErrorResultData
 
 
-#########################################################
-## GET ## /v4/decodetrack?{encodedTrack=<str(base64)>} ##
-#########################################################
+######################################################
+# GET # /v4/decodetrack?{encodedTrack=<str(base64)>} #
+######################################################
 class DecodeTrackRequestParameters(TypedDict):
     encodedTrack: str
 
 
 DecodedTrackData: TypeAlias = TrackData
+
 
 ##############################
 ## POST ## /v4/decodetracks ##
@@ -148,15 +130,16 @@ DecodeTracksRequestData: TypeAlias = list[str]
 DecodedTracksData: TypeAlias = list[DecodedTrackData]
 
 
-#####################
-## GET ## /v4/info ##
-#####################
+##################
+# GET # /v4/info #
+##################
 class VersionData(TypedDict):
     semver: str
     major: int
     minor: int
     patch: int
     preRelease: str | None
+    build: str | None
 
 
 class GitData(TypedDict):
@@ -181,70 +164,121 @@ class LavalinkInfoData(TypedDict):
     plugins: list[PluginData]
 
 
-######################
-## GET ## /v4/stats ##
-######################
+###################
+# GET # /v4/stats #
+###################
 LavalinkStatsData: TypeAlias = StatsData
 
-#####################
-## GET ## /version ##
-#####################
+
+##################
+# GET # /version #
+##################
 LavalinkVersionData: TypeAlias = str
 
 
-####################################
-## GET ## /v4/routeplanner/status ##
-####################################
+#################################
+# GET # /v4/routeplanner/status #
+#################################
+IpBlockType: TypeAlias = Literal["Inet4Address", "Inet6Address"]
+
+
 class IpBlockData(TypedDict):
-    type: Literal["Inet4Address", "Inet6Address"]
+    type: IpBlockType
     size: str
 
 
 class FailingAddressData(TypedDict):
-    address: str
+    failingAddress: str
     failingTimestamp: int
     failingTime: str
 
 
-class RoutePlannerDetailsData(TypedDict):
+class RotatingIpRoutePlannerDetailsData(TypedDict):
     ipBlock: IpBlockData
     failingAddresses: list[FailingAddressData]
     rotateIndex: str
     ipIndex: str
     currentAddress: str
-    currentAddressIndex: str
-    blockIndex: str
 
 
-RoutePlannerStatusData = TypedDict(
-    "RoutePlannerStatusData",
-    {
-        "class":   Literal[
-                       "RotatingIpRoutePlanner", "NanoIpRoutePlanner", "RotatingNanoIpRoutePlanner", "BalancingIpRoutePlanner"] | None,
-        "details": RoutePlannerDetailsData | None
+RotatingIpRoutePlannerStatusData = TypedDict(
+    "RotatingIpRoutePlannerStatusData", {
+        "class":   Literal["RotatingIpRoutePlanner"],
+        "details": RotatingIpRoutePlannerDetailsData
     }
 )
 
 
-###########################################
-## POST ## /v4/routeplanner/free/address ##
-###########################################
+class NanoIpRoutePlannerDetailsData(TypedDict):
+    ipBlock: IpBlockData
+    failingAddresses: list[FailingAddressData]
+    currentAddressIndex: str
+
+
+NanoIpRoutePlannerStatusData = TypedDict(
+    "NanoIpRoutePlannerStatusData", {
+        "class":   Literal["NanoIpRoutePlanner"],
+        "details": NanoIpRoutePlannerDetailsData
+    }
+)
+
+
+class RotatingNanoIpRoutePlannerDetailsData(TypedDict):
+    ipBlock: IpBlockData
+    failingAddresses: list[FailingAddressData]
+    currentAddressIndex: str
+    blockIndex: str
+
+
+RotatingNanoIpRoutePlannerStatusData = TypedDict(
+    "RotatingNanoIpRoutePlannerStatusData", {
+        "class":   Literal["RotatingNanoIpRoutePlanner"],
+        "details": RotatingNanoIpRoutePlannerDetailsData
+    }
+)
+
+
+class BalancingIpRoutePlannerDetailsData(TypedDict):
+    ipBlock: IpBlockData
+    failingAddresses: list[FailingAddressData]
+
+
+BalancingIpRoutePlannerStatusData = TypedDict(
+    "BalancingIpRoutePlannerStatusData", {
+        "class":   Literal["BalancingIpRoutePlanner"],
+        "details": BalancingIpRoutePlannerDetailsData
+    }
+)
+
+NoRoutePlannerStatusData = TypedDict(
+    "NoRoutePlannerStatusData", {
+        "class":   None,
+        "details": None
+    }
+)
+
+RoutePlannerStatus: TypeAlias = (
+    RotatingIpRoutePlannerStatusData
+    | NanoIpRoutePlannerStatusData
+    | RotatingNanoIpRoutePlannerStatusData
+    | BalancingIpRoutePlannerStatusData
+    | NoRoutePlannerStatusData
+)
+
+
+########################################
+# POST # /v4/routeplanner/free/address #
+########################################
 class FreeAddressRequestData(TypedDict):
     address: str
 
-
-#######################################
-## POST ## /v4/routeplanner/free/all ##
-#######################################
-...
 
 ############
 ## Types ##
 ############
 RequestMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
 RequestHeaders = TypedDict(
-    "RequestHeaders",
-    {
+    "RequestHeaders", {
         "Authorization": str,
         "Content-Type":  NotRequired[Literal["application/json"]]
     }

@@ -1,6 +1,17 @@
-from typing import TypedDict
+from typing import Any, TypeAlias, TypedDict
+
+from .track import TrackData
+
+
+class PlaylistInfoData(TypedDict):
+    name: str
+    selectedTrack: int
+
+
+PlaylistPluginInfoData: TypeAlias = dict[str, Any]
 
 
 class PlaylistData(TypedDict):
-    name: str
-    selectedTrack: int
+    info: PlaylistInfoData
+    pluginInfo: PlaylistPluginInfoData
+    tracks: list[TrackData]

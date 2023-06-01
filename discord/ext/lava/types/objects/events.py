@@ -1,5 +1,6 @@
 from typing import Literal, TypeAlias, TypedDict
 
+from .track import TrackData
 from ..common import ExceptionData
 
 
@@ -7,22 +8,22 @@ class TrackStartEventData(TypedDict):
     op: Literal["event"]
     type: Literal["TrackStartEvent"]
     guildId: str
-    encodedTrack: str
+    track: TrackData
 
 
 class TrackEndEventData(TypedDict):
     op: Literal["event"]
     type: Literal["TrackEndEvent"]
     guildId: str
-    encodedTrack: str
-    reason: Literal["FINISHED", "LOAD_FAILED", "STOPPED", "REPLACED", "CLEANUP"]
+    track: TrackData
+    reason: Literal["finished", "loadFailed", "stopped", "replaced", "cleanup"]
 
 
 class TrackExceptionEventData(TypedDict):
     op: Literal["event"]
     type: Literal["TrackExceptionEvent"]
     guildId: str
-    encodedTrack: str
+    track: TrackData
     exception: ExceptionData
 
 
@@ -30,7 +31,7 @@ class TrackStuckEventData(TypedDict):
     op: Literal["event"]
     type: Literal["TrackStuckEvent"]
     guildId: str
-    encodedTrack: str
+    track: TrackData
     thresholdMs: int
 
 
@@ -44,8 +45,16 @@ class WebSocketClosedEventData(TypedDict):
 
 
 EventType: TypeAlias = Literal[
-    "TrackStartEvent", "TrackEndEvent", "TrackExceptionEvent", "TrackStuckEvent", "WebSocketClosedEvent"
+    "TrackStartEvent",
+    "TrackEndEvent",
+    "TrackExceptionEvent",
+    "TrackStuckEvent",
+    "WebSocketClosedEvent"
 ]
 EventData: TypeAlias = (
-    TrackStartEventData | TrackEndEventData | TrackExceptionEventData | TrackStuckEventData | WebSocketClosedEventData
+    TrackStartEventData
+    | TrackEndEventData
+    | TrackExceptionEventData
+    | TrackStuckEventData
+    | WebSocketClosedEventData
 )

@@ -1,47 +1,39 @@
 from typing import Literal, TypeAlias, TypedDict
 
-from typing_extensions import NotRequired
-
+from .common import PlayerStateData
 from .objects.events import EventData
 from .objects.stats import StatsData
 
 
-##############
-## Ready OP ##
-##############
+############
+# Ready OP #
+############
 class ReadyPayload(TypedDict):
     op: Literal["ready"]
     resumed: bool
     sessionId: str
 
 
-######################
-## Player Update OP ##
-######################
-class PlayerStateData(TypedDict):
-    time: int
-    position: NotRequired[int]
-    connected: bool
-    ping: int
-
-
+####################
+# Player Update OP #
+####################
 class PlayerUpdatePayload(TypedDict):
     op: Literal["playerUpdate"]
     guildId: str
     state: PlayerStateData
 
 
-##############
-## Stats OP ##
-##############
+############
+# Stats OP #
+############
 StatsPayload: TypeAlias = StatsData
 
-##############
-## Event OP ##
-##############
+############
+# Event OP #
+############
 EventPayload: TypeAlias = EventData
 
-#############
-## Payload ##
-#############
+###########
+# Payload #
+###########
 Payload: TypeAlias = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
