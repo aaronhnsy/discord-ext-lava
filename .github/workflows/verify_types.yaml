@@ -9,56 +9,68 @@ on:
       - main
     types:
       - opened
+      - reopened
       - synchronize
 
 jobs:
-
   job:
     name: "Verify Types @ Python v${{ matrix.python-version }}"
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.11" ]
-
+        python-version: [ "3.11", "3.x" ]
     steps:
-
-      # git
-
-      - name: "Initialise Environment"
+      - name: "Checkout Repository"
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # node
-
-      - name: "Setup Node v18"
-        uses: actions/setup-node@v3
+      - name: "Restore cached Poetry installation"
+        id: restore-cached-poetry-installation
+        uses: actions/cache@v3
         with:
-          node-version: 18
+          path: ~/.local
+          key: poetry-0
 
-      - name: "Install Pyright"
-        run: |
-          npm install -g pyright@latest
-
-      # python
+      - name: "Setup Poetry"
+        if: steps.restore-cached-poetry-installation.outputs.cache-hit != 'true'
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          virtualenvs-path: .venv
 
       - name: "Setup Python v${{ matrix.python-version }}"
+        id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "${{ matrix.python-version }}"
+          cache: "poetry"
 
-      - name: "Install Poetry"
-        run: |
-          pipx install poetry
+      - name: "Restore cached Poetry virtual environment"
+        id: restore-cached-poetry-virtual-environment
+        uses: actions/cache@v3
+        with:
+          path: .venv/
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-      - name: "Install Dependencies"
+      - name: "Install dependencies"
+        if: ${{ steps.restore-cached-poetry-virtual-environment.outputs.cache-hit != 'true' }}
+        id: install-dependencies
         run: |
-          poetry env use ${{ matrix.python-version }}
           poetry install
 
-      - name: "Verify types"
+      - name: "Activate Poetry environment"
         run: |
-          poetry run pyright
-          poetry run pyright --ignoreexternal --lib --verifytypes discord.ext.lava
+          echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
+
+      - name: "Run Pyright"
+        uses: jakebailey/pyright-action@v1
+        with:
+          warnings: false
+          lib: true
+          verify-types: "discord.ext.lava"
+          ignore-external: true
+          no-comments: ${{ matrix.python-version != '3.x' }}
