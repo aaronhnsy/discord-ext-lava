@@ -1,6 +1,6 @@
 # discord-ext-lava
 
-A [discord.py](https://github.com/Rapptz/discord.py) extension for [lavaplayer](https://github.com/Walkyst/lavaplayer-fork)-based audio nodes.
+A [discord.py](https://github.com/Rapptz/discord.py) extension for the [Lavalink](https://github.com/lavalink-devs/Lavalink) API and WebSocket.
 
 ## Installation
 

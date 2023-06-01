@@ -1,19 +1,20 @@
 [build-system]
-requires      = ["poetry-core>=1.0.0"]
+requires      = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name          = "discord-ext-lava"
 version       = "1.0.0a1"
-description   = "A discord.py extension for lavaplayer-based audio nodes."
+description   = "A discord.py extension for the Lavalink API and WebSocket."
 license       = "MIT"
-authors       = ["Axel <axelancerr@gmail.com>"]
+authors       = ["Aaron Hennessey <axelancerr@gmail.com>"]
 readme        = "README.md"
 homepage      = "https://github.com/Axelancerr/discord-ext-lava"
 repository    = "https://github.com/Axelancerr/discord-ext-lava"
 documentation = "https://discord-ext-lava.readthedocs.io/en/latest/"
-keywords      = ["lavalink", "api", "wrapper", "async", "discord.py", "discord", "discord.ext"]
-include       = ["CHANGELOG.md", "LICENSE"]
+keywords      = [
+    "discord", "discord.py", "discord-ext", "lavalink", "lavaplayer", "api", "wrapper", "async"
+]
 classifiers   = [
     "Development Status :: 3 - Alpha",
     "Environment :: Other Environment",
@@ -32,23 +33,26 @@ packages = [
     { include = "discord/ext/lava/**/*.py" },
     { include = "discord/ext/lava/**/*.typed" },
 ]
+include = [
+    "CHANGELOG.md", "LICENSE"
+]
 
 [tool.poetry.dependencies]
 python            = "^3.11.0"
 aiohttp           = "^3.8.0"
 discord-py        = "^2.2.0"
 spoti-py          = "^0.1.0"
-typing-extensions = "^4.5.0"
+typing-extensions = "^4.6.0"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx             = "^6.1.0"
+sphinx             = "^7.0.0"
 sphinxcontrib-trio = "^1.1.0"
 sphinx-copybutton  = "^0.5.0"
-sphinx-inline-tabs = "^2022.1.0"
-furo               = "^2022.12.0"
+sphinx-inline-tabs = "^2023.4.0"
+furo               = "^2023.5.0"
 
 [tool.poetry.group.dev]
 optional = true

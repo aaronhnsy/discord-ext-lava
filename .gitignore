@@ -1,12 +1,14 @@
+# python
 *.pyc
+
+# testing
 *.log*
-
-.idea/
-
-dist/
-
-build/
-_build/
-
 tests/
 lavalink/
+
+# ide
+.idea/
+
+# docs
+build/
+_build/
