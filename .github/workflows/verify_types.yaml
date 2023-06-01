@@ -60,7 +60,7 @@ jobs:
         if: ${{ steps.restore-cached-poetry-virtual-environment.outputs.cache-hit != 'true' }}
         id: install-dependencies
         run: |
-          poetry install
+          poetry install --no-interaction 
 
       - name: "Activate Poetry environment"
         run: |
@@ -70,7 +70,6 @@ jobs:
         uses: jakebailey/pyright-action@v1
         with:
           warnings: false
-          lib: true
           verify-types: "discord.ext.lava"
           ignore-external: true
           no-comments: ${{ matrix.python-version != '3.x' }}
