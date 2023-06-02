@@ -8,14 +8,14 @@ __all__ = [
 
 
 class TrackEndReason(enum.Enum):
-    finished = "finished"
-    load_failed = "loadFailed"
-    stopped = "stopped"
-    replaced = "replaced"
-    cleanup = "cleanup"
+    FINISHED = "finished"
+    LOAD_FAILED = "loadFailed"
+    STOPPED = "stopped"
+    REPLACED = "replaced"
+    CLEANUP = "cleanup"
 
 
 class ExceptionSeverity(enum.Enum):
-    common = "common"
-    suspicious = "suspicious"
-    fatal = "fatal"
+    COMMON = "common"
+    SUSPICIOUS = "suspicious"
+    FATAL = "fatal"

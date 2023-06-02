@@ -1,13 +1,8 @@
-# python
-*.pyc
-
-# testing
-*.log*
-tests/
-lavalink/
-
 # ide
 .idea/
+
+# python
+*.pyc
 
 # docs
 build/
