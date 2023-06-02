@@ -20,8 +20,8 @@ from .objects.stats import Stats
 from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
 from .types.rest import (
-    LoadFailedData, NoMatchesData, PlaylistLoadedData, RequestData, RequestKwargs, RequestMethod, RequestParameters,
-    SearchData, SearchResultData, TrackLoadedData,
+    EmptyResultData, ErrorResultData, PlaylistResultData, RequestData, RequestKwargs, RequestMethod, RequestParameters,
+    SearchData, SearchResultData, TrackResultData,
 )
 from .types.websocket import EventPayload, Payload, PlayerUpdatePayload, ReadyPayload, StatsPayload
 
@@ -331,7 +331,7 @@ class Link(Generic[PlayerT]):
             raise SearchFailed(
                 {
                     "message":  "Error while accessing the Spotify API.",
-                    "severity": "SUSPICIOUS",
+                    "severity": "suspicious",
                     "cause":    error.message
                 }
             )
@@ -344,24 +344,24 @@ class Link(Generic[PlayerT]):
             await self._request("GET", "/v4/loadtracks", parameters={"identifier": search})
         )
         match load_type := data["loadType"]:
-            case "TRACK_LOADED":
-                assert isinstance(data, TrackLoadedData)
-                source = Track(data["tracks"][0])
+            case "track":
+                assert isinstance(data, TrackResultData)
+                source = Track(data["data"])
                 tracks = [source]
-            case "PLAYLIST_LOADED":
-                assert isinstance(data, PlaylistLoadedData)
-                source = Playlist(data["playlistInfo"])
-                tracks = [Track(track) for track in data["tracks"]]
-            case "SEARCH_RESULT":
+            case "playlist":
+                assert isinstance(data, PlaylistResultData)
+                source = Playlist(data["data"])
+                tracks = source.tracks
+            case "search":
                 assert isinstance(data, SearchResultData)
-                source = [Track(track) for track in data["tracks"]]
+                source = [Track(track) for track in data["data"]]
                 tracks = source
-            case "NO_MATCHES":
-                assert isinstance(data, NoMatchesData)
+            case "empty":
+                assert isinstance(data, EmptyResultData)
                 raise NoSearchResults(search=search)
-            case "LOAD_FAILED":
-                assert isinstance(data, LoadFailedData)
-                raise SearchFailed(data["exception"])
+            case "error":
+                assert isinstance(data, ErrorResultData)
+                raise SearchFailed(data["data"])
             case _:  # pyright: ignore - lavalink could add new load types
                 msg = f"Unknown load type: '{load_type}'. Please report this to the library author."
                 __rest_log__.error(msg)

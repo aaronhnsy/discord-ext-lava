@@ -4,6 +4,7 @@ from ..types.objects.events import (
     EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStartEventData,
     TrackStuckEventData, WebSocketClosedEventData,
 )
+from .track import Track
 
 
 __all__ = [
@@ -28,29 +29,28 @@ class _EventBase:
 
 
 class TrackStartEvent(_EventBase):
-    __slots__ = ("encoded_track",)
+    __slots__ = ("track",)
 
     def __init__(self, data: TrackStartEventData) -> None:
         super().__init__(data)
-        self.encoded_track: str = data["encodedTrack"]
+        self.track: Track = Track(data["track"])
 
 
 class TrackEndEvent(_EventBase):
-    __slots__ = ("encoded_track", "reason",)
+    __slots__ = ("track", "reason",)
 
     def __init__(self, data: TrackEndEventData) -> None:
         super().__init__(data)
-        self.encoded_track: str = data["encodedTrack"]
+        self.track: Track = Track(data["track"])
         self.reason: TrackEndReason = TrackEndReason(data["reason"])
 
 
 class TrackExceptionEvent(_EventBase):
-    __slots__ = ("encoded_track", "message", "severity", "cause",)
+    __slots__ = ("track", "message", "severity", "cause",)
 
     def __init__(self, data: TrackExceptionEventData) -> None:
         super().__init__(data)
-        self.encoded_track: str = data["encodedTrack"]
-
+        self.track: Track = Track(data["track"])
         exception: ExceptionData = data["exception"]
         self.message: str | None = exception["message"]
         self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
@@ -58,11 +58,11 @@ class TrackExceptionEvent(_EventBase):
 
 
 class TrackStuckEvent(_EventBase):
-    __slots__ = ("encoded_track", "threshold_ms",)
+    __slots__ = ("track", "threshold_ms",)
 
     def __init__(self, data: TrackStuckEventData) -> None:
         super().__init__(data)
-        self.encoded_track: str = data["encodedTrack"]
+        self.track: Track = Track(data["track"])
         self.threshold_ms: int = data["thresholdMs"]
 
 

@@ -273,9 +273,9 @@ class FreeAddressRequestData(TypedDict):
     address: str
 
 
-############
-## Types ##
-############
+#########
+# Types #
+#########
 RequestMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
 RequestHeaders = TypedDict(
     "RequestHeaders", {

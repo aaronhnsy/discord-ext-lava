@@ -1,11 +1,11 @@
 import json
 import logging
-from typing import Generic
+from typing import Generic, Self
 
 # noinspection PyUnresolvedReferences
 import discord
 import discord.types.voice
-from typing_extensions import Self, TypeVar
+from typing_extensions import TypeVar
 
 from ._utilities import DeferredMessage, MISSING
 from .link import Link

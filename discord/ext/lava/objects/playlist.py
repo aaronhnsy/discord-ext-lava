@@ -1,15 +1,18 @@
-from ..types.objects.playlist import PlaylistData
+from . import Track
+from ..types.objects.playlist import PlaylistData, PlaylistInfoData
 
 
 __all__ = ["Playlist"]
 
 
 class Playlist:
-    __slots__ = ("name", "selected_track",)
+    __slots__ = ("name", "selected_track", "tracks",)
 
     def __init__(self, data: PlaylistData) -> None:
-        self.name: str = data["name"]
-        self.selected_track: int = data["selectedTrack"]
+        info: PlaylistInfoData = data["info"]
+        self.name: str = info["name"]
+        self.selected_track: int = info["selectedTrack"]
+        self.tracks: list[Track] = [Track(track) for track in data["tracks"]]
 
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Playlist name='{self.name}', selected_track={self.selected_track}>"
