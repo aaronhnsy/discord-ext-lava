@@ -1,10 +1,10 @@
+from .track import Track
 from ..enums import ExceptionSeverity, TrackEndReason
 from ..types.common import ExceptionData
 from ..types.objects.events import (
-    EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStartEventData,
-    TrackStuckEventData, WebSocketClosedEventData,
+    EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStartEventData, TrackStuckEventData,
+    WebSocketClosedEventData,
 )
-from .track import Track
 
 
 __all__ = [

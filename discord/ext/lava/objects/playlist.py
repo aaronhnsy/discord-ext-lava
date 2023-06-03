@@ -1,4 +1,4 @@
-from . import Track
+from .track import Track
 from ..types.objects.playlist import PlaylistData, PlaylistInfoData
 
 

@@ -62,8 +62,8 @@ class Track:
             isrc = track.external_ids.get("isrc")
         return Track(
             {
-                "encoded": discord.utils.MISSING,
-                "info":    {
+                "encoded":    discord.utils.MISSING,
+                "info":       {
                     "identifier": identifier,
                     "isSeekable": True,
                     "author":     author,
