@@ -128,7 +128,7 @@ class Link(Generic[PlayerT]):
             if self._session is None:
                 self._session = aiohttp.ClientSession()
             websocket = await self._session.ws_connect(
-                f"{self._ws_url or f'ws://{self._host}:{self._port}'}/v4/websocket",
+                url=f"{self._ws_url or f'ws://{self._host}:{self._port}'}/v4/websocket",
                 headers={
                     "Authorization": self._password,
                     "User-Id":       str(self._user_id),
