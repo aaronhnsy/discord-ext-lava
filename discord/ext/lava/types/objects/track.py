@@ -19,6 +19,6 @@ TrackPluginInfoData: TypeAlias = dict[str, Any]
 
 
 class TrackData(TypedDict):
+    encoded: str
     info: TrackInfoData
     pluginInfo: TrackPluginInfoData
-    encoded: str

@@ -16,8 +16,9 @@ class Track:
     )
 
     def __init__(self, data: TrackData) -> None:
+        # encoded track
         self.encoded: str = data["encoded"]
-
+        # track info
         info: TrackInfoData = data["info"]
         self.identifier: str = info["identifier"]
         self._is_seekable: bool = info["isSeekable"]
