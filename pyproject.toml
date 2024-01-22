@@ -7,10 +7,10 @@ name          = "discord-ext-lava"
 version       = "1.0.0a1"
 description   = "A discord.py extension for the Lavalink API and WebSocket."
 license       = "MIT"
-authors       = ["Aaron Hennessey <axelancerr@gmail.com>"]
+authors       = ["Aaron Hennessey <aaronhnsy@gmail.com>"]
 readme        = "README.md"
-homepage      = "https://github.com/Axelancerr/discord-ext-lava"
-repository    = "https://github.com/Axelancerr/discord-ext-lava"
+homepage      = "https://github.com/aaronhnsy/discord-ext-lava"
+repository    = "https://github.com/aaronhnsy/discord-ext-lava"
 documentation = "https://discord-ext-lava.readthedocs.io/en/latest/"
 keywords      = [
     "discord", "discord.py", "discord-ext", "lavalink", "lavaplayer", "api", "wrapper", "async"
@@ -62,8 +62,7 @@ colorama = "^0.4.0"
 jishaku  = { git = "https://github.com/Gorialis/jishaku/" }
 
 [tool.poetry.urls]
-"Issue Tracker" = "https://github.com/Axelancerr/discord-ext-lava/issues"
-"Discord"       = "https://discord.com/invite/w9f6NkQbde"
+"Issue Tracker" = "https://github.com/aaronhnsy/discord-ext-lava/issues"
 
 [tool.pyright]
 include                = ["discord/ext/lava"]

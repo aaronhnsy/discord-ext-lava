@@ -19,14 +19,12 @@ from .objects.result import Result
 from .objects.stats import Stats
 from .objects.track import Track
 from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
-from .types.rest import (
-    EmptyResultData, ErrorResultData, PlaylistResultData, RequestData, RequestKwargs, RequestMethod, RequestParameters,
-    SearchData, SearchResultData, TrackResultData,
-)
-from .types.websocket import EventPayload, Payload, PlayerUpdatePayload, ReadyPayload, StatsPayload
+from .types.rest import RequestData, RequestKwargs, RequestMethod, RequestParameters, SearchData
+from .types.websocket import Payload
 
 if TYPE_CHECKING:
-    from .player import Player  # type: ignore
+    # noinspection PyUnresolvedReferences
+    from .player import Player
 
 
 __all__ = ["Link"]
@@ -178,15 +176,13 @@ class Link(Generic[PlayerT]):
             f"Link '{self.identifier}' received a '{payload['op']}' payload.\n%s",
             DeferredMessage(_json.dumps, payload, indent=4),
         )
-        match op := payload["op"]:
+        match payload["op"]:
             case "ready":
-                assert isinstance(payload, ReadyPayload)
                 self._session_id = payload["sessionId"]
                 self._ready_event.set()
                 __ws_log__.info(f"Link '{self.identifier}' is ready.")
 
             case "playerUpdate":
-                assert isinstance(payload, PlayerUpdatePayload)
                 if not (player := self._players.get(int(payload["guildId"]))):
                     __ws_log__.warning(
                         f"Link '{self.identifier}' received a player update for a non-existent player "
@@ -196,11 +192,9 @@ class Link(Generic[PlayerT]):
                 await player._handle_player_update(payload)
 
             case "stats":
-                assert isinstance(payload, StatsPayload)
                 self._stats = Stats(payload)
 
             case "event":
-                assert isinstance(payload, EventPayload)
                 if not (player := self._players.get(int(payload["guildId"]))):
                     __ws_log__.warning(
                         f"Link '{self.identifier}' received a '{payload['type']}' event for a non-existent player "
@@ -210,7 +204,9 @@ class Link(Generic[PlayerT]):
                 await player._handle_event(payload)
 
             case _:  # pyright: ignore - lavalink could add new op codes.
-                __ws_log__.error(f"Link '{self.identifier}' received a payload with an unhandled op code: '{op}'.")
+                __ws_log__.error(
+                    f"Link '{self.identifier}' received a payload with an unhandled op code: '{payload["op"]}'."
+                )
 
     async def _listen(self) -> None:
         while True:
@@ -343,27 +339,22 @@ class Link(Generic[PlayerT]):
             SearchData,
             await self._request("GET", "/v4/loadtracks", parameters={"identifier": search})
         )
-        match load_type := data["loadType"]:
+        match data["loadType"]:
             case "track":
-                assert isinstance(data, TrackResultData)
                 source = Track(data["data"])
                 tracks = [source]
             case "playlist":
-                assert isinstance(data, PlaylistResultData)
                 source = Playlist(data["data"])
                 tracks = source.tracks
             case "search":
-                assert isinstance(data, SearchResultData)
                 source = [Track(track) for track in data["data"]]
                 tracks = source
             case "empty":
-                assert isinstance(data, EmptyResultData)
                 raise NoSearchResults(search=search)
             case "error":
-                assert isinstance(data, ErrorResultData)
                 raise SearchFailed(data["data"])
             case _:  # pyright: ignore - lavalink could add new load types
-                msg = f"Unknown load type: '{load_type}'. Please report this to the library author."
+                msg = f"Unknown load type: '{data["load_type"]}'. Please report this to the library author."
                 __rest_log__.error(msg)
                 raise SearchError(msg)
         return Result(source=source, tracks=tracks)

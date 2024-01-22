@@ -23,7 +23,7 @@ xmlns="http://www.w3.org/2000/svg">
 </svg>
 """
 
-_GITHUB: str = "https://github.com/Axelancerr/discord-ext-lava"
+_GITHUB: str = "https://github.com/aaronhnsy/discord-ext-lava"
 _GITHUB_SVG: str = """
 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
     <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 
