@@ -15,7 +15,7 @@ from .objects.track import Track
 from .types.common import VoiceChannel
 from .types.objects.track import TrackUserData
 from .types.rest import (
-    UpdatePlayerRequestData, UpdatePlayerRequestParameters, VoiceStateData, UpdatePlayerRequestTrackData
+    UpdatePlayerRequestData, UpdatePlayerRequestParameters, UpdatePlayerRequestTrackData, VoiceStateData,
 )
 from .types.websocket import EventPayload, PlayerUpdatePayload
 
