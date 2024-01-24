@@ -7,6 +7,7 @@ __all__ = [
     "LinkAlreadyConnected",
     "LinkConnectionError",
     "LinkNotReady",
+    "SearchError",
     "SearchFailed",
     "NoSearchResults",
 ]

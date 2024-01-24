@@ -4,7 +4,7 @@ from .common import ExceptionData, PlayerStateData
 from .objects.filters import FiltersData
 from .objects.playlist import PlaylistData
 from .objects.stats import StatsData
-from .objects.track import TrackData
+from .objects.track import TrackData, TrackUserData
 
 
 ##########
@@ -54,9 +54,14 @@ class UpdatePlayerRequestParameters(TypedDict):
     noReplace: NotRequired[bool]
 
 
-class UpdatePlayerRequestData(TypedDict):
-    encodedTrack: NotRequired[str | None]
+class UpdatePlayerRequestTrackData(TypedDict):
+    encoded: NotRequired[str | None]
     identifier: NotRequired[str]
+    userData: NotRequired[TrackUserData]
+
+
+class UpdatePlayerRequestData(TypedDict):
+    track: NotRequired[UpdatePlayerRequestTrackData]
     position: NotRequired[int]
     endTime: NotRequired[int | None]
     volume: NotRequired[int]
@@ -78,9 +83,9 @@ class SessionData(TypedDict):
     timeout: int
 
 
-##############################################
-## GET ## /v4/loadtracks?{identifier=<str>} ##
-##############################################
+############################################
+# GET ## /v4/loadtracks?{identifier=<str>} #
+############################################
 class SearchRequestParameters(TypedDict):
     identifier: str
 
@@ -123,9 +128,9 @@ class DecodeTrackRequestParameters(TypedDict):
 DecodedTrackData: TypeAlias = TrackData
 
 
-##############################
-## POST ## /v4/decodetracks ##
-##############################
+############################
+# POST ## /v4/decodetracks #
+############################
 DecodeTracksRequestData: TypeAlias = list[str]
 DecodedTracksData: TypeAlias = list[DecodedTrackData]
 

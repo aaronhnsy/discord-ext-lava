@@ -13,7 +13,10 @@ from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent,
 from .objects.filters import Filter
 from .objects.track import Track
 from .types.common import VoiceChannel
-from .types.rest import UpdatePlayerRequestData, UpdatePlayerRequestParameters, VoiceStateData
+from .types.objects.track import TrackUserData
+from .types.rest import (
+    UpdatePlayerRequestData, UpdatePlayerRequestParameters, VoiceStateData, UpdatePlayerRequestTrackData
+)
 from .types.websocket import EventPayload, PlayerUpdatePayload
 
 
@@ -150,6 +153,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         *,
         track: Track | None = MISSING,
         track_identifier: str = MISSING,
+        track_user_data: TrackUserData = MISSING,
         track_end_time: int = MISSING,
         replace_current_track: bool = MISSING,
         position: int = MISSING,
@@ -168,11 +172,17 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if replace_current_track is not MISSING:
             parameters["noReplace"] = not replace_current_track
 
-        data: UpdatePlayerRequestData = {}
+        track_data: UpdatePlayerRequestTrackData = {}
         if track is not MISSING:
-            data["encodedTrack"] = track.encoded if track is not None else None
+            track_data["encoded"] = track.encoded if track is not None else None
         if track_identifier is not MISSING:
-            data["identifier"] = track_identifier
+            track_data["identifier"] = track_identifier
+        if track_user_data is not MISSING:
+            track_data["userData"] = track_user_data
+
+        data: UpdatePlayerRequestData = {
+            "track": track_data,
+        }
         if track_end_time is not MISSING:
             data["endTime"] = track_end_time
         if position is not MISSING:
