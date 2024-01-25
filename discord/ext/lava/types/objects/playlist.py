@@ -1,4 +1,4 @@
-from typing import Any, TypeAlias, TypedDict
+from typing import Any, TypedDict
 
 from .track import TrackData
 
@@ -8,7 +8,7 @@ class PlaylistInfoData(TypedDict):
     selectedTrack: int
 
 
-PlaylistPluginInfoData: TypeAlias = dict[str, Any]
+type PlaylistPluginInfoData = dict[str, Any]
 
 
 class PlaylistData(TypedDict):

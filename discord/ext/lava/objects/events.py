@@ -1,9 +1,8 @@
 from .track import Track
 from ..enums import ExceptionSeverity, TrackEndReason
-from ..types.common import ExceptionData
 from ..types.objects.events import (
-    EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStartEventData, TrackStuckEventData,
-    WebSocketClosedEventData,
+    EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStuckEventData, WebSocketClosedEventData,
+    TrackEventData,
 )
 
 
@@ -16,7 +15,7 @@ __all__ = [
 ]
 
 
-class _EventBase:
+class _Event:
     __slots__ = ("type", "guild_id",)
 
     def __init__(self, data: EventData) -> None:
@@ -28,45 +27,46 @@ class _EventBase:
                f"{', '.join(f'{attr}={getattr(self, attr)}' for attr in self.__slots__)}>"
 
 
-class TrackStartEvent(_EventBase):
+class _TrackEvent(_Event):
     __slots__ = ("track",)
 
-    def __init__(self, data: TrackStartEventData) -> None:
+    def __init__(self, data: TrackEventData) -> None:
         super().__init__(data)
         self.track: Track = Track(data["track"])
 
 
-class TrackEndEvent(_EventBase):
-    __slots__ = ("track", "reason",)
+class TrackStartEvent(_TrackEvent):
+    pass
+
+
+class TrackEndEvent(_TrackEvent):
+    __slots__ = ("reason",)
 
     def __init__(self, data: TrackEndEventData) -> None:
         super().__init__(data)
-        self.track: Track = Track(data["track"])
         self.reason: TrackEndReason = TrackEndReason(data["reason"])
 
 
-class TrackExceptionEvent(_EventBase):
-    __slots__ = ("track", "message", "severity", "cause",)
+class TrackExceptionEvent(_TrackEvent):
+    __slots__ = ("message", "severity", "cause",)
 
     def __init__(self, data: TrackExceptionEventData) -> None:
         super().__init__(data)
-        self.track: Track = Track(data["track"])
-        exception: ExceptionData = data["exception"]
+        exception = data["exception"]
         self.message: str | None = exception["message"]
         self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
         self.cause: str = exception["cause"]
 
 
-class TrackStuckEvent(_EventBase):
+class TrackStuckEvent(_TrackEvent):
     __slots__ = ("track", "threshold_ms",)
 
     def __init__(self, data: TrackStuckEventData) -> None:
         super().__init__(data)
-        self.track: Track = Track(data["track"])
         self.threshold_ms: int = data["thresholdMs"]
 
 
-class WebSocketClosedEvent(_EventBase):
+class WebSocketClosedEvent(_Event):
     __slots__ = ("code", "reason", "by_remote",)
 
     def __init__(self, data: WebSocketClosedEventData) -> None:

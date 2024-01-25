@@ -21,7 +21,8 @@ from .types.websocket import EventPayload, PlayerUpdatePayload
 
 
 __all__ = ["Player"]
-__log__ = logging.getLogger("discord.ext.lava.player")
+
+__log__: logging.Logger = logging.getLogger("discord.ext.lava.player")
 
 ClientT = TypeVar(
     "ClientT",

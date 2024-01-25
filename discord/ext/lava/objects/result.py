@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from collections.abc import Sequence
 
 from .playlist import Playlist
 from .track import Track
@@ -7,7 +7,8 @@ from ..types.common import SpotifySource
 
 __all__ = ["Result"]
 
-ResultSource: TypeAlias = SpotifySource | Playlist | list[Track] | Track
+
+type ResultSource = SpotifySource | Playlist | Sequence[Track] | Track
 
 
 class Result:
@@ -16,10 +17,10 @@ class Result:
         self,
         *,
         source: ResultSource,
-        tracks: list[Track],
+        tracks: Sequence[Track],
     ) -> None:
         self.source: ResultSource = source
-        self.tracks: list[Track] = tracks
+        self.tracks: Sequence[Track] = tracks
 
     def __repr__(self) -> str:
         return f"<discord.ext.lava.Result source={self.source}>"

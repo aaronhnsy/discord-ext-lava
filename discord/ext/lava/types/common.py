@@ -1,19 +1,18 @@
 from collections.abc import Callable
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypedDict
 
 import discord
 import spotipy
 
 
-JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+type JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+type JSONDumps = Callable[[JSON], str]
+type JSONLoads = Callable[..., JSON]
 
-JSONDumps: TypeAlias = Callable[[JSON], str]
-JSONLoads: TypeAlias = Callable[..., JSON]
+type VoiceChannel = discord.VoiceChannel | discord.StageChannel
 
-VoiceChannel: TypeAlias = discord.VoiceChannel | discord.StageChannel
-
-SpotifySearchType: TypeAlias = Literal["album", "playlist", "artist", "track"]
-SpotifySource: TypeAlias = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track
+type SpotifySearchType = Literal["album", "playlist", "artist", "track"]
+type SpotifySource = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy.Track
 
 
 class PlayerStateData(TypedDict):

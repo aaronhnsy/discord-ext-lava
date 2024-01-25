@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypedDict
 
 from .track import TrackData
 from ..common import ExceptionData
@@ -44,17 +44,12 @@ class WebSocketClosedEventData(TypedDict):
     byRemote: bool
 
 
-EventType: TypeAlias = Literal[
+type EventType = Literal[
     "TrackStartEvent",
     "TrackEndEvent",
     "TrackExceptionEvent",
     "TrackStuckEvent",
     "WebSocketClosedEvent"
 ]
-EventData: TypeAlias = (
-    TrackStartEventData
-    | TrackEndEventData
-    | TrackExceptionEventData
-    | TrackStuckEventData
-    | WebSocketClosedEventData
-)
+type TrackEventData = TrackStartEventData | TrackEndEventData | TrackExceptionEventData | TrackStuckEventData
+type EventData = TrackEventData | WebSocketClosedEventData

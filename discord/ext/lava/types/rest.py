@@ -1,4 +1,4 @@
-from typing import Literal, Never, NotRequired, TypeAlias, TypedDict
+from typing import Literal, Never, NotRequired, TypedDict
 
 from .common import ExceptionData, PlayerStateData
 from .objects.filters import FiltersData
@@ -115,7 +115,7 @@ class ErrorResultData(TypedDict):
     data: ExceptionData
 
 
-SearchData = TrackResultData | PlaylistResultData | SearchResultData | EmptyResultData | ErrorResultData
+type SearchData = TrackResultData | PlaylistResultData | SearchResultData | EmptyResultData | ErrorResultData
 
 
 ######################################################
@@ -125,14 +125,14 @@ class DecodeTrackRequestParameters(TypedDict):
     encodedTrack: str
 
 
-DecodedTrackData: TypeAlias = TrackData
+type DecodedTrackData = TrackData
 
 
 ############################
 # POST ## /v4/decodetracks #
 ############################
-DecodeTracksRequestData: TypeAlias = list[str]
-DecodedTracksData: TypeAlias = list[DecodedTrackData]
+type DecodeTracksRequestData = list[str]
+type DecodedTracksData = list[DecodedTrackData]
 
 
 ##################
@@ -172,19 +172,19 @@ class LavalinkInfoData(TypedDict):
 ###################
 # GET # /v4/stats #
 ###################
-LavalinkStatsData: TypeAlias = StatsData
+type LavalinkStatsData = StatsData
 
 
 ##################
 # GET # /version #
 ##################
-LavalinkVersionData: TypeAlias = str
+type LavalinkVersionData = str
 
 
 #################################
 # GET # /v4/routeplanner/status #
 #################################
-IpBlockType: TypeAlias = Literal["Inet4Address", "Inet6Address"]
+type IpBlockType = Literal["Inet4Address", "Inet6Address"]
 
 
 class IpBlockData(TypedDict):
@@ -262,7 +262,7 @@ NoRoutePlannerStatusData = TypedDict(
     }
 )
 
-RoutePlannerStatus: TypeAlias = (
+type RoutePlannerStatus = (
     RotatingIpRoutePlannerStatusData
     | NanoIpRoutePlannerStatusData
     | RotatingNanoIpRoutePlannerStatusData
@@ -281,17 +281,17 @@ class FreeAddressRequestData(TypedDict):
 #########
 # Types #
 #########
-RequestMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
+type RequestMethod = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
 RequestHeaders = TypedDict(
     "RequestHeaders", {
         "Authorization": str,
         "Content-Type":  NotRequired[Literal["application/json"]]
     }
 )
-RequestParameters: TypeAlias = (
+type RequestParameters = (
     ErrorRequestParameters | UpdatePlayerRequestParameters | SearchRequestParameters | DecodeTrackRequestParameters
 )
-RequestData: TypeAlias = (
+type RequestData = (
     UpdatePlayerRequestData | UpdateSessionRequestData | DecodeTracksRequestData | FreeAddressRequestData
 )
 

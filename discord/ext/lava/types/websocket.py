@@ -1,4 +1,4 @@
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypedDict
 
 from .common import PlayerStateData
 from .objects.events import EventData
@@ -26,14 +26,14 @@ class PlayerUpdatePayload(TypedDict):
 ############
 # Stats OP #
 ############
-StatsPayload: TypeAlias = StatsData
+type StatsPayload = StatsData
 
 ############
 # Event OP #
 ############
-EventPayload: TypeAlias = EventData
+type EventPayload = EventData
 
 ###########
 # Payload #
 ###########
-Payload: TypeAlias = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
+type Payload = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
