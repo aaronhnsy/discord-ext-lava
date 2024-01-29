@@ -2,8 +2,7 @@ import json
 import logging
 from typing import Generic, Self
 
-# noinspection PyUnresolvedReferences
-import discord
+import discord  # type: ignore
 import discord.types.voice
 from typing_extensions import TypeVar
 
@@ -35,14 +34,22 @@ ClientT = TypeVar(
 class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     def __init__(self, *, link: Link) -> None:
+        # player info
         self.client: ClientT = MISSING
         self.channel: VoiceChannel = MISSING
-
+        self._link: Link = link
+        # voice state
         self._token: str | None = None
         self._endpoint: str | None = None
         self._session_id: str | None = None
-
-        self._link: Link = link
+        # player state (websocket)
+        self._time: int = 0
+        self._position: int = 0
+        self._connected: bool = False
+        self._ping: int = -1
+        # player state (http)
+        self._paused = False
+        self._volume = 100
 
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
         self.client = client  # pyright: ignore
@@ -59,6 +66,24 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     def guild(self) -> discord.Guild:
         return self.channel.guild
 
+    @property
+    def volume(self) -> int:
+        return self._volume
+
+    @property
+    def ping(self) -> int:
+        return self._ping
+
+    @property
+    def position(self) -> float:
+        return self._position
+
+    def is_connected(self) -> bool:
+        return self._connected and self.channel is not None
+
+    def is_paused(self) -> bool:
+        return self._paused
+
     # websocket
 
     _EVENT_MAPPING = {
@@ -71,13 +96,11 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     async def _handle_event(self, payload: EventPayload, /) -> None:
         event_type = payload["type"]
-
-        if event := self._EVENT_MAPPING.get(event_type):
-            dispatch_name, event = event
-            event = event(payload)  # pyright: ignore
+        if event_items := self._EVENT_MAPPING.get(event_type):
+            dispatch_name, event_cls = event_items
+            event = event_cls(payload)  # pyright: ignore
         else:
             dispatch_name, event = event_type, payload
-
         self.client.dispatch(f"lava_{dispatch_name}", event, self)
         __log__.info(
             f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{event_type}' event to "
@@ -85,7 +108,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         )
 
     async def _handle_player_update(self, payload: PlayerUpdatePayload, /) -> None:
-        ...
+        self._time = payload["state"]["time"]
+        self._position = payload["state"]["position"]
+        self._connected = payload["state"]["connected"]
+        self._ping = payload["state"]["ping"]
 
     # voice state
 
@@ -165,14 +191,13 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     ) -> None:
         if not self._link.is_ready():
             await self._link._ready_event.wait()
-
         if track is not None and track_identifier is not MISSING:
             raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
-
+        # request parameters
         parameters: UpdatePlayerRequestParameters = {}
         if replace_current_track is not MISSING:
             parameters["noReplace"] = not replace_current_track
-
+        # track data
         track_data: UpdatePlayerRequestTrackData = {}
         if track is not MISSING:
             track_data["encoded"] = track.encoded if track is not None else None
@@ -180,7 +205,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             track_data["identifier"] = track_identifier
         if track_user_data is not MISSING:
             track_data["userData"] = track_user_data
-
+        # request data
         data: UpdatePlayerRequestData = {
             "track": track_data,
         }
@@ -196,7 +221,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             data["filters"] = filter.data
         if voice_state is not MISSING:
             data["voice"] = voice_state
-
+        # send request
         await self._link._request(
             "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
             parameters=parameters, data=data,
@@ -210,15 +235,19 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
     # pausing
 
     async def pause(self) -> None:
+        self._paused = True
         await self.update(paused=True)
 
     async def set_pause_state(self, state: bool) -> None:
+        self._paused = state
         await self.update(paused=state)
 
     async def resume(self) -> None:
+        self._paused = False
         await self.update(paused=False)
 
     # volume
 
     async def set_volume(self, volume: int, /) -> None:
+        self._volume = volume
         await self.update(volume=volume)
