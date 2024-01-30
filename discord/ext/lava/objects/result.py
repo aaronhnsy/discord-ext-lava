@@ -1,8 +1,10 @@
+# Standard Library
 from collections.abc import Sequence
 
+# Local Folder
+from ..types.common import SpotifySource
 from .playlist import Playlist
 from .track import Track
-from ..types.common import SpotifySource
 
 
 __all__ = ["Result"]

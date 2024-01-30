@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+# Standard Library
 import abc
 import collections
 
-from ..types.objects.filters import (
-    ChannelMixData, DistortionData, EqualizerData, FiltersData, KaraokeData, LowPassData, RotationData, TimescaleData,
-    TremoloData, VibratoData,
-)
+# Local Folder
+from ..types.objects.filters import ChannelMixData, DistortionData, EqualizerData, FiltersData, KaraokeData
+from ..types.objects.filters import LowPassData, RotationData, TimescaleData, TremoloData, VibratoData
 
 
 __all__ = [

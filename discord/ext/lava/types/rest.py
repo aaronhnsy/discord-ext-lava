@@ -1,5 +1,7 @@
+# Standard Library
 from typing import Literal, Never, NotRequired, TypedDict
 
+# Local Folder
 from .common import ExceptionData, PlayerStateData
 from .objects.filters import FiltersData
 from .objects.playlist import PlaylistData

@@ -1,3 +1,4 @@
+# Standard Library
 import asyncio
 import itertools
 import json as _json
@@ -5,14 +6,16 @@ import logging
 import random
 import string
 import traceback
-from typing import Generic, TYPE_CHECKING, cast
-
-import aiohttp
-import spotipy
+from typing import TYPE_CHECKING, Generic, cast
 from typing_extensions import TypeVar
 
+# Libraries
+import aiohttp
+import spotipy
+
+# Local Folder
 from ._backoff import Backoff
-from ._utilities import DeferredMessage, SPOTIFY_REGEX, chunks, json_or_text, ordinal
+from ._utilities import SPOTIFY_REGEX, DeferredMessage, chunks, json_or_text, ordinal
 from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchError, SearchFailed
 from .objects.playlist import Playlist
 from .objects.result import Result
@@ -22,9 +25,10 @@ from .types.common import JSON, JSONDumps, JSONLoads, SpotifySearchType
 from .types.rest import RequestData, RequestKwargs, RequestMethod, RequestParameters, SearchData
 from .types.websocket import Payload
 
+
 if TYPE_CHECKING:
-    # noinspection PyUnresolvedReferences
-    from .player import Player
+    # Local Folder
+    from .player import Player  # type: ignore
 
 
 __all__ = ["Link"]
@@ -122,6 +126,7 @@ class Link(Generic[PlayerT]):
         if self.is_connected():
             raise LinkAlreadyConnected(f"Link '{self.identifier}' is already connected.")
         try:
+            # Local Folder
             from . import __version__
             if self._session is None:
                 self._session = aiohttp.ClientSession()

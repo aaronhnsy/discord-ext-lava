@@ -1,6 +1,8 @@
+# Standard Library
 from collections.abc import Callable
 from typing import Literal, TypedDict
 
+# Libraries
 import discord
 import spotipy
 

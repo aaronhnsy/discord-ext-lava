@@ -1,13 +1,16 @@
+# Standard Library
 import functools
 import itertools
 import re
 from collections.abc import Callable, Iterable
 from typing import Any, ParamSpec
-
-import aiohttp
-import discord.utils
 from typing_extensions import TypeVar
 
+# Libraries
+import aiohttp
+import discord.utils
+
+# Local Folder
 from .types.common import JSON, JSONLoads
 
 

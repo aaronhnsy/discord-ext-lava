@@ -1,9 +1,8 @@
-from .track import Track
+# Local Folder
 from ..enums import ExceptionSeverity, TrackEndReason
-from ..types.objects.events import (
-    EventData, EventType, TrackEndEventData, TrackExceptionEventData, TrackStuckEventData, WebSocketClosedEventData,
-    TrackEventData,
-)
+from ..types.objects.events import EventData, EventType, TrackEndEventData, TrackEventData, TrackExceptionEventData
+from ..types.objects.events import TrackStuckEventData, WebSocketClosedEventData
+from .track import Track
 
 
 __all__ = [

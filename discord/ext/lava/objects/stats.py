@@ -1,3 +1,4 @@
+# Local Folder
 from ..types.objects.stats import CPUStatsData, FrameStatsData, MemoryStatsData, StatsData
 
 

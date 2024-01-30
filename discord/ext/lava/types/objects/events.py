@@ -1,7 +1,9 @@
+# Standard Library
 from typing import Literal, TypedDict
 
-from .track import TrackData
+# Local Folder
 from ..common import ExceptionData
+from .track import TrackData
 
 
 class TrackStartEventData(TypedDict):

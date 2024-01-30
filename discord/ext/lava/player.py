@@ -1,21 +1,23 @@
+# Standard Library
 import json
 import logging
 from typing import Generic, Self
-
-import discord  # type: ignore
-import discord.types.voice
 from typing_extensions import TypeVar
 
-from ._utilities import DeferredMessage, MISSING
+# Libraries
+import discord  # type: ignore
+import discord.types.voice
+
+# Local Folder
+from ._utilities import MISSING, DeferredMessage
 from .link import Link
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent, WebSocketClosedEvent
 from .objects.filters import Filter
 from .objects.track import Track
 from .types.common import VoiceChannel
 from .types.objects.track import TrackUserData
-from .types.rest import (
-    UpdatePlayerRequestData, UpdatePlayerRequestParameters, UpdatePlayerRequestTrackData, VoiceStateData,
-)
+from .types.rest import UpdatePlayerRequestData, UpdatePlayerRequestParameters, UpdatePlayerRequestTrackData
+from .types.rest import VoiceStateData
 from .types.websocket import EventPayload, PlayerUpdatePayload
 
 
