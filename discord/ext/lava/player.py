@@ -50,6 +50,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         # player state (http)
         self._paused = False
         self._volume = 100
+        self._filter = Filter()
 
     def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
         self.client = client  # pyright: ignore
@@ -67,10 +68,6 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         return self.channel.guild
 
     @property
-    def volume(self) -> int:
-        return self._volume
-
-    @property
     def ping(self) -> int:
         return self._ping
 
@@ -80,9 +77,6 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
 
     def is_connected(self) -> bool:
         return self._connected and self.channel is not None
-
-    def is_paused(self) -> bool:
-        return self._paused
 
     # websocket
 
@@ -213,41 +207,68 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             data["endTime"] = track_end_time
         if position is not MISSING:
             data["position"] = position
+
+        # paused
         if paused is not MISSING:
+            if not isinstance(paused, bool):
+                raise TypeError("'paused' must be a boolean value.")
             data["paused"] = paused
+        # volume
         if volume is not MISSING:
+            if not isinstance(volume, int) or not 0 <= volume <= 1000:
+                raise TypeError("'volume' must be an integer between '0' and '1000'.")
             data["volume"] = volume
+        # filters
         if filter is not MISSING:
+            if not isinstance(filter, Filter):
+                raise TypeError("'filter' must be an instance of 'lava.Filter'.")
             data["filters"] = filter.data
+        # voice state
         if voice_state is not MISSING:
             data["voice"] = voice_state
+
         # send request
         await self._link._request(
             "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
             parameters=parameters, data=data,
         )
 
-    # position
-
-    async def set_position(self, position: int, /) -> None:
-        await self.update(position=position)
+        # set player state
+        if "paused" in data:
+            self._paused = data["paused"]
+        if "volume" in data:
+            self._volume = data["volume"]
+        if "filters" in data:
+            self._filter = filter
 
     # pausing
 
+    def is_paused(self) -> bool:
+        return self._paused
+
     async def pause(self) -> None:
-        self._paused = True
         await self.update(paused=True)
 
     async def set_pause_state(self, state: bool) -> None:
-        self._paused = state
         await self.update(paused=state)
 
     async def resume(self) -> None:
-        self._paused = False
         await self.update(paused=False)
 
     # volume
 
+    @property
+    def volume(self) -> int:
+        return self._volume
+
     async def set_volume(self, volume: int, /) -> None:
-        self._volume = volume
         await self.update(volume=volume)
+
+    # filters
+
+    @property
+    def filter(self) -> Filter:
+        return self._filter
+
+    async def set_filter(self, filter: Filter, /) -> None:
+        await self.update(filter=filter)
