@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-class _Event:
+class _EventBase:
     __slots__ = ("type", "guild_id",)
 
     def __init__(self, data: EventData) -> None:
@@ -26,7 +26,7 @@ class _Event:
                f"{', '.join(f'{attr}={getattr(self, attr)}' for attr in self.__slots__)}>"
 
 
-class _TrackEvent(_Event):
+class _TrackEvent(_EventBase):
     __slots__ = ("track",)
 
     def __init__(self, data: TrackEventData) -> None:
@@ -65,7 +65,7 @@ class TrackStuckEvent(_TrackEvent):
         self.threshold_ms: int = data["thresholdMs"]
 
 
-class WebSocketClosedEvent(_Event):
+class WebSocketClosedEvent(_EventBase):
     __slots__ = ("code", "reason", "by_remote",)
 
     def __init__(self, data: WebSocketClosedEventData) -> None:

@@ -71,13 +71,10 @@ class Link(Generic[PlayerT]):
         self._json_dumps: JSONDumps = json_dumps or _json.dumps
         self._json_loads: JSONLoads = json_loads or _json.loads
 
-        if spotify_client_id is not None and spotify_client_secret is not None:
-            self._spotify: spotipy.Client | None = spotipy.Client(
-                client_id=spotify_client_id,
-                client_secret=spotify_client_secret,
-            )
-        else:
-            self._spotify: spotipy.Client | None = None
+        self._spotify: spotipy.Client | None = spotipy.Client(
+            client_id=spotify_client_id,
+            client_secret=spotify_client_secret,
+        ) if spotify_client_id and spotify_client_secret else None
 
         self._backoff: Backoff = Backoff(base=2, max_time=60 * 5, max_tries=5)
         self._task: asyncio.Task[None] | None = None
@@ -92,7 +89,7 @@ class Link(Generic[PlayerT]):
         self._players: dict[int, PlayerT] = {}
 
     def __repr__(self) -> str:
-        return "<discord.ext.lava.Link>"
+        return "<discord.ext.lava.Link: >"
 
     # properties
 

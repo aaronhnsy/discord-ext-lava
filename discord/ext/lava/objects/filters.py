@@ -27,7 +27,7 @@ class _FilterBase(metaclass=abc.ABCMeta):
     __slots__ = ()
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.{self.__class__.__name__} " \
+        return f"<discord.ext.lava.{self.__class__.__name__}: " \
                f"{', '.join(f'{attr[1:]}={getattr(self, attr)}' for attr in self.__slots__)}>"
 
     @property

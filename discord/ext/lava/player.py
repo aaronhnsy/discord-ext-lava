@@ -22,18 +22,18 @@ from .types.websocket import EventPayload, PlayerUpdatePayload
 
 
 __all__ = ["Player"]
-
 __log__: logging.Logger = logging.getLogger("discord.ext.lava.player")
 
-ClientT = TypeVar(
-    "ClientT",
-    bound=discord.Client | discord.AutoShardedClient,
-    default=discord.Client,
-    covariant=True
-)
+ClientT = TypeVar("ClientT", bound=discord.Client, default=discord.Client, covariant=True)
 
 
 class Player(discord.VoiceProtocol, Generic[ClientT]):
+
+    def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
+        self.client = client  # pyright: ignore
+        self.channel = channel  # pyright: ignore
+        self._link._players[self.guild.id] = self
+        return self
 
     def __init__(self, *, link: Link) -> None:
         # player info
@@ -54,14 +54,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self._volume = 100
         self._filter = Filter()
 
-    def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
-        self.client = client  # pyright: ignore
-        self.channel = channel  # pyright: ignore
-        self._link._players[self.guild.id] = self
-        return self
-
     def __repr__(self) -> str:
-        return "<discord.ext.lava.Player>"
+        return f"<discord.ext.lava.Player: is_connected={self.is_connected()}>"
 
     # properties
 
@@ -78,7 +72,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         return self._position
 
     def is_connected(self) -> bool:
-        return self._connected and self.channel is not None
+        return self._connected
 
     # websocket
 

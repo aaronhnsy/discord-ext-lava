@@ -16,4 +16,4 @@ class Playlist:
         self.tracks: list[Track] = [Track(track) for track in data["tracks"]]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.Playlist name='{self.name}', selected_track={self.selected_track}>"
+        return f"<discord.ext.lava.Playlist: name='{self.name}', selected_track={self.selected_track}>"
