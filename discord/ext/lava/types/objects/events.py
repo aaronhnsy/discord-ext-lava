@@ -1,7 +1,7 @@
-# Standard Library
 from typing import Literal, TypedDict
 
-# Local Folder
+from ...objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent
+from ...objects.events import WebSocketClosedEvent
 from ..common import ExceptionData
 from .track import TrackData
 
@@ -44,6 +44,14 @@ class WebSocketClosedEventData(TypedDict):
     code: int
     reason: str
     byRemote: bool
+
+
+class EventMapping(TypedDict):
+    TrackStartEvent: type[TrackStartEvent]
+    TrackEndEvent: type[TrackEndEvent]
+    TrackExceptionEvent: type[TrackExceptionEvent]
+    TrackStuckEvent: type[TrackStuckEvent]
+    WebSocketClosedEvent: type[WebSocketClosedEvent]
 
 
 type EventType = Literal[

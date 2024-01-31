@@ -1,4 +1,3 @@
-# Local Folder
 from .events import *
 from .filters import *
 from .playlist import *

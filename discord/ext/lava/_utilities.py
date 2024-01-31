@@ -1,30 +1,26 @@
-# Standard Library
 import functools
 import itertools
 import re
 from collections.abc import Callable, Iterable
-from typing import Any, ParamSpec
-from typing_extensions import TypeVar
+from typing import Any
 
-# Libraries
 import aiohttp
 import discord.utils
 
-# Local Folder
 from .types.common import JSON, JSONLoads
-
-
-T = TypeVar("T")
-P = ParamSpec("P")
 
 
 def ordinal(number: int) -> str:
     return "%d%s" % (number, "tsnrhtdd"[(number / 10 % 10 != 1) * (number % 10 < 4) * number % 10::4])
 
 
-def chunks(iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
+def chunks[T](iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     it = iter(iterable)
     return iter(lambda: tuple(itertools.islice(it, n)), ())
+
+
+def get_event_dispatch_name(name: str) -> str:
+    return f"lava_{re.sub("(?<!^)(?=[A-Z])", "_", name).lower().replace("_event", "")}"
 
 
 async def json_or_text(response: aiohttp.ClientResponse, json_loads: JSONLoads) -> JSON | str:
@@ -36,7 +32,7 @@ async def json_or_text(response: aiohttp.ClientResponse, json_loads: JSONLoads) 
 
 class DeferredMessage:
 
-    def __init__(self, callable: Callable[P, str], *args: P.args, **kwargs: P.kwargs) -> None:
+    def __init__[**P](self, callable: Callable[P, str], *args: P.args, **kwargs: P.kwargs) -> None:
         self.callable: functools.partial[str] = functools.partial(callable, *args, **kwargs)
 
     def __str__(self) -> str:

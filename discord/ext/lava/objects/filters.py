@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-# Standard Library
 import abc
 import collections
+from typing import Self
 
-# Local Folder
 from ..types.objects.filters import ChannelMixData, DistortionData, EqualizerData, FiltersData, KaraokeData
 from ..types.objects.filters import LowPassData, RotationData, TimescaleData, TremoloData, VibratoData
 
@@ -27,8 +26,8 @@ class _FilterBase(metaclass=abc.ABCMeta):
     __slots__ = ()
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.{self.__class__.__name__}: " \
-               f"{', '.join(f'{attr[1:]}={getattr(self, attr)}' for attr in self.__slots__)}>"
+        attributes = [f"{x.lstrip("_")}={getattr(self, x)}" for x in self.__slots__]
+        return f"<discord.ext.lava.{self.__class__.__name__}: {", ".join(attributes)}>"
 
     @property
     @abc.abstractmethod
@@ -244,27 +243,27 @@ class ChannelMix(_FilterBase):
         }
 
     @classmethod
-    def mono(cls) -> ChannelMix:
+    def mono(cls) -> Self:
         return cls(left_to_left=0.5, left_to_right=0.5, right_to_left=0.5, right_to_right=0.5)
 
     @classmethod
-    def switch(cls) -> ChannelMix:
+    def switch(cls) -> Self:
         return cls(left_to_left=0.0, left_to_right=1.0, right_to_left=1.0, right_to_right=0.0)
 
     @classmethod
-    def only_left(cls) -> ChannelMix:
+    def only_left(cls) -> Self:
         return cls(left_to_left=1.0, left_to_right=0.0, right_to_left=0.0, right_to_right=0.0)
 
     @classmethod
-    def full_left(cls) -> ChannelMix:
+    def full_left(cls) -> Self:
         return cls(left_to_left=0.5, left_to_right=0.0, right_to_left=0.5, right_to_right=0.0)
 
     @classmethod
-    def only_right(cls) -> ChannelMix:
+    def only_right(cls) -> Self:
         return cls(left_to_left=0.0, left_to_right=0.0, right_to_left=0.0, right_to_right=1.0)
 
     @classmethod
-    def full_right(cls) -> ChannelMix:
+    def full_right(cls) -> Self:
         return cls(left_to_left=0.0, left_to_right=0.5, right_to_left=0.0, right_to_right=0.5)
 
 

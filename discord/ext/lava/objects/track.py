@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-# Libraries
-import discord.utils
 import spotipy
 
-# Local Folder
+from .._utilities import MISSING
 from ..types.objects.track import TrackData, TrackInfoData, TrackPluginInfoData, TrackUserData
 
 
@@ -67,7 +65,7 @@ class Track:
             isrc = track.external_ids.get("isrc")
         return Track(
             {
-                "encoded":    discord.utils.MISSING,
+                "encoded":    MISSING,
                 "info":       {
                     "identifier": identifier,
                     "isSeekable": True,
@@ -82,6 +80,6 @@ class Track:
                     "sourceName": "spotify",
                 },
                 "pluginInfo": {},
-                "userData":  {},
+                "userData":   {},
             }
         )

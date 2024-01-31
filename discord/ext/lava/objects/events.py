@@ -1,8 +1,14 @@
-# Local Folder
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ..enums import ExceptionSeverity, TrackEndReason
-from ..types.objects.events import EventData, EventType, TrackEndEventData, TrackEventData, TrackExceptionEventData
-from ..types.objects.events import TrackStuckEventData, WebSocketClosedEventData
 from .track import Track
+
+
+if TYPE_CHECKING:
+    from ..types.objects.events import EventData, EventType, TrackEndEventData, TrackEventData
+    from ..types.objects.events import TrackExceptionEventData, TrackStuckEventData, WebSocketClosedEventData
 
 
 __all__ = [
@@ -11,10 +17,11 @@ __all__ = [
     "TrackExceptionEvent",
     "TrackStuckEvent",
     "WebSocketClosedEvent",
+    "UnhandledEvent",
 ]
 
 
-class _EventBase:
+class _BaseEvent:
     __slots__ = ("type", "guild_id",)
 
     def __init__(self, data: EventData) -> None:
@@ -22,11 +29,11 @@ class _EventBase:
         self.guild_id: str = data["guildId"]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.{self.__class__.__name__}: " \
-               f"{', '.join(f'{attr}={getattr(self, attr)}' for attr in self.__slots__)}>"
+        attributes = [f"{x}={getattr(self, x)}" for x in self.__slots__ if not x.startswith("_")]
+        return f"<discord.ext.lava.{self.__class__.__name__}: {", ".join(attributes)}>"
 
 
-class _TrackEvent(_EventBase):
+class _TrackEvent(_BaseEvent):
     __slots__ = ("track",)
 
     def __init__(self, data: TrackEventData) -> None:
@@ -58,14 +65,14 @@ class TrackExceptionEvent(_TrackEvent):
 
 
 class TrackStuckEvent(_TrackEvent):
-    __slots__ = ("track", "threshold_ms",)
+    __slots__ = ("threshold_ms",)
 
     def __init__(self, data: TrackStuckEventData) -> None:
         super().__init__(data)
         self.threshold_ms: int = data["thresholdMs"]
 
 
-class WebSocketClosedEvent(_EventBase):
+class WebSocketClosedEvent(_BaseEvent):
     __slots__ = ("code", "reason", "by_remote",)
 
     def __init__(self, data: WebSocketClosedEventData) -> None:
@@ -73,3 +80,11 @@ class WebSocketClosedEvent(_EventBase):
         self.code: int = data["code"]
         self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
+
+
+class UnhandledEvent(_BaseEvent):
+    __slots__ = ("data",)
+
+    def __init__(self, data: EventData) -> None:
+        super().__init__(data)
+        self.data: EventData = data

@@ -1,8 +1,6 @@
-# Standard Library
 from collections.abc import Callable
 from typing import Literal, TypedDict
 
-# Libraries
 import discord
 import spotipy
 
@@ -18,10 +16,10 @@ type SpotifySource = spotipy.Album | spotipy.Playlist | spotipy.Artist | spotipy
 
 
 class PlayerStateData(TypedDict):
-    time: int
-    position: int
     connected: bool
     ping: int
+    time: int
+    position: int
 
 
 class ExceptionData(TypedDict):

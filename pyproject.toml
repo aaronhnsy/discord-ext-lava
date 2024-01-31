@@ -74,13 +74,9 @@ reportUnknownMemberType     = false
 reportUnnecessaryIsInstance = false
 
 [tool.isort]
-line_length                = 120
-lines_after_imports        = 2
-multi_line_output          = 9
-include_trailing_comma     = true
-import_heading_stdlib      = "Standard Library"
-import_heading_thirdparty  = "Libraries"
-import_heading_firstparty  = "Project"
-import_heading_localfolder = "Local Folder"
-extra_standard_library     = ["typing_extensions"]
-known_thirdparty           = ["discord"]
+line_length            = 110
+lines_after_imports    = 2
+multi_line_output      = 9
+include_trailing_comma = true
+extra_standard_library = ["typing_extensions"]
+known_thirdparty       = ["discord"]

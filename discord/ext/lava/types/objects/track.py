@@ -1,4 +1,3 @@
-# Standard Library
 from typing import Any, TypedDict
 
 

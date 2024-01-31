@@ -1,4 +1,3 @@
-# Standard Library
 import asyncio
 import itertools
 import json as _json
@@ -9,11 +8,9 @@ import traceback
 from typing import TYPE_CHECKING, Generic, cast
 from typing_extensions import TypeVar
 
-# Libraries
 import aiohttp
 import spotipy
 
-# Local Folder
 from ._backoff import Backoff
 from ._utilities import SPOTIFY_REGEX, DeferredMessage, chunks, json_or_text, ordinal
 from .exceptions import LinkAlreadyConnected, LinkConnectionError, NoSearchResults, SearchError, SearchFailed
@@ -27,7 +24,6 @@ from .types.websocket import Payload
 
 
 if TYPE_CHECKING:
-    # Local Folder
     from .player import Player  # type: ignore
 
 
@@ -123,7 +119,6 @@ class Link(Generic[PlayerT]):
         if self.is_connected():
             raise LinkAlreadyConnected(f"Link '{self.identifier}' is already connected.")
         try:
-            # Local Folder
             from . import __version__
             if self._session is None:
                 self._session = aiohttp.ClientSession()
@@ -203,7 +198,7 @@ class Link(Generic[PlayerT]):
                         f"with id '{payload['guildId']}'."
                     )
                     return
-                await player._handle_event(payload)
+                await player._handle_player_event(payload)
 
             case _:  # pyright: ignore - lavalink could add new op codes.
                 __ws_log__.error(

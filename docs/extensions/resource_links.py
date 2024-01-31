@@ -24,10 +24,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-# Standard Library
 from typing import Any
 
-# Libraries
 import sphinx
 from docutils import nodes, utils
 from docutils.nodes import Node, system_message

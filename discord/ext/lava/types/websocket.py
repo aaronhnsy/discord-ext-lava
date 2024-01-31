@@ -1,7 +1,5 @@
-# Standard Library
 from typing import Literal, TypedDict
 
-# Local Folder
 from .common import PlayerStateData
 from .objects.events import EventData
 from .objects.stats import StatsData

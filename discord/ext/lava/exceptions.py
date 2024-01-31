@@ -1,4 +1,3 @@
-# Local Folder
 from .enums import ExceptionSeverity
 from .types.common import ExceptionData
 
