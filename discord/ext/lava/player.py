@@ -105,7 +105,7 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self.client.dispatch(event_name, self, event)
         __log__.info(
             f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{payload["type"]}' event to "
-            f"'on_lava_{event_name}' listeners."
+            f"'on_{event_name}' listeners."
         )
 
     async def _handle_player_update(self, payload: PlayerUpdatePayload, /) -> None:
