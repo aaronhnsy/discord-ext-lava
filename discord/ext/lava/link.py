@@ -5,7 +5,7 @@ import logging
 import random
 import string
 import traceback
-from typing import TYPE_CHECKING, Generic, cast
+from typing import TYPE_CHECKING, Any, Generic, cast
 from typing_extensions import TypeVar
 
 import aiohttp
@@ -178,7 +178,8 @@ class Link(Generic[PlayerT]):
                 self._session_id = payload["sessionId"]
                 self._ready_event.set()
                 __ws_log__.info(f"Link '{self.identifier}' is ready.")
-
+            case "stats":
+                self._stats = Stats(payload)
             case "playerUpdate":
                 if not (player := self._players.get(int(payload["guildId"]))):
                     __ws_log__.warning(
@@ -186,11 +187,7 @@ class Link(Generic[PlayerT]):
                         f"with id '{payload['guildId']}'."
                     )
                     return
-                await player._handle_player_update(payload)
-
-            case "stats":
-                self._stats = Stats(payload)
-
+                player._update_player_state(payload["state"])
             case "event":
                 if not (player := self._players.get(int(payload["guildId"]))):
                     __ws_log__.warning(
@@ -198,8 +195,7 @@ class Link(Generic[PlayerT]):
                         f"with id '{payload['guildId']}'."
                     )
                     return
-                await player._handle_player_event(payload)
-
+                player._dispatch_event(payload)
             case _:  # pyright: ignore - lavalink could add new op codes.
                 __ws_log__.error(
                     f"Link '{self.identifier}' received a payload with an unhandled op code: '{payload["op"]}'."
@@ -261,7 +257,7 @@ class Link(Generic[PlayerT]):
         /, *,
         parameters: RequestParameters | None = None,
         data: RequestData | None = None,
-    ) -> JSON:
+    ) -> Any:
         if self._session is None:
             self._session = aiohttp.ClientSession()
 

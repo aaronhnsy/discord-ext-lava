@@ -12,12 +12,12 @@ from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent,
 from .objects.events import UnhandledEvent, WebSocketClosedEvent
 from .objects.filters import Filter
 from .objects.track import Track
-from .types.common import VoiceChannel
+from .types.common import PlayerStateData, VoiceChannel
 from .types.objects.events import EventMapping
 from .types.objects.track import TrackUserData
-from .types.rest import UpdatePlayerRequestData, UpdatePlayerRequestParameters, UpdatePlayerRequestTrackData
-from .types.rest import VoiceStateData
-from .types.websocket import EventPayload, PlayerUpdatePayload
+from .types.rest import PlayerData, UpdatePlayerRequestData, UpdatePlayerRequestParameters
+from .types.rest import UpdatePlayerRequestTrackData, VoiceStateData
+from .types.websocket import EventPayload
 
 
 __all__ = ["Player"]
@@ -37,8 +37,8 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self._endpoint: str | None = None
         self._session_id: str | None = None
         # player state
-        self._ping: int = -1
         self._time: int = 0
+        self._ping: int = -1
         self._connected: bool = False
         self._paused = False
         self._position: int = 0
@@ -99,20 +99,20 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         "WebSocketClosedEvent": WebSocketClosedEvent,
     }
 
-    async def _handle_player_event(self, payload: EventPayload, /) -> None:
+    def _dispatch_event(self, payload: EventPayload, /) -> None:
         event = self.EVENT_MAPPING.get(payload["type"], UnhandledEvent)(payload)
         event_name = get_event_dispatch_name(event.type)
         self.client.dispatch(event_name, self, event)
         __log__.info(
-            f"Player for '{self.guild.name}' ({self.guild.id}) dispatched a '{payload["type"]}' event to "
+            f"Player for '{self.guild.name}' ({self.guild.id}) dispatched '{event}' event to "
             f"'on_{event_name}' listeners."
         )
 
-    async def _handle_player_update(self, payload: PlayerUpdatePayload, /) -> None:
-        self._connected = payload["state"]["connected"]
-        self._ping = payload["state"]["ping"]
-        self._time = payload["state"]["time"]
-        self._position = payload["state"]["position"]
+    def _update_player_state(self, payload: PlayerStateData, /) -> None:
+        self._time = payload["time"]
+        self._ping = payload["ping"]
+        self._connected = payload["connected"]
+        self._position = payload["position"]
 
     # TODO: split the update method into multiple methods, or something, idk.
 
@@ -179,17 +179,11 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if voice_state is not MISSING:
             data["voice"] = voice_state
         # send request
-        await self._link._request(
+        player: PlayerData = await self._link._request(
             "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
             parameters=parameters, data=data,
         )
-        # set player state
-        if "paused" in data:
-            self._paused = data["paused"]
-        if "volume" in data:
-            self._volume = data["volume"]
-        if "filters" in data:
-            self._filter = filter
+        self._update_player_state(player["state"])
 
     # properties
 
@@ -198,12 +192,12 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         return self.channel.guild
 
     @property
-    def ping(self) -> int:
-        return self._ping
-
-    @property
     def time(self) -> int:
         return self._time
+
+    @property
+    def ping(self) -> int:
+        return self._ping
 
     # connection state
 
@@ -227,11 +221,14 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         raise NotImplementedError
 
     async def disconnect(self, *, force: bool = False) -> None:
-        await (channel := self.channel).guild.change_voice_state(channel=None)
+        channel = self.channel
+        await channel.guild.change_voice_state(channel=None)
         __log__.info(
             f"Player for '{channel.guild.name}' ({channel.guild.id}) disconnected from voice channel "
             f"'{channel.name}' ({channel.id})."
         )
+        self.cleanup()
+        del self._link._players[channel.guild.id]
 
     # pause state
 
