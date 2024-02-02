@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .._utilities import get_event_dispatch_name
 from ..enums import ExceptionSeverity, TrackEndReason
 from .track import Track
 
@@ -22,14 +23,15 @@ __all__ = [
 
 
 class _BaseEvent:
-    __slots__ = ("type", "guild_id",)
+    __slots__ = ("type", "guild_id", "_dispatch_name",)
 
     def __init__(self, data: EventData) -> None:
         self.type: EventType = data["type"]
         self.guild_id: str = data["guildId"]
+        self._dispatch_name: str = get_event_dispatch_name(self.type)
 
     def __repr__(self) -> str:
-        attributes = [f"{x}={getattr(self, x)}" for x in self.__slots__ if not x.startswith("_")]
+        attributes = [f"{x}='{getattr(self, x)}'" for x in self.__slots__ if not x.startswith("_")]
         return f"<discord.ext.lava.{self.__class__.__name__}: {", ".join(attributes)}>"
 
 

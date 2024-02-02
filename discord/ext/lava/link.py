@@ -180,14 +180,6 @@ class Link(Generic[PlayerT]):
                 __ws_log__.info(f"Link '{self.identifier}' is ready.")
             case "stats":
                 self._stats = Stats(payload)
-            case "playerUpdate":
-                if not (player := self._players.get(int(payload["guildId"]))):
-                    __ws_log__.warning(
-                        f"Link '{self.identifier}' received a player update for a non-existent player "
-                        f"with id '{payload['guildId']}'."
-                    )
-                    return
-                player._update_player_state(payload["state"])
             case "event":
                 if not (player := self._players.get(int(payload["guildId"]))):
                     __ws_log__.warning(
@@ -195,7 +187,15 @@ class Link(Generic[PlayerT]):
                         f"with id '{payload['guildId']}'."
                     )
                     return
-                player._dispatch_event(payload)
+                player._handle_event(payload)
+            case "playerUpdate":
+                if not (player := self._players.get(int(payload["guildId"]))):
+                    __ws_log__.warning(
+                        f"Link '{self.identifier}' received a player update for a non-existent player "
+                        f"with id '{payload['guildId']}'."
+                    )
+                    return
+                player._handle_player_update(payload["state"])
             case _:  # pyright: ignore - lavalink could add new op codes.
                 __ws_log__.error(
                     f"Link '{self.identifier}' received a payload with an unhandled op code: '{payload["op"]}'."

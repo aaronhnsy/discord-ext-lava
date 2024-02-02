@@ -1,41 +1,46 @@
+from __future__ import annotations
+
 import json
 import logging
-from typing import Generic, Self
+from typing import Generic
 from typing_extensions import TypeVar
 
 import discord  # type: ignore
-import discord.types.voice
+from discord.channel import VocalGuildChannel
+from discord.types.voice import GuildVoiceState as DiscordVoiceStateUpdateData
+from discord.types.voice import VoiceServerUpdate as DiscordVoiceServerUpdateData
 
-from ._utilities import MISSING, DeferredMessage, get_event_dispatch_name
+from ._utilities import MISSING, DeferredMessage
 from .link import Link
 from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent
 from .objects.events import UnhandledEvent, WebSocketClosedEvent
 from .objects.filters import Filter
 from .objects.track import Track
-from .types.common import PlayerStateData, VoiceChannel
+from .types.common import PlayerStateData
 from .types.objects.events import EventMapping
 from .types.objects.track import TrackUserData
 from .types.rest import PlayerData, UpdatePlayerRequestData, UpdatePlayerRequestParameters
-from .types.rest import UpdatePlayerRequestTrackData, VoiceStateData
+from .types.rest import UpdatePlayerRequestTrackData
 from .types.websocket import EventPayload
 
 
 __all__ = ["Player"]
 __log__: logging.Logger = logging.getLogger("discord.ext.lava.player")
 
-ClientT = TypeVar("ClientT", bound=discord.Client, default=discord.Client, covariant=True)
+BotT = TypeVar("BotT", bound=discord.Client, default=discord.Client, covariant=True)
 
 
-class Player(discord.VoiceProtocol, Generic[ClientT]):
+class Player(discord.VoiceProtocol, Generic[BotT]):
 
-    def __init__(self, *, link: Link) -> None:
-        self.client: ClientT = MISSING  # pyright: ignore
-        self.channel: VoiceChannel = MISSING  # pyright: ignore
+    def __init__(self, link: Link) -> None:
+        self._bot: BotT = MISSING
+        self._channel: VocalGuildChannel = MISSING
         self._link: Link = link
         # voice state
         self._token: str | None = None
         self._endpoint: str | None = None
         self._session_id: str | None = None
+        self._self_deaf: bool = True  # TODO: add a way to change this and have it persist when moving channels
         # player state
         self._time: int = 0
         self._ping: int = -1
@@ -45,51 +50,45 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         self._filter = Filter()
         self._volume = 100
 
-    def __call__(self, client: discord.Client, channel: discord.abc.Connectable, /) -> Self:
-        self.client = client  # pyright: ignore
-        self.channel = channel  # pyright: ignore
+    def __call__(self, client: discord.Client, channel: discord.abc.Connectable) -> Player:
+        self._bot = client  # type: ignore
+        self._channel = channel  # type: ignore
         self._link._players[self.guild.id] = self
         return self
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.Player: >"
+        return f"<discord.ext.lava.Player: is_connected={self.is_connected()}>"
 
-    # voice state
+    # rest voice state updates
 
-    async def on_voice_server_update(self, data: discord.types.voice.VoiceServerUpdate, /) -> None:
+    async def on_voice_server_update(self, data: DiscordVoiceServerUpdateData, /) -> None:
         __log__.debug(
-            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_SERVER_UPDATE.\n%s",
-            DeferredMessage(json.dumps, data, indent=4),
+            f"Player for '{self.guild.name}' ({self.guild.id}) received 'VOICE_SERVER_UPDATE' from Discord.\n"
+            f"%s", DeferredMessage(json.dumps, data, indent=4),
         )
         self._token = data["token"]
         self._endpoint = data["endpoint"]
         await self._update_voice_state()
 
-    async def on_voice_state_update(self, data: discord.types.voice.GuildVoiceState, /) -> None:
+    async def on_voice_state_update(self, data: DiscordVoiceStateUpdateData, /) -> None:
         __log__.debug(
-            f"Player for '{self.guild.name}' ({self.guild.id}) received VOICE_STATE_UPDATE.\n%s",
-            DeferredMessage(json.dumps, data, indent=4),
+            f"Player for '{self.guild.name}' ({self.guild.id}) received 'VOICE_STATE_UPDATE' from Discord.\n"
+            f"%s", DeferredMessage(json.dumps, data, indent=4),
         )
-        # TODO: check if this is needed?
-        # if (channel_id := data["channel_id"]) is None:
-        #     del self._link._players[self.guild.id]
-        #     return
-        # self.channel = self.client.get_channel(int(channel_id))
         self._session_id = data["session_id"]
+        self._self_deaf = data["self_deaf"]
+        # TODO: detect when the bot is moved to a different channel and update the channel attribute
         await self._update_voice_state()
 
     async def _update_voice_state(self) -> None:
         if self._token is None or self._endpoint is None or self._session_id is None:
             return
-        await self.update(
-            voice_state={
-                "token":     self._token,
-                "endpoint":  self._endpoint,
-                "sessionId": self._session_id
-            }
+        await self._link._request(
+            "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
+            data={"voice": {"token": self._token, "endpoint": self._endpoint, "sessionId": self._session_id}},
         )
 
-    # player state
+    # websocket payload handlers
 
     EVENT_MAPPING: EventMapping = {
         "TrackStartEvent":      TrackStartEvent,
@@ -99,22 +98,35 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         "WebSocketClosedEvent": WebSocketClosedEvent,
     }
 
-    def _dispatch_event(self, payload: EventPayload, /) -> None:
+    def _handle_event(self, payload: EventPayload, /) -> None:
         event = self.EVENT_MAPPING.get(payload["type"], UnhandledEvent)(payload)
-        event_name = get_event_dispatch_name(event.type)
-        self.client.dispatch(event_name, self, event)
+        self._bot.dispatch(event._dispatch_name, self, event)
         __log__.info(
             f"Player for '{self.guild.name}' ({self.guild.id}) dispatched '{event}' event to "
-            f"'on_{event_name}' listeners."
+            f"'on_{event._dispatch_name}' listeners."
         )
 
-    def _update_player_state(self, payload: PlayerStateData, /) -> None:
+    def _handle_player_update(self, payload: PlayerStateData, /) -> None:
         self._time = payload["time"]
         self._ping = payload["ping"]
         self._connected = payload["connected"]
         self._position = payload["position"]
 
-    # TODO: split the update method into multiple methods, or something, idk.
+    # properties
+
+    @property
+    def guild(self) -> discord.Guild:
+        return self._channel.guild
+
+    @property
+    def time(self) -> int:
+        return self._time
+
+    @property
+    def ping(self) -> int:
+        return self._ping
+
+    # methods
 
     async def update(
         self,
@@ -128,8 +140,10 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         position: int = MISSING,
         filter: Filter = MISSING,
         volume: int = MISSING,
-        voice_state: VoiceStateData = MISSING,
     ) -> None:
+        ######################################
+        # TODO: clean this abhorrent mess up #
+        ######################################
         if not self._link.is_ready():
             await self._link._ready_event.wait()
         if track is not None and track_identifier is not MISSING:
@@ -147,9 +161,9 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         if track_user_data is not MISSING:
             track_data["userData"] = track_user_data
         # data
-        data: UpdatePlayerRequestData = {
-            "track": track_data,
-        }
+        data: UpdatePlayerRequestData = {}
+        if track_data:
+            data["track"] = track_data
         # track end time
         if track_end_time is not MISSING:
             if not isinstance(track_end_time, int):
@@ -175,29 +189,12 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
             if not isinstance(volume, int) or not 0 <= volume <= 1000:
                 raise TypeError("'volume' must be an integer between '0' and '1000'.")
             data["volume"] = volume
-        # voice state
-        if voice_state is not MISSING:
-            data["voice"] = voice_state
         # send request
         player: PlayerData = await self._link._request(
             "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
             parameters=parameters, data=data,
         )
-        self._update_player_state(player["state"])
-
-    # properties
-
-    @property
-    def guild(self) -> discord.Guild:
-        return self.channel.guild
-
-    @property
-    def time(self) -> int:
-        return self._time
-
-    @property
-    def ping(self) -> int:
-        return self._ping
+        self._handle_player_update(player["state"])
 
     # connection state
 
@@ -211,24 +208,26 @@ class Player(discord.VoiceProtocol, Generic[ClientT]):
         timeout: float | None = None,
         reconnect: bool | None = None,
     ) -> None:
-        await self.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
+        await self.guild.change_voice_state(channel=self._channel)
         __log__.info(
             f"Player for '{self.guild.name}' ({self.guild.id}) connected to voice channel "
-            f"'{self.channel.name}' ({self.channel.id})."
+            f"'{self._channel.name}' ({self._channel.id})."
         )
 
-    async def move_to(self) -> None:
-        raise NotImplementedError
+    async def move_to(self, channel: VocalGuildChannel) -> None:
+        __log__.info(
+            f"Player for '{self.guild.name}' ({self.guild.id}) moved from voice channel "
+            f"'{self._channel.name}' ({self._channel.id}) to '{channel.name}' ({channel.id})."
+        )
+        await self.guild.change_voice_state(channel=channel)
 
     async def disconnect(self, *, force: bool = False) -> None:
-        channel = self.channel
-        await channel.guild.change_voice_state(channel=None)
         __log__.info(
-            f"Player for '{channel.guild.name}' ({channel.guild.id}) disconnected from voice channel "
-            f"'{channel.name}' ({channel.id})."
+            f"Player for '{self.guild.name}' ({self.guild.id}) disconnected from voice channel "
+            f"'{self._channel.name}' ({self._channel.id})."
         )
-        self.cleanup()
-        del self._link._players[channel.guild.id]
+        await self._channel.guild.change_voice_state(channel=None)
+        self._bot._connection._remove_voice_client(self.guild.id)
 
     # pause state
 

@@ -19,8 +19,12 @@ def chunks[T](iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
     return iter(lambda: tuple(itertools.islice(it, n)), ())
 
 
+PASCAL_CASE_TO_SNAKE_CASE_REGEX: re.Pattern[str] = re.compile(r"(?<!^)(?=[A-Z])")
+
+
 def get_event_dispatch_name(name: str) -> str:
-    return f"lava_{re.sub("(?<!^)(?=[A-Z])", "_", name).lower().replace("_event", "")}"
+    snake_case = re.sub(PASCAL_CASE_TO_SNAKE_CASE_REGEX, "_", name)
+    return f"lava_{snake_case.lower().replace("_event", "")}"
 
 
 async def json_or_text(response: aiohttp.ClientResponse, json_loads: JSONLoads) -> JSON | str:
