@@ -40,7 +40,7 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
         self._token: str | None = None
         self._endpoint: str | None = None
         self._session_id: str | None = None
-        self._self_deaf: bool = True  # TODO: add a way to change this and have it persist when moving channels
+        self._self_deaf: bool = False
         # player state
         self._time: int = 0
         self._ping: int = -1
@@ -76,7 +76,6 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
             f"%s", DeferredMessage(json.dumps, data, indent=4),
         )
         self._session_id = data["session_id"]
-        self._self_deaf = data["self_deaf"]
         # TODO: detect when the bot is moved to a different channel and update the channel attribute
         await self._update_voice_state()
 
@@ -203,12 +202,12 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
 
     async def connect(
         self, *,
-        self_mute: bool = False,
-        self_deaf: bool = False,
         timeout: float | None = None,
         reconnect: bool | None = None,
+        self_deaf: bool = False,
+        self_mute: bool = False,
     ) -> None:
-        await self.guild.change_voice_state(channel=self._channel)
+        await self.guild.change_voice_state(channel=self._channel, self_deaf=self._self_deaf)
         __log__.info(
             f"Player for '{self.guild.name}' ({self.guild.id}) connected to voice channel "
             f"'{self._channel.name}' ({self._channel.id})."
@@ -219,7 +218,7 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
             f"Player for '{self.guild.name}' ({self.guild.id}) moved from voice channel "
             f"'{self._channel.name}' ({self._channel.id}) to '{channel.name}' ({channel.id})."
         )
-        await self.guild.change_voice_state(channel=channel)
+        await self.guild.change_voice_state(channel=channel, self_deaf=self._self_deaf)
 
     async def disconnect(self, *, force: bool = False) -> None:
         __log__.info(
@@ -269,3 +268,12 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
 
     async def set_volume(self, volume: int, /) -> None:
         await self.update(volume=volume)
+
+    # self deafen
+
+    def is_self_deaf(self) -> bool:
+        return self._self_deaf
+
+    async def set_self_deaf(self, state: bool, /) -> None:
+        self._self_deaf = state
+        await self.guild.change_voice_state(channel=self._channel, self_deaf=state)
