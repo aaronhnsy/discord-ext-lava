@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .._utilities import get_event_dispatch_name
 from ..enums import ExceptionSeverity, TrackEndReason
 from .track import Track
 
@@ -28,11 +27,6 @@ class _BaseEvent:
     def __init__(self, data: EventData) -> None:
         self.type: EventType = data["type"]
         self.guild_id: str = data["guildId"]
-        self._dispatch_name: str = get_event_dispatch_name(self.type)
-
-    def __repr__(self) -> str:
-        attributes = [f"{x}='{getattr(self, x)}'" for x in self.__slots__ if not x.startswith("_")]
-        return f"<discord.ext.lava.{self.__class__.__name__}: {", ".join(attributes)}>"
 
 
 class _TrackEvent(_BaseEvent):
@@ -44,7 +38,9 @@ class _TrackEvent(_BaseEvent):
 
 
 class TrackStartEvent(_TrackEvent):
-    pass
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: track='{self.track}'>"
 
 
 class TrackEndEvent(_TrackEvent):
@@ -53,6 +49,9 @@ class TrackEndEvent(_TrackEvent):
     def __init__(self, data: TrackEndEventData) -> None:
         super().__init__(data)
         self.reason: TrackEndReason = TrackEndReason(data["reason"])
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: track='{self.track}', reason={self.reason}>"
 
 
 class TrackExceptionEvent(_TrackEvent):
@@ -65,6 +64,10 @@ class TrackExceptionEvent(_TrackEvent):
         self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
         self.cause: str = exception["cause"]
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: track='{self.track}', message='{self.message}' " \
+               f"severity='{self.severity}' cause='{self.cause}'>"
+
 
 class TrackStuckEvent(_TrackEvent):
     __slots__ = ("threshold_ms",)
@@ -72,6 +75,9 @@ class TrackStuckEvent(_TrackEvent):
     def __init__(self, data: TrackStuckEventData) -> None:
         super().__init__(data)
         self.threshold_ms: int = data["thresholdMs"]
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: track='{self.track}', threshold_ms={self.threshold_ms}>"
 
 
 class WebSocketClosedEvent(_BaseEvent):
@@ -83,6 +89,9 @@ class WebSocketClosedEvent(_BaseEvent):
         self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: code={self.code}, reason='{self.reason}', by_remote={self.by_remote}>"
+
 
 class UnhandledEvent(_BaseEvent):
     __slots__ = ("data",)
@@ -90,3 +99,6 @@ class UnhandledEvent(_BaseEvent):
     def __init__(self, data: EventData) -> None:
         super().__init__(data)
         self.data: EventData = data
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}: data={self.data}>"

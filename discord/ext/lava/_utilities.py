@@ -22,8 +22,8 @@ def chunks[T](iterable: Iterable[T], n: int) -> Iterable[tuple[T, ...]]:
 PASCAL_CASE_TO_SNAKE_CASE_REGEX: re.Pattern[str] = re.compile(r"(?<!^)(?=[A-Z])")
 
 
-def get_event_dispatch_name(name: str) -> str:
-    snake_case = re.sub(PASCAL_CASE_TO_SNAKE_CASE_REGEX, "_", name)
+def get_event_dispatch_name(event_type: str, /) -> str:
+    snake_case = re.sub(PASCAL_CASE_TO_SNAKE_CASE_REGEX, "_", event_type)
     return f"lava_{snake_case.lower().replace("_event", "")}"
 
 

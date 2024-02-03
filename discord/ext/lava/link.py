@@ -29,8 +29,8 @@ if TYPE_CHECKING:
 
 __all__ = ["Link"]
 
-__ws_log__: logging.Logger = logging.getLogger("discord.ext.lava.websocket")
-__rest_log__: logging.Logger = logging.getLogger("discord.ext.lava.rest")
+__ws_log__: logging.Logger = logging.getLogger("lava.websocket")
+__rest_log__: logging.Logger = logging.getLogger("lava.rest")
 
 PlayerT = TypeVar("PlayerT", bound="Player", default="Player", covariant=True)
 
