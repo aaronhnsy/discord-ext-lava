@@ -7,6 +7,8 @@ __all__ = [
     "LinkAlreadyConnected",
     "LinkConnectionError",
     "LinkNotReady",
+    "PlayerError",
+    "PlayerAlreadyConnected",
     "SearchError",
     "SearchFailed",
     "NoSearchResults",
@@ -26,6 +28,18 @@ class LinkConnectionError(LavaError):
 
 
 class LinkNotReady(LavaError):
+    pass
+
+
+class PlayerError(LavaError):
+    pass
+
+
+class PlayerNotConnected(PlayerError):
+    pass
+
+
+class PlayerAlreadyConnected(PlayerError):
     pass
 
 
