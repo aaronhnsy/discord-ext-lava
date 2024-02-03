@@ -85,7 +85,7 @@ class Link(Generic[PlayerT]):
         self._players: dict[int, PlayerT] = {}
 
     def __repr__(self) -> str:
-        return "<discord.ext.lava.Link: >"
+        return "<discord.ext.lava.Link>"
 
     # properties
 
@@ -270,16 +270,16 @@ class Link(Generic[PlayerT]):
             kwargs["headers"]["Content-Type"] = "application/json"
             kwargs["data"] = self._json_dumps(cast(JSON, data))
 
-        __rest_log__.debug(
-            f"Starting request: {method} -> '{url}'.\nParameters:\n%s\nData:\n%s",
-            DeferredMessage(_json.dumps, parameters or {}, indent=4),
-            DeferredMessage(_json.dumps, data or {}, indent=4),
-        )
         async with self._session.request(method, url, **kwargs) as response:
             response_data = await json_or_text(response, json_loads=self._json_loads)
             __rest_log__.debug(
-                f"Finished request: {method} -> '{url}' -> {response.status}.\n%s",
-                DeferredMessage(_json.dumps, response_data, indent=4)
+                f"{method} -> '{url}' -> {response.status}.\n"
+                f"Request Parameters:{"\n" if parameters else " "}%s\n"
+                f"Request Data:{"\n" if data else " "}%s\n"
+                f"Response Data:{"\n" if response_data else " "}%s",
+                DeferredMessage(_json.dumps, parameters or {}, indent=4),
+                DeferredMessage(_json.dumps, data or {}, indent=4),
+                DeferredMessage(_json.dumps, response_data or {}, indent=4),
             )
             if 200 <= response.status < 300:
                 return response_data
