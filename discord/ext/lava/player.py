@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Generic, cast
+from typing import Generic, NotRequired, TypedDict, Unpack, cast
 from typing_extensions import TypeVar
 
 import discord
@@ -15,7 +15,7 @@ from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent,
 from .objects.events import UnhandledEvent, WebSocketClosedEvent
 from .objects.filters import Filter
 from .objects.track import Track
-from .types.common import PlayerStateData
+from .types.common import PlayerStateData, VoiceChannel
 from .types.objects.events import EventMapping
 from .types.objects.track import TrackUserData
 from .types.rest import PlayerData, UpdatePlayerRequestData, UpdatePlayerRequestParameters
@@ -28,12 +28,23 @@ __log__: logging.Logger = logging.getLogger("lava.player")
 
 type Client = discord.Client
 type Guild = discord.Guild
-type VoiceChannel = discord.channel.VocalGuildChannel
 type Connectable = discord.abc.Connectable
 type VoiceStateUpdateData = discord.types.voice.GuildVoiceState
 type VoiceServerUpdateData = discord.types.voice.VoiceServerUpdate
 
 BotT = TypeVar("BotT", bound=Client, default=Client, covariant=True)
+
+
+class PlayerUpdateParameters(TypedDict):
+    track: NotRequired[Track | None]
+    track_identifier: NotRequired[str]
+    track_user_data: NotRequired[TrackUserData]
+    track_end_time: NotRequired[int]
+    replace_current_track: NotRequired[bool]
+    filter: NotRequired[Filter]
+    position: NotRequired[int]
+    paused: NotRequired[bool]
+    volume: NotRequired[int]
 
 
 class Player(discord.VoiceProtocol, Generic[BotT]):
@@ -48,14 +59,15 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
         self._endpoint: str | None = None
         self._session_id: str | None = None
         # player state
-        self._is_connected: bool = False
-        self._is_paused = False
-        self._is_self_deaf: bool = False
+        self._connected: bool = False
         self._ping: int = -1
         self._time: int = -1
-        self._position: int = 0
+        self._track: Track | None = None
         self._filter = Filter()
+        self._position: int = 0
+        self._paused = False
         self._volume = 100
+        self._self_deaf: bool = False
 
     def __call__(self, client: Client, channel: Connectable) -> Player:
         self._bot = client                          # type: ignore
@@ -137,13 +149,24 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
         self._bot.dispatch(get_event_dispatch_name(event.type), self, event)
         __log__.info(f"Player ({self._guild.id} : {self._guild.name}) dispatched {event}")
 
-    def _handle_player_update(self, payload: PlayerStateData, /) -> None:
-        self._is_connected = payload["connected"]
+    def _handle_player_state_update(self, payload: PlayerStateData, /) -> None:
+        self._connected = payload["connected"]
         self._ping = payload["ping"]
         self._time = payload["time"]
         self._position = payload["position"]
 
+    def _update_player(self, data: PlayerData) -> None:
+        self._handle_player_state_update(data["state"])
+        self._track = Track(data["track"]) if data["track"] else None
+        # self._filter = Filter(data["filters"]) ???
+        self._volume = data["volume"]
+        self._paused = data["paused"]
+
     # properties
+
+    @property
+    def channel(self) -> VoiceChannel | None:  # pyright: ignore
+        return self._channel
 
     @property
     def time(self) -> int:
@@ -155,78 +178,68 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
 
     # methods
 
-    async def update(
-        self,
-        *,
-        track: Track | None = MISSING,
-        track_identifier: str = MISSING,
-        track_user_data: TrackUserData = MISSING,
-        track_end_time: int = MISSING,
-        replace_current_track: bool = MISSING,
-        paused: bool = MISSING,
-        position: int = MISSING,
-        filter: Filter = MISSING,
-        volume: int = MISSING,
-    ) -> None:
-        ######################################
-        # TODO: clean this abhorrent mess up #
-        ######################################
+    async def update(self, **kwargs: Unpack[PlayerUpdateParameters]) -> None:
+        # validate that track and track_identifier are not used at the same time
+        track = kwargs.get("track", MISSING)
+        track_identifier = kwargs.get("track_identifier")
+        if track is not MISSING and track_identifier is not None:
+            raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
+
+        # wait for the player to be ready
         if not self._link.is_ready():
             await self._link._ready_event.wait()
-        if track is not None and track_identifier is not MISSING:
-            raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
-        # parameters
+
+        # prepare request parameters
         parameters: UpdatePlayerRequestParameters = {}
-        if replace_current_track is not MISSING:
+        if replace_current_track := kwargs.get("replace_current_track"):
             parameters["noReplace"] = not replace_current_track
-        # track data
+
+        # prepare request track data
         track_data: UpdatePlayerRequestTrackData = {}
         if track is not MISSING:
             track_data["encoded"] = track.encoded if track is not None else None
-        if track_identifier is not MISSING:
+        if track_identifier:
             track_data["identifier"] = track_identifier
-        if track_user_data is not MISSING:
+        if track_user_data := kwargs.get("track_user_data"):
             track_data["userData"] = track_user_data
-        # data
+
+        # prepare request data
         data: UpdatePlayerRequestData = {}
         if track_data:
             data["track"] = track_data
-        # track end time
-        if track_end_time is not MISSING:
+        if track_end_time := kwargs.get("track_end_time"):
             if not isinstance(track_end_time, int):
                 raise TypeError("'track_end_time' must be an integer.")
             data["endTime"] = track_end_time
-        # pause state
-        if paused is not MISSING:
-            if not isinstance(paused, bool):
-                raise TypeError("'paused' must be a boolean value.")
-            data["paused"] = paused
-        # position
-        if position is not MISSING:
-            if not isinstance(position, int):
-                raise TypeError("'position' must be an integer.")
-            data["position"] = position
-        # filter
-        if filter is not MISSING:
+        if filter := kwargs.get("filter"):
             if not isinstance(filter, Filter):
                 raise TypeError("'filter' must be an instance of 'lava.Filter'.")
             data["filters"] = filter.data
-        # volume
-        if volume is not MISSING:
+            self._filter = filter
+        if position := kwargs.get("position"):
+            if not isinstance(position, int):
+                raise TypeError("'position' must be an integer.")
+            data["position"] = position
+        if paused := kwargs.get("paused"):
+            if not isinstance(paused, bool):
+                raise TypeError("'paused' must be a boolean value.")
+            data["paused"] = paused
+        if volume := kwargs.get("volume"):
             if not isinstance(volume, int) or not 0 <= volume <= 1000:
                 raise TypeError("'volume' must be an integer between '0' and '1000'.")
             data["volume"] = volume
+
         # send request
         player: PlayerData = await self._link._request(
             "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self._guild.id}",
             parameters=parameters, data=data,
         )
-        self._handle_player_update(player["state"])
+        self._update_player(player)
 
     # connection state
 
     def is_connected(self) -> bool:
-        return self._channel is not None and self._is_connected is True
+        return self._channel is not None and self._connected is True
 
     async def connect(
         self, *,
@@ -245,7 +258,7 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
             f"Player ({self._guild.id} : {self._guild.name}) connected to voice channel "
             f"({self._channel.id} : {self._channel.name})."
         )
-        await self._guild.change_voice_state(channel=self._channel, self_deaf=self._is_self_deaf)
+        await self._guild.change_voice_state(channel=self._channel, self_deaf=self._self_deaf)
 
     async def move_to(self, channel: VoiceChannel, /) -> None:
         if not self.is_connected():
@@ -255,7 +268,7 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
             f"Player ({self._guild.id} : {self._guild.name}) moved from voice channel "
             f"({self._channel.id} : {self._channel.name}) to ({channel.id} : {channel.name})."
         )
-        await self._guild.change_voice_state(channel=self._channel, self_deaf=self._is_self_deaf)
+        await self._guild.change_voice_state(channel=self._channel, self_deaf=self._self_deaf)
 
     async def disconnect(self, *, force: bool = False) -> None:
         if not self.is_connected():
@@ -266,30 +279,9 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
             f"Player ({self._guild.id} : {self._guild.name}) disconnected from voice channel "
             f"({old_channel.id} : {old_channel.name})."
         )
-        await self._guild.change_voice_state(channel=self._channel, self_deaf=self._is_self_deaf)
+        await self._guild.change_voice_state(channel=self._channel, self_deaf=self._self_deaf)
 
-    # pause state
-
-    def is_paused(self) -> bool:
-        return self._is_paused
-
-    async def pause(self) -> None:
-        await self.update(paused=True)
-
-    async def set_pause_state(self, state: bool, /) -> None:
-        await self.update(paused=state)
-
-    async def resume(self) -> None:
-        await self.update(paused=False)
-
-    # position
-
-    @property
-    def position(self) -> int:
-        return self._position
-
-    async def set_position(self, position: int, /) -> None:
-        await self.update(position=position)
+    # TODO: play() and stop() methods for tracks
 
     # filter
 
@@ -300,6 +292,29 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
     async def set_filter(self, filter: Filter, /) -> None:
         await self.update(filter=filter)
 
+    # position
+
+    @property
+    def position(self) -> int:
+        return self._position
+
+    async def set_position(self, position: int, /) -> None:
+        await self.update(position=position)
+
+    # paused
+
+    def is_paused(self) -> bool:
+        return self._paused
+
+    async def pause(self) -> None:
+        await self.update(paused=True)
+
+    async def set_pause_state(self, state: bool, /) -> None:
+        await self.update(paused=state)
+
+    async def resume(self) -> None:
+        await self.update(paused=False)
+
     # volume
 
     @property
@@ -309,11 +324,11 @@ class Player(discord.VoiceProtocol, Generic[BotT]):
     async def set_volume(self, volume: int, /) -> None:
         await self.update(volume=volume)
 
-    # self deafen
+    # self deaf
 
     def is_self_deaf(self) -> bool:
-        return self._is_self_deaf
+        return self._self_deaf
 
     async def set_self_deaf(self, state: bool, /) -> None:
-        self._is_self_deaf = state
+        self._self_deaf = state
         await self._guild.change_voice_state(channel=self._channel, self_deaf=state)

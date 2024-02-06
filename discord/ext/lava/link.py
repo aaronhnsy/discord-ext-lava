@@ -195,7 +195,7 @@ class Link(Generic[PlayerT]):
                         f"with id '{payload['guildId']}'."
                     )
                     return
-                player._handle_player_update(payload["state"])
+                player._handle_player_state_update(payload["state"])
             case _:  # pyright: ignore - lavalink could add new op codes.
                 __ws_log__.error(
                     f"Link '{self.identifier}' received a payload with an unhandled op code: '{payload["op"]}'."
