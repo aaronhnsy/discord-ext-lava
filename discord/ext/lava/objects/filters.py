@@ -27,7 +27,7 @@ class _FilterBase(metaclass=abc.ABCMeta):
 
     def __repr__(self) -> str:
         attributes = [f"{x.lstrip("_")}={getattr(self, x)}" for x in self.__slots__]
-        return f"<discord.ext.lava.{self.__class__.__name__}: {", ".join(attributes)}>"
+        return f"<lava.{self.__class__.__name__}: {", ".join(attributes)}>"
 
     @property
     @abc.abstractmethod

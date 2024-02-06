@@ -36,7 +36,7 @@ class Track:
         self.user_data: TrackUserData = data["userData"]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.Track: identifier='{self.identifier}', title='{self.title}', " \
+        return f"<lava.{self.__class__.__name__}: identifier='{self.identifier}', title='{self.title}', " \
                f"author='{self.author}', length={self.length}>"
 
     # utility methods

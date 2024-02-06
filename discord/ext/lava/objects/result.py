@@ -20,4 +20,4 @@ class Result:
         self.tracks: Sequence[Track] = tracks
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.Result: source={self.source}>"
+        return f"<lava.{self.__class__.__name__}: source={self.source}>"

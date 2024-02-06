@@ -34,4 +34,4 @@ class Stats:
         self.frames_deficit: int = frame_stats.get("deficit", -1)
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.Stats: players={self.players}, playing_players={self.playing_players}>"
+        return f"<lava.{self.__class__.__name__}: players={self.players}, playing_players={self.playing_players}>"
