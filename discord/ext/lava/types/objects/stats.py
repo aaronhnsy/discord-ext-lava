@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import TypedDict
 
 
 class MemoryStatsData(TypedDict):
@@ -21,7 +21,6 @@ class FrameStatsData(TypedDict):
 
 
 class StatsData(TypedDict):
-    op: Literal["stats"]
     players: int
     playingPlayers: int
     uptime: int

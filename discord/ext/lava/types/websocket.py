@@ -5,35 +5,27 @@ from .objects.events import EventData
 from .objects.stats import StatsData
 
 
-############
-# Ready OP #
-############
+# 'ready' payload
 class ReadyPayload(TypedDict):
     op: Literal["ready"]
     resumed: bool
     sessionId: str
 
 
-####################
-# Player Update OP #
-####################
+# 'playerUpdate' payload
 class PlayerUpdatePayload(TypedDict):
     op: Literal["playerUpdate"]
     guildId: str
     state: PlayerStateData
 
 
-############
-# Stats OP #
-############
-type StatsPayload = StatsData
+# 'stats' payload
+class StatsPayload(StatsData):
+    op: Literal["stats"]
 
-############
-# Event OP #
-############
+
+# 'event' payload
 type EventPayload = EventData
 
-###########
-# Payload #
-###########
+# payload
 type Payload = ReadyPayload | PlayerUpdatePayload | StatsPayload | EventPayload
