@@ -1,123 +1,85 @@
 from __future__ import annotations
 
-from typing import Any
-
 import spotipy
 
-from ..types import SpotifySearchResult, SpotifySearchTrack
-from .enums import Source
+from .._utilities import MISSING
+from ..types.objects.track import TrackData, TrackInfoData, TrackPluginInfoData, TrackUserData
 
 
-__all__ = (
-    "Track",
-)
+__all__ = ["Track"]
 
 
 class Track:
-
     __slots__ = (
-        "id",
-        "title",
-        "author",
-        "uri",
-        "identifier",
-        "length",
-        "position",
-        "source",
-        "_artwork_url",
-        "isrc",
-        "_is_stream",
-        "_is_seekable",
-        "extras",
+        "encoded", "identifier", "_is_seekable", "author", "length", "_is_stream", "position", "title", "uri",
+        "artwork_url", "isrc", "source", "plugin_info", "user_data",
     )
 
-    def __init__(
-        self,
-        *,
-        id: str,
-        info: dict[str, Any],
-        extras: dict[str, Any] | None = None,
-    ) -> None:
-
-        self.id: str = id
-
-        self.title: str = info["title"]
-        self.author: str = info["author"]
-        self.uri: str = info["uri"]
+    def __init__(self, data: TrackData) -> None:
+        # encoded track
+        self.encoded: str = data["encoded"]
+        # track info
+        info: TrackInfoData = data["info"]
         self.identifier: str = info["identifier"]
+        self._is_seekable: bool = info["isSeekable"]
+        self.author: str = info["author"]
         self.length: int = info["length"]
+        self._is_stream: bool = info["isStream"]
         self.position: int = info["position"]
-        self.source: Source = Source(info.get("source_name", info.get("sourceName", "Unknown")))
-        self._artwork_url: str | None = info.get("artwork_url")
-        self.isrc: str | None = info.get("isrc")
-
-        self._is_stream: bool = info.get("is_stream", info.get("isStream", False))
-        self._is_seekable: bool = info.get("is_seekable", info.get("isSeekable", False))
-
-        self.extras: dict[str, Any] = extras or {}
+        self.title: str = info["title"]
+        self.uri: str | None = info["uri"]
+        self.artwork_url: str | None = info["artworkUrl"]
+        self.isrc: str | None = info["isrc"]
+        self.source: str = info["sourceName"]
+        # others
+        self.plugin_info: TrackPluginInfoData = data["pluginInfo"]
+        self.user_data: TrackUserData = data["userData"]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.Track title='{self.title}', author='{self.author}'>"
+        return f"<lava.{self.__class__.__name__}: identifier='{self.identifier}', title='{self.title}', " \
+               f"author='{self.author}', length={self.length}>"
 
-    # properties
-
-    @property
-    def artwork_url(self) -> str | None:
-
-        if self._artwork_url:
-            return self._artwork_url
-        elif self.source is Source.YOUTUBE:
-            return f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"
-
-        return None
-
-    # utilities
-
-    def is_stream(self) -> bool:
-        return self._is_stream
+    # utility methods
 
     def is_seekable(self) -> bool:
         return self._is_seekable
 
-    # classmethods
+    def is_stream(self) -> bool:
+        return self._is_stream
 
-    @staticmethod
-    def _from_spotify_track(
-        track: SpotifySearchTrack,
-        result: SpotifySearchResult,
-        extras: dict[str, Any] | None = None
-    ) -> Track:
+    # spotify
 
-        title = track.name or "Unknown"
-        author = ", ".join(artist.name for artist in track.artists) if track.artists else "Unknown"
-        length = track.duration_ms or 0
-
-        # SimpleTrack's are only ever received when the
-        # result is an Album. They don't have 'album' or
-        # 'external_ids' attributes, so we have to fetch
-        # those from the album instead.
-        if isinstance(track, spotipy.SimpleTrack):
-            assert isinstance(result, spotipy.Album)
-            artwork_url = result.images[0].url if result.images else None
+    @classmethod
+    def _from_spotify_track(cls, track: spotipy.Track | spotipy.PlaylistTrack) -> Track:
+        if track.is_local:
+            identifier = track.uri
+            author = track.artists[0].name or "Unknown"
+            title = track.name or "Unknown"
+            artwork_url = None
             isrc = None
         else:
-            artwork_url = track.album.images[0].url if track.album.images else None
+            identifier = track.id
+            author = ", ".join(artist.name for artist in track.artists)
+            title = track.name
+            artwork_url = track.album.images[0].url if len(track.album.images) > 0 else None
             isrc = track.external_ids.get("isrc")
-
         return Track(
-            id="",
-            info={
-                "title":       title,
-                "author":      author,
-                "uri":         track.url or "Unknown",
-                "identifier":  track.id or hash(f"{title} - {author} - {length}"),
-                "length":      length,
-                "position":    0,
-                "source_name": "spotify",
-                "artwork_url": artwork_url,
-                "isrc":        isrc,
-                "is_stream":   False,
-                "is_seekable": False,
-            },
-            extras=extras
+            {
+                "encoded":    MISSING,
+                "info":       {
+                    "identifier": identifier,
+                    "isSeekable": True,
+                    "author":     author,
+                    "length":     track.duration_ms,
+                    "isStream":   False,
+                    "position":   0,
+                    "title":      title,
+                    "uri":        track.uri,
+                    "artworkUrl": artwork_url,
+                    "isrc":       isrc,
+                    "sourceName": "spotify",
+                },
+                "pluginInfo": {},
+                "userData":   {},
+            }
         )

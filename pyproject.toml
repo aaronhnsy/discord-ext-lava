@@ -2,76 +2,81 @@
 requires      = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-
 [tool.poetry]
 name          = "discord-ext-lava"
-version       = "0.5.1"
-description   = "A discord.py extension for lavaplayer-based audio nodes."
+version       = "1.0.0a1"
+description   = "A discord.py extension for the Lavalink API and WebSocket."
 license       = "MIT"
-authors       = ["Axel <axelancerr@gmail.com>"]
+authors       = ["Aaron Hennessey <aaronhnsy@gmail.com>"]
 readme        = "README.md"
-homepage      = "https://github.com/Axelware/discord-ext-lava"
-repository    = "https://github.com/Axelware/discord-ext-lava"
+homepage      = "https://github.com/aaronhnsy/discord-ext-lava"
+repository    = "https://github.com/aaronhnsy/discord-ext-lava"
 documentation = "https://discord-ext-lava.readthedocs.io/en/latest/"
-keywords      = ["obsidian", "lavalink", "api", "wrapper", "async", "discord", "discord-ext"]
-include       = ["CHANGELOG.md", "LICENSE"]
-classifiers = [
+keywords      = [
+    "discord", "discord.py", "discord-ext", "lavalink", "lavaplayer", "api", "wrapper", "async"
+]
+classifiers   = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Other Environment",
     "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Operating System :: OS Independent",
-    "Environment :: Other Environment",
-    "Intended Audience :: Developers",
-    "Natural Language :: English",
-    "Typing :: Typed"
+    "Typing :: Typed",
 ]
 packages = [
     { include = "discord/ext/lava" },
     { include = "discord/ext/lava/**/*.py" },
     { include = "discord/ext/lava/**/*.typed" },
 ]
-
+include = [
+    "CHANGELOG.md", "LICENSE"
+]
 
 [tool.poetry.dependencies]
-python            = "^3.10.0"
-aiohttp           = "^3.8.0"
-discord-py        = "^2.0.0"
+python            = "^3.12.0"
+aiohttp           = "^3.9.0"
+discord-py        = "^2.3.0"
 spoti-py          = "^0.1.0"
-typing_extensions = "^4.3.0"
-
+typing-extensions = "^4.8.0"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx             = "5.1.1"
-sphinxcontrib-trio = "1.1.2"
-sphinx-copybutton  = "0.5.0"
-sphinx-inline-tabs = "2022.1.2b11"
-furo               = "2022.6.21"
-
+sphinx             = "^7.2.0"
+sphinxcontrib-trio = "^1.1.0"
+sphinx-copybutton  = "^0.5.0"
+sphinx-inline-tabs = "^2023.4.0"
+furo               = "^2023.9.0"
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-jishaku = "*"
-
+colorama = "^0.4.0"
+jishaku  = { git = "https://github.com/Gorialis/jishaku/" }
 
 [tool.poetry.urls]
-"Issue Tracker" = "https://github.com/Axelware/discord-ext-lava/issues"
-"Discord"       = "https://discord.com/invite/w9f6NkQbde"
-
+"Issue Tracker" = "https://github.com/aaronhnsy/discord-ext-lava/issues"
 
 [tool.pyright]
 include                = ["discord/ext/lava"]
-pythonVersion          = "3.10"
+pythonVersion          = "3.12"
 typeCheckingMode       = "strict"
 useLibraryCodeForTypes = true
+reportPrivateUsage          = false
+reportUnknownMemberType     = false
+reportUnnecessaryIsInstance = false
 
-reportPrivateUsage      = false
-reportUnknownMemberType = false
-reportImportCycles      = false
+[tool.isort]
+line_length            = 110
+lines_after_imports    = 2
+multi_line_output      = 9
+include_trailing_comma = true
+extra_standard_library = ["typing_extensions"]
+known_thirdparty       = ["discord"]

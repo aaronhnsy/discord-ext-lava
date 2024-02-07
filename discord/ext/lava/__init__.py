@@ -1,15 +1,11 @@
-from __future__ import annotations
-
 import logging
-from typing import Final, Literal, NamedTuple
+from typing import Literal, NamedTuple
 
+from .enums import *
 from .exceptions import *
-from .node import *
+from .link import *
 from .objects import *
 from .player import *
-from .pool import *
-from .queue import *
-from .utils import *
 
 
 class VersionInfo(NamedTuple):
@@ -20,14 +16,16 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-version_info: Final[VersionInfo] = VersionInfo(major=0, minor=5, micro=1, releaselevel="final", serial=0)
+__version_info__: VersionInfo = VersionInfo(major=1, minor=0, micro=0, releaselevel="alpha", serial=1)
+__version__: str = "1.0.0a1"
 
-__title__: Final[str] = "discord-ext-lava"
-__author__: Final[str] = "Axelancerr"
-__copyright__: Final[str] = "Copyright 2020-present Axelancerr"
-__license__: Final[str] = "MIT"
-__version__: Final[str] = "0.5.1"
-__maintainer__: Final[str] = "Aaron Hennessey"
-__source__: Final[str] = "https://github.com/Axelware/discord-ext-lava"
+__title__: str = "discord-ext-lava"
+__url__: str = "https://github.com/aaronhnsy/discord-ext-lava"
+
+__author__: str = "Aaron Hennessey (aaronhnsy)"
+__email__: str = "aaronhnsy@gmail.com"
+
+__license__: str = "MIT"
+__copyright__: str = "Copyright (c) 2019-present Aaron Hennessey (aaronhnsy)"
 
 logging.getLogger("discord.ext.lava")

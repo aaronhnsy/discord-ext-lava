@@ -1,192 +1,100 @@
 from __future__ import annotations
 
-from typing import Any, Literal
-
-from ..utils import MISSING
-
-
-__all__ = (
-    "TrackStart",
-    "TrackEnd",
-    "TrackStuck",
-    "TrackException",
-    "WebsocketOpen",
-    "WebsocketClosed",
-)
+from ..enums import ExceptionSeverity, TrackEndReason
+from ..types.objects.events import EventData, EventType, TrackEndEventData, TrackEventData
+from ..types.objects.events import TrackExceptionEventData, TrackStuckEventData, WebSocketClosedEventData
+from .track import Track
 
 
-class BaseEvent:
-
-    __slots__ = ("_type", "_guild_id",)
-
-    def __init__(self, data: dict[str, Any]) -> None:
-        self._type: str = MISSING
-        self._guild_id: int = int(data.get("guild_id", data.get("guildId")))
-
-    def __repr__(self) -> str:
-        return f"<discord.ext.lava.BaseEvent guild_id={self.guild_id}>"
-
-    @property
-    def type(self) -> str:
-        return self._type
-
-    @property
-    def guild_id(self) -> int:
-        return self._guild_id
+__all__ = [
+    "TrackStartEvent",
+    "TrackEndEvent",
+    "TrackExceptionEvent",
+    "TrackStuckEvent",
+    "WebSocketClosedEvent",
+    "UnhandledEvent",
+]
 
 
-class TrackStart(BaseEvent):
+class _BaseEvent:
+    __slots__ = ("type", "guild_id", "_dispatch_name",)
 
-    __slots__ = ("_track_id",)
+    def __init__(self, data: EventData) -> None:
+        self.type: EventType = data["type"]
+        self.guild_id: str = data["guildId"]
 
-    def __init__(self, data: dict[str, Any]) -> None:
+
+class _BaseTrackEvent(_BaseEvent):
+    __slots__ = ("track",)
+
+    def __init__(self, data: TrackEventData) -> None:
         super().__init__(data)
+        self.track: Track = Track(data["track"])
 
-        self._type: str = "TRACK_START"
 
-        self._track_id: str = data["track"]
+class TrackStartEvent(_BaseTrackEvent):
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackStart guild_id={self.guild_id}, track_id='{self.track_id}'>"
-
-    @property
-    def track_id(self) -> str:
-        return self._track_id
+        return f"<lava.{self.__class__.__name__}: track='{self.track}'>"
 
 
-class TrackEnd(BaseEvent):
+class TrackEndEvent(_BaseTrackEvent):
+    __slots__ = ("reason",)
 
-    __slots__ = ("_track_id", "_reason",)
-
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(self, data: TrackEndEventData) -> None:
         super().__init__(data)
-
-        self._type: str = "TRACK_END"
-
-        self._track_id: str = data["track"]
-        self._reason: Literal["STOPPED", "REPLACED", "CLEANUP", "LOAD_FAILED", "FINISHED"] = data["reason"]
+        self.reason: TrackEndReason = TrackEndReason(data["reason"])
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackEnd guild_id={self.guild_id}, track_id='{self.track_id}', reason='{self.reason}'>"
-
-    @property
-    def track_id(self) -> str:
-        return self._track_id
-
-    @property
-    def reason(self) -> Literal["STOPPED", "REPLACED", "CLEANUP", "LOAD_FAILED", "FINISHED"]:
-        return self._reason
+        return f"<lava.{self.__class__.__name__}: track='{self.track}', reason={self.reason}>"
 
 
-class TrackStuck(BaseEvent):
+class TrackExceptionEvent(_BaseTrackEvent):
+    __slots__ = ("message", "severity", "cause",)
 
-    __slots__ = ("_track_id", "_threshold_ms",)
-
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(self, data: TrackExceptionEventData) -> None:
         super().__init__(data)
-
-        self._type: str = "TRACK_STUCK"
-
-        self._track_id: str = data["track"]
-        self._threshold_ms: int = data.get("threshold_ms", data["thresholdMs"])
+        exception = data["exception"]
+        self.message: str | None = exception["message"]
+        self.severity: ExceptionSeverity = ExceptionSeverity(exception["severity"])
+        self.cause: str = exception["cause"]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackStuck guild_id={self.guild_id}, track_id='{self.track_id}', threshold_ms={self.threshold_ms}>"
-
-    @property
-    def track_id(self) -> str:
-        return self._track_id
-
-    @property
-    def threshold_ms(self) -> int:
-        return self._threshold_ms
+        return f"<lava.{self.__class__.__name__}: track='{self.track}', message='{self.message}' " \
+               f"severity='{self.severity}' cause='{self.cause}'>"
 
 
-class TrackException(BaseEvent):
+class TrackStuckEvent(_BaseTrackEvent):
+    __slots__ = ("threshold_ms",)
 
-    __slots__ = ("_track_id", "_message", "_cause", "_severity",)
-
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(self, data: TrackStuckEventData) -> None:
         super().__init__(data)
-
-        self._type: str = "TRACK_EXCEPTION"
-
-        self._track_id: str = data["track"]
-
-        exception: dict[str, Any] = data.get("exception", data.get("error"))
-        self._message: str = exception["message"]
-        self._cause: str = exception["cause"]
-        self._severity: Literal["COMMON", "FAULT", "SUSPICIOUS"] = exception["severity"]
+        self.threshold_ms: int = data["thresholdMs"]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.TrackException guild_id={self.guild_id}, track_id='{self.track_id}', message='{self.message}', cause='{self.cause}', " \
-               f"severity='{self.severity}'>"
-
-    @property
-    def track_id(self) -> str:
-        return self._track_id
-
-    @property
-    def message(self) -> str:
-        return self._message
-
-    @property
-    def cause(self) -> str:
-        return self._cause
-
-    @property
-    def severity(self) -> Literal["COMMON", "FAULT", "SUSPICIOUS"]:
-        return self._severity
+        return f"<lava.{self.__class__.__name__}: track='{self.track}', threshold_ms={self.threshold_ms}>"
 
 
-class WebsocketOpen(BaseEvent):
+class WebSocketClosedEvent(_BaseEvent):
+    __slots__ = ("code", "reason", "by_remote",)
 
-    __slots__ = ("_target", "_ssrc",)
-
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(self, data: WebSocketClosedEventData) -> None:
         super().__init__(data)
-
-        self._type: str = "WEBSOCKET_OPEN"
-
-        self._target: str = data["target"]
-        self._ssrc: int = data["ssrc"]
+        self.code: int = data["code"]
+        self.reason: str = data["reason"]
+        self.by_remote: bool = data["byRemote"]
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.WebsocketOpen guild_id={self.guild_id}, target='{self._target}', ssrc={self._ssrc}>"
-
-    @property
-    def target(self) -> str:
-        return self._target
-
-    @property
-    def ssrc(self) -> int:
-        return self._ssrc
+        return f"<lava.{self.__class__.__name__}: code={self.code}, reason='{self.reason}', " \
+               f"by_remote={self.by_remote}>"
 
 
-class WebsocketClosed(BaseEvent):
+class UnhandledEvent(_BaseEvent):
+    __slots__ = ("data",)
 
-    __slots__ = ("_code", "_reason", "_by_remote",)
-
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(self, data: EventData) -> None:
         super().__init__(data)
-
-        self._type: str = "WEBSOCKET_CLOSED"
-
-        self._code: int = data["code"]
-        self._reason: str = data["reason"]
-        self._by_remote: bool = data["by_remote"]
+        self.data: EventData = data
 
     def __repr__(self) -> str:
-        return f"<discord.ext.lava.WebsocketClosed guild_id={self._guild_id}, code={self._code}, reason='{self._reason}', by_remote={self._by_remote}>"
-
-    @property
-    def code(self) -> int:
-        return self._code
-
-    @property
-    def reason(self) -> str:
-        return self._reason
-
-    @property
-    def by_remote(self) -> bool:
-        return self._by_remote
+        return f"<lava.{self.__class__.__name__}: data={self.data}>"

@@ -1,8 +1,12 @@
-*.pyc
-*.log*
-
+# ide
 .idea/
-tests/
-dist/
-_build/
+
+# python
+*.pyc
+
+# docs
 build/
+_build/
+
+# lavalink
+Lavalink.jar

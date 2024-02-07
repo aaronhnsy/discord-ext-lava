@@ -1,502 +1,349 @@
 from __future__ import annotations
 
-import contextlib
+import json
 import logging
 import time
-from typing import Any, Generic
+from typing import Generic, cast
+from typing_extensions import TypeVar
 
 import discord
 import discord.types.voice
 
-from .node import Node
-from .objects.enums import Provider
-from .objects.events import TrackEnd, TrackException, TrackStart, TrackStuck, WebsocketClosed, WebsocketOpen
+from ._utilities import MISSING, DeferredMessage, get_event_dispatch_name
+from .exceptions import PlayerAlreadyConnected, PlayerNotConnected
+from .link import Link
+from .objects.events import TrackEndEvent, TrackExceptionEvent, TrackStartEvent, TrackStuckEvent
+from .objects.events import UnhandledEvent, WebSocketClosedEvent
 from .objects.filters import Filter
 from .objects.track import Track
-from .pool import Pool
-from .types import BotT, PlayerT, VoiceChannel
-from .utils import MISSING
+from .types.common import PlayerStateData, VoiceChannel
+from .types.objects.track import TrackUserData
+from .types.rest import PlayerData, UpdatePlayerRequestData, UpdatePlayerRequestParameters
+from .types.rest import UpdatePlayerRequestTrackData
+from .types.websocket import EventPayload
 
 
-__all__ = (
-    "Player",
-)
+__all__ = ["Player"]
+__log__: logging.Logger = logging.getLogger("lava.player")
+
+BotT = TypeVar("BotT", bound=discord.Client, default=discord.Client, covariant=True)
+
+type Connectable = discord.abc.Connectable
+type VoiceStateUpdateData = discord.types.voice.GuildVoiceState
+type VoiceServerUpdateData = discord.types.voice.VoiceServerUpdate
 
 
-LOGGER: logging.Logger = logging.getLogger("discord.ext.lava.player")
+class Player(discord.VoiceProtocol, Generic[BotT]):
 
-
-OBSIDIAN_EVENT_MAPPING: dict[str, Any] = {
-    "WEBSOCKET_OPEN":   WebsocketOpen,
-    "WEBSOCKET_CLOSED": WebsocketClosed,
-    "TRACK_START":      TrackStart,
-    "TRACK_END":        TrackEnd,
-    "TRACK_STUCK":      TrackStuck,
-    "TRACK_EXCEPTION":  TrackException,
-}
-
-LAVALINK_EVENT_MAPPING: dict[str, Any] = {
-    "WebsocketClosedEvent": WebsocketClosed,
-    "TrackStartEvent":      TrackStart,
-    "TrackEndEvent":        TrackEnd,
-    "TrackStuckEvent":      TrackStuck,
-    "TrackExceptionEvent":  TrackException,
-}
-
-
-class Player(discord.VoiceProtocol, Generic[BotT, PlayerT]):
-
-    def __init__(
-        self,
-        client: BotT = MISSING,
-        channel: VoiceChannel = MISSING,
-        /, *,
-        node: Node[BotT, PlayerT] | None = None,
-    ) -> None:
-
-        self.client: BotT = client
-        self.channel: VoiceChannel = channel
-
-        self._node: Node[BotT, PlayerT] = node or Pool.get_node()  # type: ignore
-
-        self._voice_server_update_data: discord.types.voice.VoiceServerUpdate | None = None
+    def __init__(self, link: Link) -> None:
+        self._bot: BotT = MISSING
+        self._guild: discord.Guild = MISSING
+        self._channel: VoiceChannel | None = MISSING
+        self._link: Link = link
+        # player voice state
+        self._token: str | None = None
+        self._endpoint: str | None = None
         self._session_id: str | None = None
-
-        self._current_track_id: str | None = None
-        self._current: Track | None = None
-        self._paused: bool = False
-
-        self._last_update: float = 0
-        self._position: float = 0
-        self._timestamp: float = 0
-
+        # player state
+        self._connected: bool = False
+        self._ping: int = -1
+        self._position: int = 0
+        self._time: int = 0
+        # player data
+        self._track: Track | None = None
         self._filter: Filter | None = None
+        self._paused = False
+        self._volume = 100
 
-    def __call__(
-        self,
-        client: discord.Client,
-        channel: discord.abc.Connectable,
-        /,
-    ) -> PlayerT:
-
-        self.client = client  # type: ignore
-        self.channel = channel  # type: ignore
-
-        self._node._players[channel.guild.id] = self  # type: ignore
-
-        return self  # type: ignore
+    def __call__(self, client: discord.Client, channel: Connectable) -> Player:
+        self._bot = client                         # type: ignore
+        self._guild = channel.guild                # type: ignore
+        self._channel = channel                    # type: ignore
+        self._link._players[self.guild.id] = self  # type: ignore
+        return self
 
     def __repr__(self) -> str:
-        return "<discord.ext.lava.Player>"
-
-    # discord.py abstract methods
-
-    async def on_voice_server_update(
-        self,
-        data: discord.types.voice.VoiceServerUpdate
-    ) -> None:
-
-        LOGGER.debug(f"Player '{self.channel.guild.id}' received VOICE_SERVER_UPDATE.\nData: {data}")
-
-        self._voice_server_update_data = data
-        await self._dispatch_voice_update()
-
-    async def on_voice_state_update(
-        self,
-        data: discord.types.voice.GuildVoiceState
-    ) -> None:
-
-        LOGGER.debug(f"Player '{self.channel.guild.id}' received VOICE_STATE_UPDATE.\nData: {data}")
-
-        self._session_id = data.get("session_id")
-        await self._dispatch_voice_update()
-
-    async def _dispatch_voice_update(self) -> None:
-
-        if not self._session_id or not self._voice_server_update_data:
-            return
-
-        if self._node.provider is Provider.OBSIDIAN:
-            data = {
-                "session_id": self._session_id,
-                **self._voice_server_update_data
-            }
-        else:
-            data = {
-                "sessionId": self._session_id,
-                "event":     self._voice_server_update_data,
-            }
-
-        await self._node._send_payload(
-            0,  # voiceUpdate
-            data=data,
-            guild_id=str(self.channel.guild.id)
-        )
-
-    # websocket
-
-    def _dispatch_event(
-        self,
-        data: dict[str, Any]
-    ) -> None:
-
-        _type = data["type"]
-
-        if not (event := OBSIDIAN_EVENT_MAPPING.get(_type) if self._node.provider is Provider.OBSIDIAN else LAVALINK_EVENT_MAPPING.get(_type)):
-            LOGGER.error(f"Player '{self.channel.guild.id}' received an event with an unknown type: '{_type}'.")
-            return
-
-        event = event(data)
-
-        self.bot.dispatch(f"lava_{event.type.lower()}", self, event)
-        LOGGER.info(f"Player '{self.channel.guild.id}' dispatched '{_type}' event.")
-
-    def _update_state(
-        self,
-        data: dict[str, Any]
-    ) -> None:
-
-        self._last_update = time.time() * 1000
-
-        if self._node.provider is Provider.OBSIDIAN:
-
-            current: dict[str, Any] = data["current_track"]
-            self._current_track_id = current["track"]
-            self._paused = current["paused"]
-            self._position = current["position"]
-            self._timestamp = data["timestamp"]
-            # TODO: Parse filters from data["filters"]
-
-        else:
-            state: dict[str, Any] = data["state"]
-            self._position = state.get("position", 0)
-            self._timestamp = state["time"]
+        return f"<lava.{self.__class__.__name__}: >"
 
     # properties
 
     @property
-    def bot(self) -> BotT:
-        """
-        The bot instance that this player is attached to.
-        """
-        return self.client
+    def guild(self) -> discord.Guild:
+        return self._guild
 
     @property
-    def voice_channel(self) -> VoiceChannel:
-        """
-        The voice channel that this player is connected to.
-        """
-        return self.channel
+    def channel(self) -> VoiceChannel | None:  # pyright: ignore
+        return self._channel
 
     @property
-    def node(self) -> Node[BotT, PlayerT]:
-        """
-        The node that this player is attached to.
-        """
-        return self._node
+    def ping(self) -> int:
+        return self._ping
 
     @property
-    def current_track_id(self) -> str | None:
-        """
-        The ID of the current track. This is ``None`` if no track is playing.
-        """
-        return self._current_track_id
+    def time(self) -> int:
+        return self._time
 
-    @property
-    def current(self) -> Track | None:
-        """
-        The current track. This is ``None`` if no track is playing.
-        """
-        return self._current
+    # voice state update
 
-    @property
-    def paused(self) -> bool:
-        """
-        Whether the player is paused. ``True`` if paused, ``False`` if not.
-        """
-        return self._paused
+    async def on_voice_state_update(self, data: VoiceStateUpdateData, /) -> None:
+        __log__.debug(
+            f"Player ({self.guild.id} : {self.guild.name}) received a 'VOICE_STATE_UPDATE' from Discord.\n"
+            f"%s", DeferredMessage(json.dumps, data, indent=4),
+        )
+        # set discord voice state data
+        self._session_id = data["session_id"]
+        await self._update_voice_state()
+        # update player voice channel
+        id: int | None = int(channel_id) if (channel_id := data["channel_id"]) else None  # type: ignore
+        channel: VoiceChannel | None = self.guild.get_channel(id)  # type: ignore
+        if self._channel == channel:
+            return
+        elif self._channel is not None and channel is None:
+            __log__.info(
+                f"Player ({self.guild.id} : {self.guild.name}) disconnected from voice channel "
+                f"({self._channel.id} : {self._channel.name})."
+            )
+        elif self._channel is None and channel is not None:
+            __log__.info(
+                f"Player ({self.guild.id} : {self.guild.name}) connected to voice channel "
+                f"({channel.id} : {channel.name})."
+            )
+        elif self._channel is not None and channel is not None:
+            __log__.info(
+                f"Player ({self.guild.id} : {self.guild.name}) moved from voice channel "
+                f"({self._channel.id} : {self._channel.name}) to ({channel.id} : {channel.name})."
+            )
+        self._channel = channel
 
-    @property
-    def position(self) -> float:
-        """
-        The position of the player. Returns ``0.0`` if no track is playing.
-        """
+    async def on_voice_server_update(self, data: VoiceServerUpdateData, /) -> None:
+        __log__.debug(
+            f"Player ({self.guild.id} : {self.guild.name}) received a 'VOICE_SERVER_UPDATE' from Discord.\n"
+            f"%s", DeferredMessage(json.dumps, data, indent=4),
+        )
+        # set discord voice state data
+        self._token = data["token"]
+        self._endpoint = data["endpoint"]
+        await self._update_voice_state()
 
-        if not self.is_playing():
-            return 0
+    async def _update_voice_state(self) -> None:
+        # check if all the data required to update the player's voice state is available
+        if self._token is None or self._endpoint is None or self._session_id is None:
+            return
+        # update the player's voice state
+        await self._link._request(
+            "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
+            data={"voice": {"token": self._token, "endpoint": self._endpoint, "sessionId": self._session_id}},
+        )
+        # reset the discord voice state data to disallow subsequent 'VOICE_STATE_UPDATE'
+        # events from updating the player's voice state unnecessarily
+        self._token, self._endpoint, self._session_id = None, None, None
 
-        assert self._current is not None
+    # events + player updates
 
-        if self._paused:
-            return min(self._position, self._current.length)
+    def _dispatch_event(self, payload: EventPayload, /) -> None:
+        match payload["type"]:
+            case "TrackStartEvent":
+                event = TrackStartEvent(payload)
+            case "TrackEndEvent":
+                event = TrackEndEvent(payload)
+            case "TrackExceptionEvent":
+                event = TrackExceptionEvent(payload)
+            case "TrackStuckEvent":
+                event = TrackStuckEvent(payload)
+            case "WebSocketClosedEvent":
+                event = WebSocketClosedEvent(payload)
+            case _:  # pyright: ignore - lavalink could add new event types
+                event = UnhandledEvent(payload)
+        self._bot.dispatch(get_event_dispatch_name(event.type), self, event)
+        __log__.info(f"Player ({self.guild.id} : {self.guild.name}) dispatched '{event}'")
 
-        position = self._position + ((time.time() * 1000) - self._last_update)
+    def _update_player_state(self, payload: PlayerStateData, /) -> None:
+        self._connected = payload["connected"]
+        self._ping = payload["ping"]
+        self._position = payload["position"]
+        self._time = payload["time"]
 
-        if position > self._current.length:
-            return 0
+    def _update_player_data(self, data: PlayerData) -> None:
+        self._update_player_state(data["state"])
+        self._track = Track(data["track"]) if data["track"] else None
+        # self._filter = Filter(data["filters"])
+        self._volume = data["volume"]
+        self._paused = data["paused"]
 
-        return position
+    # methods
 
-    @property
-    def filter(self) -> Filter | None:
-        """
-        The players current filter. This is ``None`` if no filter has been set yet.
-        """
-        return self._filter
+    async def update(
+        self,
+        *,
+        track: Track | None = MISSING,
+        track_identifier: str = MISSING,
+        track_user_data: TrackUserData = MISSING,
+        track_end_time: int | None = MISSING,
+        replace_current_track: bool = MISSING,
+        filter: Filter = MISSING,
+        position: int = MISSING,
+        paused: bool = MISSING,
+        volume: int = MISSING,
+    ) -> None:
+        # validate that track and track_identifier are not used at the same time
+        if track is not MISSING and track_identifier is not MISSING:
+            raise ValueError("'track' and 'track_identifier' can not be used at the same time.")
+        # wait for the player to be ready
+        if not self._link.is_ready():
+            await self._link._ready_event.wait()
 
-    @property
-    def listeners(self) -> list[discord.Member]:
-        """
-        Returns a list of non bot members in the players voice channel who are also not deafened.
-        """
-        return [
-            member for member in getattr(self.voice_channel, "members", [])
-            if not member.bot and not member.voice.deaf and not member.voice.self_deaf
-        ]
+        # prepare request parameters
+        parameters: UpdatePlayerRequestParameters = {}
+        if replace_current_track is not MISSING:
+            parameters["noReplace"] = not replace_current_track
 
-    # utility methods
+        # prepare request track data
+        track_data: UpdatePlayerRequestTrackData = {}
+        if track is not MISSING:
+            track_data["encoded"] = track.encoded if track else None
+        if track_identifier is not MISSING:
+            track_data["identifier"] = track_identifier
+        if track_user_data is not MISSING:
+            track_data["userData"] = track_user_data
+
+        # prepare request data
+        data: UpdatePlayerRequestData = {}
+        if track_data:
+            data["track"] = track_data
+        if track_end_time is not MISSING:
+            if isinstance(track_end_time, int) and track_end_time <= 0:
+                raise TypeError("'track_end_time' must be an integer more than or equal to '1'.")
+            data["endTime"] = track_end_time
+        if filter is not MISSING:
+            data["filters"] = filter.data
+        if position is not MISSING:
+            data["position"] = position
+        if paused is not MISSING:
+            data["paused"] = paused
+        if volume is not MISSING:
+            if volume < 0 or volume > 1000:
+                raise TypeError("'volume' must be an integer between '0' and '1000' inclusive.")
+            data["volume"] = volume
+
+        # send request
+        player: PlayerData = await self._link._request(
+            "PATCH", f"/v4/sessions/{self._link.session_id}/players/{self.guild.id}",
+            parameters=parameters, data=data,
+        )
+        self._update_player_data(player)
+
+    # connection
 
     def is_connected(self) -> bool:
-        """
-        Whether the player is connected to a voice channel. ``True`` if connected, ``False`` if not.
-        """
-        return self.channel is not None
-
-    def is_playing(self) -> bool:
-        """
-        Whether the player is playing a track. ``True`` if playing, ``False`` otherwise.
-        """
-        return self.is_connected() is True and self._current is not None
-
-    def is_paused(self) -> bool:
-        """
-        Whether the player is paused. ``True`` if paused, ``False`` otherwise.
-        """
-        return self._paused is True
-
-    # player methods
+        return self._channel is not None and self._connected is True
 
     async def connect(
-        self,
-        *,
+        self, *,
+        channel: VoiceChannel | None = None,
         timeout: float | None = None,
         reconnect: bool | None = None,
-        self_mute: bool = False,
-        self_deaf: bool = True,
+        self_deaf: bool | None = None,
+        self_mute: bool | None = None,
     ) -> None:
-        """
-        Connects the player to its voice channel.
+        if self.is_connected():
+            raise PlayerAlreadyConnected("This player is already connected to a voice channel.")
+        if self._channel is None and channel is None:
+            raise ValueError("You must provide the 'channel' parameter to reconnect this player.")
+        self._channel = cast(VoiceChannel, self._channel or channel)
+        __log__.info(
+            f"Player ({self.guild.id} : {self.guild.name}) connected to voice channel "
+            f"({self._channel.id} : {self._channel.name})."
+        )
+        await self.guild.change_voice_state(channel=self._channel)
 
-        Parameters
-        ----------
-        timeout
-            Unused parameter, does nothing.
-        reconnect
-            Unused parameter, does nothing.
-        self_mute
-            ``True`` if the player should be muted when connected. Defaults to ``False``.
-        self_deaf
-            ``True`` if the player should be deafened when connected. Defaults to ``True``.
-        """
+    async def move_to(self, channel: VoiceChannel) -> None:
+        if not self.is_connected():
+            raise PlayerNotConnected("This player is not connected to a voice channel.")
+        self._channel = channel
+        __log__.info(
+            f"Player ({self.guild.id} : {self.guild.name}) moved from voice channel "
+            f"({self._channel.id} : {self._channel.name}) to ({channel.id} : {channel.name})."
+        )
+        await self.guild.change_voice_state(channel=self._channel)
 
-        await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
-        LOGGER.info(f"Player '{self.channel.guild.id}' connected to voice channel '{self.channel.id}'.")
+    async def disconnect(self, *, force: bool = False) -> None:
+        if not self.is_connected():
+            raise PlayerNotConnected("This player is not connected to a voice channel.")
+        old_channel = cast(VoiceChannel, self._channel)
+        self._channel = None
+        __log__.info(
+            f"Player ({self.guild.id} : {self.guild.name}) disconnected from voice channel "
+            f"({old_channel.id} : {old_channel.name})."
+        )
+        await self.guild.change_voice_state(channel=self._channel)
 
-    async def disconnect(
-        self,
-        *,
-        force: bool = False
-    ) -> None:
-        """
-        Disconnects the player from its voice channel and removes it from the node.
+    # position
 
-        Parameters
-        ----------
-        force
-            ``True`` if the player should send a request to the provider server to stop the current track even if
-            one is not playing. Defaults to ``False``.
-        """
+    @property
+    def position(self) -> int:
+        return round(self._position + ((time.time() * 1000) - self._time))
 
-        LOGGER.info(f"Player '{self.channel.guild.id}' disconnected from voice channel '{self.channel.id}'.")
-        await self.channel.guild.change_voice_state(channel=None)
+    async def set_position(self, position: int, /) -> None:
+        await self.update(position=position)
+        __log__.info(f"Player ({self.guild.id} : {self.guild.name}) set it's position to '{self.position}'.")
 
-        if self._node.is_connected():
+    # track
 
-            await self.stop(force=force)
-            await self._node._send_payload(
-                11,  # destroy
-                guild_id=str(self.channel.guild.id)
-            )
-
-        with contextlib.suppress(KeyError):
-            del self._node._players[self.channel.guild.id]
-
-        self.cleanup()
+    @property
+    def track(self) -> Track | None:
+        return self._track
 
     async def play(
         self,
         track: Track,
         /, *,
-        start_time: int | None = None,
         end_time: int | None = None,
-        no_replace: bool = False
+        replace_current_track: bool = True,
     ) -> None:
-        """
-        Plays the given track.
-
-        Parameters
-        ----------
-        track
-            The track to play.
-        start_time
-            The start time of the track in milliseconds. Defaults to ``None``.
-        end_time
-            The end time of the track in milliseconds. Defaults to ``None``.
-        no_replace
-            ``True`` if this track should not replace the current track, if any. Defaults to ``False``.
-        """
-
-        data: dict[str, Any] = {
-            "track": track.id,
-        }
-        if self._node.provider is Provider.OBSIDIAN:
-            if start_time:
-                data["start_time"] = start_time
-            if end_time:
-                data["end_time"] = end_time
-            if no_replace:
-                data["no_replace"] = no_replace
-        else:
-            if start_time:
-                data["startTime"] = start_time
-            if end_time:
-                data["endTime"] = end_time
-            if no_replace:
-                data["noReplace"] = no_replace
-
-        await self._node._send_payload(
-            6,  # play
-            data=data,
-            guild_id=str(self.channel.guild.id)
+        await self.update(track=track, track_end_time=end_time, replace_current_track=replace_current_track)
+        __log__.info(
+            f"Player ({self.guild.id} : {self.guild.name}) started playing '{track.title}' by '{track.author}'."
         )
-        LOGGER.info(f"Player '{self.channel.guild.id}' started playing track '{track!r}'.")
 
-        self._current_track_id = track.id
-        self._current = track
-        self._last_update = 0
-        self._position = 0
+    async def stop(self) -> None:
+        await self.update(track=None)
+        __log__.info(f"Player ({self.guild.id} : {self.guild.name}) stopped playing.")
 
-    async def stop(
-        self,
-        *,
-        force: bool = False
-    ) -> None:
-        """
-        Stops the current track.
+    # filter
 
-        Parameters
-        ----------
-        force
-            ``True`` if the player should send the stop track request to the provider server even if this player's
-            :attr:`~Player.current` attribute is ``None``. Defaults to ``False``.
-        """
-
-        if self._current is None and not force:
-            return
-
-        await self._node._send_payload(
-            7,  # stop
-            guild_id=str(self.channel.guild.id)
-        )
-        LOGGER.info(f"Player '{self.channel.guild.id}' stopped playing track '{self.current!r}'.")
-
-        self._current_track_id = None
-        self._current = None
-        self._last_update = 0
-        self._position = 0
-
-    async def set_pause(
-        self,
-        pause: bool,
-        /,
-    ) -> None:
-        """
-        Sets the players pause state.
-
-        Parameters
-        ----------
-        pause
-            ``True`` if the player should be paused, ``False`` otherwise.
-        """
-
-        await self._node._send_payload(
-            8,  # pause
-            data={"state": pause} if self._node.provider is Provider.OBSIDIAN else {"pause": pause},
-            guild_id=str(self.channel.guild.id)
-        )
-        LOGGER.info(f"Player '{self.channel.guild.id}' set its paused state to '{pause}'.")
-
-        self._paused = pause
+    @property
+    def filter(self) -> Filter | None:
+        return self._filter
 
     async def set_filter(
         self,
         filter: Filter,
         /, *,
-        set_position: bool = True
+        instant: bool = True
     ) -> None:
-        """
-        Sets the players filter.
+        await self.update(filter=filter, position=self.position if instant else MISSING)
+        __log__.info(f"Player ({self.guild.id} : {self.guild.name}) set it's filter to '{filter}'.")
 
-        Parameters
-        ----------
-        filter
-            The filter to set.
-        set_position
-            ``True`` if the player should set its position to the current position which applies filters instantly.
-            Defaults to ``True``.
-        """
+    # paused
 
-        _payload = filter._construct_payload(self._node.provider)
+    def is_paused(self) -> bool:
+        return self._paused
 
-        await self._node._send_payload(
-            9,  # filters
-            data={"filters": _payload} if self._node.provider is Provider.OBSIDIAN else _payload,
-            guild_id=str(self.channel.guild.id)
-        )
-        LOGGER.info(f"Player '{self.channel.guild.id}' set its filter to '{filter!r}'.")
+    async def pause(self) -> None:
+        await self.set_pause_state(True)
 
-        self._filter = filter
+    async def set_pause_state(self, state: bool, /) -> None:
+        await self.update(paused=state)
+        __log__.info(f"Player ({self.guild.id} : {self.guild.name}) set it's paused state to '{state}'.")
 
-        if set_position:
-            await self.set_position(self.position)
+    async def resume(self) -> None:
+        await self.set_pause_state(False)
 
-    async def set_position(
-        self,
-        position: float,
-        /, *,
-        force: bool = False
-    ) -> None:
-        """
-        Sets the players position.
+    # volume
 
-        Parameters
-        ----------
-        position
-            The position to set, in milliseconds.
-        force
-            ``True`` if the player should send the set position request to the provider server even if this player's
-            :attr:`~Player.current` attribute is ``None``. Defaults to ``False``.
-        """
+    @property
+    def volume(self) -> int:
+        return self._volume
 
-        if (self._current is None or 0 > position > self._current.length) and not force:
-            return
-
-        await self._node._send_payload(
-            10,  # seek
-            data={"position": round(position)},
-            guild_id=str(self.channel.guild.id)
-        )
-        LOGGER.info(f"Player '{self.channel.guild.id}' set its position to '{self.position}'.")
-
-        self._last_update = time.time() * 1000
-        self._position = position
+    async def set_volume(self, volume: int, /) -> None:
+        await self.update(volume=volume)

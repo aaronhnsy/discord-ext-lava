@@ -28,23 +28,23 @@ Development
 
     .. code-block:: shell
 
-        pip install -U git+https://github.com/Axelware/discord-ext-lava.git@main
+        pip install -U git+https://github.com/aaronhnsy/discord-ext-lava.git@main
 
 .. tab:: Branch
 
     .. code-block:: shell
 
-        pip install -U git+https://github.com/Axelware/discord-ext-lava.git@v0.4.x
+        pip install -U git+https://github.com/aaronhnsy/discord-ext-lava.git@v0.4.x
 
 .. tab:: Tag
 
     .. code-block:: shell
 
-        pip install -U git+https://github.com/Axelware/discord-ext-lava.git@v0.5.0
+        pip install -U git+https://github.com/aaronhnsy/discord-ext-lava.git@v0.5.0
 
 
 .. tab:: Commit
 
     .. code-block:: shell
 
-        pip install -U git+https://github.com/Axelware/discord-ext-lava.git@1ce8768
+        pip install -U git+https://github.com/aaronhnsy/discord-ext-lava.git@1ce8768
