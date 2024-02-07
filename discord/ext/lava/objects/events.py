@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ..enums import ExceptionSeverity, TrackEndReason
+from ..types.objects.events import EventData, EventType, TrackEndEventData, TrackEventData
+from ..types.objects.events import TrackExceptionEventData, TrackStuckEventData, WebSocketClosedEventData
 from .track import Track
-
-
-if TYPE_CHECKING:
-    from ..types.objects.events import EventData, EventType, TrackEndEventData, TrackEventData
-    from ..types.objects.events import TrackExceptionEventData, TrackStuckEventData, WebSocketClosedEventData
 
 
 __all__ = [
@@ -29,7 +24,7 @@ class _BaseEvent:
         self.guild_id: str = data["guildId"]
 
 
-class _TrackEvent(_BaseEvent):
+class _BaseTrackEvent(_BaseEvent):
     __slots__ = ("track",)
 
     def __init__(self, data: TrackEventData) -> None:
@@ -37,13 +32,13 @@ class _TrackEvent(_BaseEvent):
         self.track: Track = Track(data["track"])
 
 
-class TrackStartEvent(_TrackEvent):
+class TrackStartEvent(_BaseTrackEvent):
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: track='{self.track}'>"
+        return f"<lava.{self.__class__.__name__}: track='{self.track}'>"
 
 
-class TrackEndEvent(_TrackEvent):
+class TrackEndEvent(_BaseTrackEvent):
     __slots__ = ("reason",)
 
     def __init__(self, data: TrackEndEventData) -> None:
@@ -51,10 +46,10 @@ class TrackEndEvent(_TrackEvent):
         self.reason: TrackEndReason = TrackEndReason(data["reason"])
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: track='{self.track}', reason={self.reason}>"
+        return f"<lava.{self.__class__.__name__}: track='{self.track}', reason={self.reason}>"
 
 
-class TrackExceptionEvent(_TrackEvent):
+class TrackExceptionEvent(_BaseTrackEvent):
     __slots__ = ("message", "severity", "cause",)
 
     def __init__(self, data: TrackExceptionEventData) -> None:
@@ -65,11 +60,11 @@ class TrackExceptionEvent(_TrackEvent):
         self.cause: str = exception["cause"]
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: track='{self.track}', message='{self.message}' " \
+        return f"<lava.{self.__class__.__name__}: track='{self.track}', message='{self.message}' " \
                f"severity='{self.severity}' cause='{self.cause}'>"
 
 
-class TrackStuckEvent(_TrackEvent):
+class TrackStuckEvent(_BaseTrackEvent):
     __slots__ = ("threshold_ms",)
 
     def __init__(self, data: TrackStuckEventData) -> None:
@@ -77,7 +72,7 @@ class TrackStuckEvent(_TrackEvent):
         self.threshold_ms: int = data["thresholdMs"]
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: track='{self.track}', threshold_ms={self.threshold_ms}>"
+        return f"<lava.{self.__class__.__name__}: track='{self.track}', threshold_ms={self.threshold_ms}>"
 
 
 class WebSocketClosedEvent(_BaseEvent):
@@ -90,7 +85,8 @@ class WebSocketClosedEvent(_BaseEvent):
         self.by_remote: bool = data["byRemote"]
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: code={self.code}, reason='{self.reason}', by_remote={self.by_remote}>"
+        return f"<lava.{self.__class__.__name__}: code={self.code}, reason='{self.reason}', " \
+               f"by_remote={self.by_remote}>"
 
 
 class UnhandledEvent(_BaseEvent):
@@ -101,4 +97,4 @@ class UnhandledEvent(_BaseEvent):
         self.data: EventData = data
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: data={self.data}>"
+        return f"<lava.{self.__class__.__name__}: data={self.data}>"
